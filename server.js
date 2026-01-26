@@ -321,7 +321,7 @@ async function claimAchievements(userId) {
     }
 
     let totalClaimed = 0;
-    const userAchievementsUrl = `${BASE_URL_ACH}/${user.userClaimAchivID}/user`;
+    const userAchievementsUrl = `${BASE_URL_ACH}/${user.userId}/user`;
     const headers = {
         'x-user-jwt': user.jwtToken,
     };
@@ -473,6 +473,7 @@ async function executeSpin(userId) {
             const prizeMap = {
                 11755: '5,000 Spraycoins',
                 11750: 'Standard Box 2025',
+                11881: 'Krakow Box 2026',
                 11782: 'New Standard Box 2025',
                 11749: '500 Spraycoins',
                 11754: '1,000,000 Spraycoins',
