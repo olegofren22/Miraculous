@@ -1,0 +1,17 @@
+{
+  "name": "megatool",
+  "version": "1.0.0",
+  "description": "Automated MegaTool for special requests",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-cron": "^3.0.2",
+    "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
