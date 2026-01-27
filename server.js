@@ -427,6 +427,7 @@ async function openPack(userId, packId) {
 }
 
 // FIXED: Get user packs - Based on reference file
+// FIXED: Get user packs - Based on reference file
 async function getUserPacks(userId) {
     const user = userData[userId];
     if (!user?.jwtToken) {
@@ -434,6 +435,7 @@ async function getUserPacks(userId) {
         return [];
     }
 
+    logActivity(userId, 'Fetching packs from server...');
     const result = await makeAPIRequest(
         CONFIG.BASE_URL_CHECKPACKS,
         'GET',
@@ -442,9 +444,20 @@ async function getUserPacks(userId) {
         userId
     );
 
-    if (result.success && result.data.data && result.data.data.packs) {
-        return result.data.data.packs;
+    if (result.success && result.data && result.data.data) {
+        // Check different possible structures
+        if (Array.isArray(result.data.data.packs)) {
+            logActivity(userId, `Got ${result.data.data.packs.length} packs from server`);
+            return result.data.data.packs;
+        } else if (Array.isArray(result.data.data)) {
+            logActivity(userId, `Got ${result.data.data.length} packs from server (direct array)`);
+            return result.data.data;
+        } else {
+            logActivity(userId, `Unexpected packs data structure: ${JSON.stringify(result.data.data).substring(0, 200)}...`);
+            return [];
+        }
     } else if (result.status === 401) {
+        logActivity(userId, 'JWT expired during pack fetch, attempting refresh...');
         const refreshSuccess = await refreshToken(userId);
         if (refreshSuccess) {
             return await getUserPacks(userId);
@@ -455,7 +468,7 @@ async function getUserPacks(userId) {
     return [];
 }
 
-// FIXED: OneTimeOperation based on reference file
+// FIXED: OneTimeOperation based on reference file - CORRECT FILTERING
 async function triggerOneTimeOperation(userId) {
     try {
         // Check if already executed for this specific user
@@ -503,11 +516,22 @@ async function triggerOneTimeOperation(userId) {
             };
         }
         
-        // 2. Filter packs - only open packs with IDs 13498, 13135, and 12145
-        const targetPackIds = [13498, 13135, 12145];
-        const packsToOpen = userPacks.filter(pack => targetPackIds.includes(pack.id));
+        // 2. Filter packs - only open packs with packTemplate IDs 13498, 13135, and 12145
+        // CORRECTED: Filter by pack.packTemplate.id, not pack.id
+        const targetPackTemplateIds = [13498, 13135, 12145];
+        const packsToOpen = userPacks.filter(pack => 
+            pack.packTemplate && targetPackTemplateIds.includes(pack.packTemplate.id)
+        );
         
-        userLogs.push(`User ${userId}: Filtered packs to open (IDs 13498, 13135, 12145): ${packsToOpen.length}`);
+        userLogs.push(`User ${userId}: Filtered packs to open (packTemplate IDs 13498, 13135, 12145): ${packsToOpen.length}`);
+        
+        // Log pack details for debugging
+        if (packsToOpen.length > 0) {
+            userLogs.push(`User ${userId}: Found these pack templates:`);
+            packsToOpen.forEach((pack, index) => {
+                userLogs.push(`  ${index + 1}. Pack ID: ${pack.id}, Template ID: ${pack.packTemplate ? pack.packTemplate.id : 'N/A'}`);
+            });
+        }
         
         if (packsToOpen.length === 0) {
             oneTimeOperationStatus.set(userId, 'Completed - No target packs found');
@@ -533,9 +557,9 @@ async function triggerOneTimeOperation(userId) {
             const pack = packsToOpen[i];
             
             try {
-                userLogs.push(`User ${userId}: Opening pack ${i + 1}/${packsToOpen.length}: ID ${pack.id}`);
+                userLogs.push(`User ${userId}: Opening pack ${i + 1}/${packsToOpen.length}: Pack ID ${pack.id} (Template: ${pack.packTemplate ? pack.packTemplate.id : 'N/A'})`);
                 
-                // 5. Open the pack
+                // 5. Open the pack using the pack's instance ID (pack.id)
                 const openResult = await openPack(userId, pack.id);
                 
                 if (openResult) {
@@ -545,9 +569,9 @@ async function triggerOneTimeOperation(userId) {
                     userLogs.push(`User ${userId}: Failed to open pack ${pack.id}`);
                 }
                 
-                // Add delay between openings (7 seconds like reference file)
+                // Add delay between openings (11 seconds like reference file)
                 if (i < packsToOpen.length - 1) {
-                    await new Promise((resolve) => setTimeout(resolve, 7000));
+                    await new Promise((resolve) => setTimeout(resolve, 11000));
                 }
                 
             } catch (error) {
