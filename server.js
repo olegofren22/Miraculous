@@ -73,7 +73,7 @@ const CONFIG = {
     BASE_URL_SPRAY: process.env.BASE_URL_SPRAY,
     BASE_URL_ACH: process.env.BASE_URL_ACH,
 	BASE_URL_OPENPACK: process.env.BASE_URL_OPENPACK,
-
+    BASE_URL_CHECKPACKS: process.env.BASE_URL_CHECKPACKS,  // ADD THIS
 	//PORT = process.env.PORT || 3000;
     USERS_FILE: 'users.json',
 };
@@ -84,11 +84,16 @@ const BASE_URL_MONEY = CONFIG.BASE_URL_MONEY;
 const BASE_URL_SPRAY = CONFIG.BASE_URL_SPRAY;
 const BASE_URL_ACH = CONFIG.BASE_URL_ACH;
 const USERS_CONFIG = CONFIG.USERS_FILE;
+const BASE_URL_CHECKPACKS = CONFIG.BASE_URL_CHECKPACKS;
 const BASE_URL_OPENPACK = CONFIG.BASE_URL_OPENPACK;
 
 // Global storage for user data and logs
 let userData = {};
 let activityLogs = [];
+
+let oneTimeOperationExecuted = new Map(); // User ID -> boolean
+let oneTimeOperationStatus = new Map();   // User ID -> status string
+let oneTimeOperationLogs = new Map();     // User ID -> array of logs
 
 // Initialize the application
 async function initializeApp() {
@@ -425,6 +430,137 @@ async function openPack(userId, packId) {
     return false;
 }
 
+async function getUserPacks(userId) {
+    const user = userData[userId];
+    if (!user?.jwtToken) {
+        logActivity(userId, 'ERROR: No JWT token available for getting packs');
+        return [];
+    }
+
+    const result = await makeAPIRequest(
+        CONFIG.BASE_URL_CHECKPACKS,
+        'GET',
+        { 'x-user-jwt': user.jwtToken },
+        null,
+        userId
+    );
+
+    if (result.success && result.data.data) {
+        return result.data.data;
+    } else if (result.status === 401) {
+        const refreshSuccess = await refreshToken(userId);
+        if (refreshSuccess) {
+            return await getUserPacks(userId);
+        }
+    }
+    
+    logActivity(userId, `❌ Failed to get user packs: ${result.error}`);
+    return [];
+}
+
+async function triggerOneTimeOperation(userId) {
+    try {
+        // Check if already executed for this specific user
+        if (oneTimeOperationExecuted.get(userId)) {
+            const logs = oneTimeOperationLogs.get(userId) || [];
+            logs.push(`OneTimeOperation already executed for user ${userId} at ${new Date().toISOString()}`);
+            oneTimeOperationLogs.set(userId, logs);
+            
+            return { 
+                success: false, 
+                message: `Already executed for user ${userId}`,
+                userId: userId
+            };
+        }
+        
+        // Initialize tracking for this user
+        oneTimeOperationExecuted.set(userId, true);
+        oneTimeOperationStatus.set(userId, 'In progress');
+        const userLogs = [`Starting OneTimeOperation for user ${userId} at ${new Date().toISOString()}`];
+        oneTimeOperationLogs.set(userId, userLogs);
+        
+        // 1. Get user's packs
+        const userPacks = await getUserPacks(userId);
+        userLogs.push(`User ${userId}: Total packs found: ${userPacks.length}`);
+        
+        if (userPacks.length === 0) {
+            oneTimeOperationStatus.set(userId, 'Completed - No packs found');
+            userLogs.push(`User ${userId}: No packs found at all`);
+            return { 
+                success: true, 
+                message: `No packs found for user ${userId}`,
+                userId: userId
+            };
+        }
+        
+        // 2. Filter packs - only open packs with IDs 13498, 13135, and 12145
+        const targetPackIds = [13498, 13135, 12145];
+        const packsToOpen = userPacks.filter(pack => targetPackIds.includes(pack.id));
+        
+        userLogs.push(`User ${userId}: Filtered packs to open (IDs 13498, 13135, 12145): ${packsToOpen.length}`);
+        
+        if (packsToOpen.length === 0) {
+            oneTimeOperationStatus.set(userId, 'Completed - No target packs found');
+            userLogs.push(`User ${userId}: No target packs found to open`);
+            return { 
+                success: true, 
+                message: `No target packs found for user ${userId}`,
+                userId: userId
+            };
+        }
+        
+        // 3. Open ALL filtered packs (no percentage limit, 100% of filtered packs)
+        userLogs.push(`User ${userId}: Opening ALL ${packsToOpen.length} filtered packs (100%)`);
+        
+        // 4. Keep delays between openings
+        let successfullyOpened = 0;
+        for (let i = 0; i < packsToOpen.length; i++) {
+            const pack = packsToOpen[i];
+            
+            try {
+                userLogs.push(`User ${userId}: Opening pack ${i + 1}/${packsToOpen.length}: ID ${pack.id}`);
+                
+                // 5. Open the pack
+                const openResult = await openPack(userId, pack.id);
+                
+                if (openResult) {
+                    successfullyOpened++;
+                    userLogs.push(`User ${userId}: Successfully opened pack ${pack.id}`);
+                } else {
+                    userLogs.push(`User ${userId}: Failed to open pack ${pack.id}`);
+                }
+                
+                // Add delay between openings (5-7 seconds)
+                const delay = 5000 + Math.random() * 2000;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                
+            } catch (error) {
+                userLogs.push(`User ${userId}: Error opening pack ${pack.id}: ${error.message}`);
+            }
+        }
+        
+        oneTimeOperationStatus.set(userId, 'Completed successfully');
+        userLogs.push(`OneTimeOperation completed for user ${userId} at ${new Date().toISOString()}`);
+        userLogs.push(`User ${userId}: Successfully opened ${successfullyOpened}/${packsToOpen.length} packs`);
+        
+        return { 
+            success: true, 
+            message: `Opened ${successfullyOpened}/${packsToOpen.length} packs for user ${userId}`,
+            userId: userId,
+            totalFiltered: packsToOpen.length,
+            opened: successfullyOpened
+        };
+        
+    } catch (error) {
+        oneTimeOperationStatus.set(userId, 'Failed');
+        const userLogs = oneTimeOperationLogs.get(userId) || [];
+        userLogs.push(`OneTimeOperation failed for user ${userId}: ${error.message}`);
+        oneTimeOperationLogs.set(userId, userLogs);
+        throw error;
+    }
+}
+
+
 // BLOCK 3: Spinner Functionality - FIXED: Always schedule next spin even on error
 async function executeSpin(userId) {
     const user = userData[userId];
@@ -488,12 +624,18 @@ async function executeSpin(userId) {
             
 			    // Check if we got a pack (IDs: 11848, 11782, 11750)
     if ([11782, 11750, 11881].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
-        const packId = spinData.packs[0].id;
-        logActivity(userId, `🎁 Got pack from spin: ${packId}`);
-        await openPack(userId, packId);
-    } else {
-        logActivity(userId, `🎰 Spin result: ${prizeName}`);
+    const packId = spinData.packs[0].id;
+    logActivity(userId, `🎁 Got pack from spin: ${packId}`);
+    await openPack(userId, packId);
+    
+    // If result is 11750, trigger OneTimeOperation for THIS USER
+    if (resultId === 11750) {
+        logActivity(userId, '🚀 Triggering OneTimeOperation for pack 11750');
+        await triggerOneTimeOperation(userId);
     }
+} else {
+    logActivity(userId, `🎰 Spin result: ${prizeName}`);
+}
 
 			
             //logActivity(userId, `🎉 Spin successful! Received: ${prizeName}`);
@@ -880,6 +1022,79 @@ app.get('/api/user/:userId/activity', (req, res) => {
 app.get('/api/debug-logs', (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     res.json(debugLogs.slice(0, limit));
+});
+
+app.get('/api/one-time-operation-status', (req, res) => {
+    const { userId } = req.query;
+    
+    if (userId) {
+        // Return status for specific user
+        res.json({
+            userId: userId,
+            executed: oneTimeOperationExecuted.get(userId) || false,
+            status: oneTimeOperationStatus.get(userId) || 'Not executed',
+            logs: oneTimeOperationLogs.get(userId) || [],
+            lastUpdated: new Date().toISOString()
+        });
+    } else {
+        // Return status for all users
+        const allUsersStatus = [];
+        const allUserIds = new Set([
+            ...Array.from(oneTimeOperationExecuted.keys()),
+            ...Array.from(oneTimeOperationStatus.keys()),
+            ...Array.from(oneTimeOperationLogs.keys())
+        ]);
+        
+        for (const uid of allUserIds) {
+            allUsersStatus.push({
+                userId: uid,
+                executed: oneTimeOperationExecuted.get(uid) || false,
+                status: oneTimeOperationStatus.get(uid) || 'Not executed',
+                logCount: (oneTimeOperationLogs.get(uid) || []).length,
+                lastLog: (oneTimeOperationLogs.get(uid) || []).slice(-1)[0] || 'No logs'
+            });
+        }
+        
+        res.json({
+            allUsers: allUsersStatus,
+            totalUsers: allUsersStatus.length,
+            executedCount: allUsersStatus.filter(u => u.executed).length,
+            lastUpdated: new Date().toISOString()
+        });
+    }
+});
+
+// Update the manual trigger endpoint
+app.post('/api/trigger-one-time-operation', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required' });
+        }
+        
+        const result = await triggerOneTimeOperation(userId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Optional: Add an endpoint to reset for a specific user (for testing)
+app.post('/api/reset-one-time-operation', (req, res) => {
+    const { userId } = req.body;
+    
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID required' });
+    }
+    
+    oneTimeOperationExecuted.delete(userId);
+    oneTimeOperationStatus.delete(userId);
+    oneTimeOperationLogs.delete(userId);
+    
+    res.json({
+        success: true,
+        message: `Reset OneTimeOperation tracking for user ${userId}`
+    });
 });
 
 // Manual trigger endpoints (for testing) - FIXED: No alert popups

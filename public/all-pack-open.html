@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneTimeOperation Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-executed { background-color: #4CAF50; color: white; }
+        .status-not-executed { background-color: #f44336; color: white; }
+        .status-in-progress { background-color: #ff9800; color: white; }
+        .status-completed { background-color: #2196F3; color: white; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .stat-label {
+            font-weight: bold;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 18px;
+            color: #212529;
+        }
+        
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .users-table th, .users-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .users-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .users-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .users-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .logs-container {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            color: #d4d4d4;
+            margin-bottom: 20px;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #2d2d2d;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .pack-badge {
+            background: #e3f2fd;
+            border: 1px solid #2196F3;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 OneTimeOperation Monitor</h1>
+            <p>Automatically triggers when user gets spin result 11750</p>
+            <p>Opens ALL packs with IDs: <span class="pack-badge">13498</span> <span class="pack-badge">13135</span> <span class="pack-badge">12145</span></p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="loadStatus('all')">🔄 Refresh All Users</button>
+            <button onclick="startAutoRefresh()">▶️ Auto-refresh (10s)</button>
+            <button onclick="stopAutoRefresh()">⏹️ Stop Auto</button>
+            <div style="flex-grow: 1;"></div>
+            <input type="text" id="userIdFilter" placeholder="Enter User ID">
+            <button onclick="loadStatus('single')">🔍 View User</button>
+            <button onclick="clearFilter()">Clear Filter</button>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Global Statistics</h2>
+            <div class="stats-grid" id="globalStats">
+                <div class="stat-card">
+                    <div class="stat-label">Total Users Tracked</div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Executed Operations</div>
+                    <div class="stat-value" id="executedCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending Users</div>
+                    <div class="stat-value" id="pendingCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Updated</div>
+                    <div class="stat-value" id="lastUpdated">--:--:--</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>👥 User Status</h2>
+            <table class="users-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Status</th>
+                        <th>Executed</th>
+                        <th>Log Count</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="6">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>🔧 Manual Trigger (Testing)</h2>
+            <div class="controls">
+                <input type="text" id="manualUserId" placeholder="Enter User ID">
+                <button onclick="manualTrigger()">🔧 Trigger Operation</button>
+                <button onclick="resetOperation()">🔄 Reset for User</button>
+            </div>
+            <div id="manualTriggerResult" style="margin-top: 10px; padding: 10px; border-radius: 4px;"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 User Logs</h2>
+            <div id="currentUserInfo" style="margin-bottom: 10px; padding: 10px; background: #e3f2fd; border-radius: 4px;">
+                No user selected
+            </div>
+            <div class="logs-container" id="logsContainer">
+                Select a user to view logs
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval = null;
+        let currentUserId = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatus('all');
+            startAutoRefresh();
+        });
+        
+        function startAutoRefresh() {
+            stopAutoRefresh();
+            autoRefreshInterval = setInterval(() => loadStatus('all'), 10000);
+            console.log('Auto-refresh started (10s interval)');
+        }
+        
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                console.log('Auto-refresh stopped');
+            }
+        }
+        
+        function clearFilter() {
+            document.getElementById('userIdFilter').value = '';
+            loadStatus('all');
+        }
+        
+        async function loadStatus(type) {
+            try {
+                const userId = document.getElementById('userIdFilter').value;
+                let url = '/api/one-time-operation-status';
+                
+                if (type === 'single' && userId) {
+                    url += `?userId=${userId}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (type === 'single' && userId) {
+                    displaySingleUser(data);
+                    currentUserId = userId;
+                } else {
+                    displayAllUsers(data);
+                    currentUserId = null;
+                }
+                
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+                
+            } catch (error) {
+                console.error('Error loading status:', error);
+                document.getElementById('usersTableBody').innerHTML = 
+                    `<tr><td colspan="6">Error loading data: ${error.message}</td></tr>`;
+            }
+        }
+        
+        function displayAllUsers(data) {
+            // Update global stats
+            document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+            document.getElementById('executedCount').textContent = data.executedCount || 0;
+            document.getElementById('pendingCount').textContent = (data.totalUsers || 0) - (data.executedCount || 0);
+            
+            // Update users table
+            const tbody = document.getElementById('usersTableBody');
+            if (!data.allUsers || data.allUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No users found</td></tr>';
+                document.getElementById('currentUserInfo').innerHTML = 'No user selected';
+                document.getElementById('logsContainer').innerHTML = 'Select a user to view logs';
+                return;
+            }
+            
+            let html = '';
+            data.allUsers.forEach(user => {
+                const statusClass = user.status === 'In progress' ? 'status-in-progress' :
+                                  user.status.includes('Completed') ? 'status-completed' :
+                                  user.status.includes('Failed') ? 'status-not-executed' :
+                                  user.executed ? 'status-executed' : 'status-not-executed';
+                
+                html += `
+                    <tr>
+                        <td><strong>${user.userId}</strong></td>
+                        <td><span class="status-badge ${statusClass}">${user.status}</span></td>
+                        <td>${user.executed ? '✅ Yes' : '❌ No'}</td>
+                        <td>${user.logCount}</td>
+                        <td>${user.lastLog ? user.lastLog.substring(0, 50) + '...' : 'No logs'}</td>
+                        <td>
+                            <button onclick="viewUser('${user.userId}')" style="padding: 5px 10px; font-size: 12px;">View</button>
+                            <button onclick="triggerForUser('${user.userId}')" style="padding: 5px 10px; font-size: 12px; background-color: #28a745;">Trigger</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            document.getElementById('currentUserInfo').innerHTML = 'Select a user to view detailed logs';
+        }
+        
+        function displaySingleUser(data) {
+            // Update global stats for single user view
+            document.getElementById('totalUsers').textContent = '1';
+            document.getElementById('executedCount').textContent = data.executed ? '1' : '0';
+            document.getElementById('pendingCount').textContent = data.executed ? '0' : '1';
+            
+            // Update users table for single user
+            const tbody = document.getElementById('usersTableBody');
+            const statusClass = data.status === 'In progress' ? 'status-in-progress' :
+                              data.status.includes('Completed') ? 'status-completed' :
+                              data.status.includes('Failed') ? 'status-not-executed' :
+                              data.executed ? 'status-executed' : 'status-not-executed';
+            
+            tbody.innerHTML = `
+                <tr>
+                    <td><strong>${data.userId}</strong></td>
+                    <td><span class="status-badge ${statusClass}">${data.status}</span></td>
+                    <td>${data.executed ? '✅ Yes' : '❌ No'}</td>
+                    <td>${data.logs.length}</td>
+                    <td>${data.logs.length > 0 ? data.logs[data.logs.length - 1].substring(0, 50) + '...' : 'No logs'}</td>
+                    <td>
+                        <button onclick="loadStatus('all')" style="padding: 5px 10px; font-size: 12px;">Back to All</button>
+                    </td>
+                </tr>
+            `;
+            
+            // Update user info and logs
+            document.getElementById('currentUserInfo').innerHTML = 
+                `<strong>User ID:</strong> ${data.userId} | <strong>Status:</strong> ${data.status} | <strong>Logs:</strong> ${data.logs.length}`;
+            
+            const logsContainer = document.getElementById('logsContainer');
+            if (data.logs.length === 0) {
+                logsContainer.innerHTML = '<div class="log-entry">No logs for this user</div>';
+            } else {
+                logsContainer.innerHTML = data.logs.map(log => 
+                    `<div class="log-entry">${log}</div>`
+                ).join('');
+                logsContainer.scrollTop = logsContainer.scrollHeight;
+            }
+        }
+        
+        function viewUser(userId) {
+            document.getElementById('userIdFilter').value = userId;
+            loadStatus('single');
+        }
+        
+        async function triggerForUser(userId) {
+            const resultDiv = document.getElementById('manualTriggerResult');
+            resultDiv.innerHTML = `<span style="color: blue;">⏳ Triggering operation for user ${userId}...</span>`;
+            
+            try {
+                const response = await fetch('/api/trigger-one-time-operation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<span style="color: green;">✅ Success: ${result.message}</span>`;
+                    if (result.opened) {
+                        resultDiv.innerHTML += `<br><span style="color: green;">Opened ${result.opened} packs</span>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<span style="color: orange;">⚠️ ${result.message}</span>`;
+                }
+                
+                setTimeout(() => loadStatus('all'), 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span style="color: red;">❌ Error: ${error.message}</span>`;
+            }
+        }
+        
+        async function manualTrigger() {
+            const userId = document.getElementById('manualUserId').value;
+            if (!userId) {
+                document.getElementById('manualTriggerResult').innerHTML = 
+                    '<span style="color: red;">⚠️ Please enter a User ID</span>';
+                return;
+            }
+            await triggerForUser(userId);
+        }
+        
+        async function resetOperation() {
+            const userId = document.getElementById('manualUserId').value;
+            if (!userId) {
+                document.getElementById('manualTriggerResult').innerHTML = 
+                    '<span style="color: red;">⚠️ Please enter a User ID</span>';
+                return;
+            }
+            
+            const resultDiv = document.getElementById('manualTriggerResult');
+            resultDiv.innerHTML = `<span style="color: blue;">⏳ Resetting operation for user ${userId}...</span>`;
+            
+            try {
+                const response = await fetch('/api/reset-one-time-operation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `<span style="color: green;">✅ ${result.message}</span>`;
+                } else {
+                    resultDiv.innerHTML = `<span style="color: orange;">⚠️ ${result.message}</span>`;
+                }
+                
+                setTimeout(() => loadStatus('all'), 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span style="color: red;">❌ Error: ${error.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>
