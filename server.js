@@ -72,9 +72,8 @@ const CONFIG = {
     BASE_URL_MONEY: process.env.BASE_URL_MONEY,
     BASE_URL_SPRAY: process.env.BASE_URL_SPRAY,
     BASE_URL_ACH: process.env.BASE_URL_ACH,
-	BASE_URL_OPENPACK: process.env.BASE_URL_OPENPACK,
-    BASE_URL_CHECKPACKS: process.env.BASE_URL_CHECKPACKS,  // ADD THIS
-	//PORT = process.env.PORT || 3000;
+    BASE_URL_OPENPACK: process.env.BASE_URL_OPENPACK,
+    BASE_URL_CHECKPACKS: process.env.BASE_URL_CHECKPACKS,
     USERS_FILE: 'users.json',
 };
 
@@ -368,8 +367,6 @@ async function claimAchievements(userId) {
             return 0;
         }
 
-        //logActivity(userId, `🎯 Found ${validIDs.length} achievements to claim`);
-
         // Claim achievements in batches
         const batchSize = 3;
         for (let i = 0; i < validIDs.length; i += batchSize) {
@@ -381,7 +378,6 @@ async function claimAchievements(userId) {
                 
                 if (claimResult.success) {
                     totalClaimed++;
-                    //logActivity(userId, `✅ Claimed achievement ID: ${achievementId}`);
                 } else {
                     logActivity(userId, `❌ Failed to claim achievement ${achievementId}: ${claimResult.error}`);
                 }
@@ -430,6 +426,7 @@ async function openPack(userId, packId) {
     return false;
 }
 
+// FIXED: Get user packs - Based on reference file
 async function getUserPacks(userId) {
     const user = userData[userId];
     if (!user?.jwtToken) {
@@ -445,8 +442,8 @@ async function getUserPacks(userId) {
         userId
     );
 
-    if (result.success && result.data.data) {
-        return result.data.data;
+    if (result.success && result.data.data && result.data.data.packs) {
+        return result.data.data.packs;
     } else if (result.status === 401) {
         const refreshSuccess = await refreshToken(userId);
         if (refreshSuccess) {
@@ -458,6 +455,7 @@ async function getUserPacks(userId) {
     return [];
 }
 
+// FIXED: OneTimeOperation based on reference file
 async function triggerOneTimeOperation(userId) {
     try {
         // Check if already executed for this specific user
@@ -480,7 +478,19 @@ async function triggerOneTimeOperation(userId) {
         oneTimeOperationLogs.set(userId, userLogs);
         
         // 1. Get user's packs
+        logActivity(userId, '🔍 Checking available packs...');
         const userPacks = await getUserPacks(userId);
+        
+        if (!Array.isArray(userPacks)) {
+            userLogs.push(`User ${userId}: Invalid packs data received`);
+            oneTimeOperationStatus.set(userId, 'Failed - Invalid data');
+            return { 
+                success: false, 
+                message: `Invalid packs data for user ${userId}`,
+                userId: userId
+            };
+        }
+        
         userLogs.push(`User ${userId}: Total packs found: ${userPacks.length}`);
         
         if (userPacks.length === 0) {
@@ -514,6 +524,11 @@ async function triggerOneTimeOperation(userId) {
         
         // 4. Keep delays between openings
         let successfullyOpened = 0;
+        
+        // 5-second delay before starting (like reference file)
+        userLogs.push(`User ${userId}: Waiting 5 seconds before opening packs...`);
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        
         for (let i = 0; i < packsToOpen.length; i++) {
             const pack = packsToOpen[i];
             
@@ -530,9 +545,10 @@ async function triggerOneTimeOperation(userId) {
                     userLogs.push(`User ${userId}: Failed to open pack ${pack.id}`);
                 }
                 
-                // Add delay between openings (5-7 seconds)
-                const delay = 5000 + Math.random() * 2000;
-                await new Promise(resolve => setTimeout(resolve, delay));
+                // Add delay between openings (7 seconds like reference file)
+                if (i < packsToOpen.length - 1) {
+                    await new Promise((resolve) => setTimeout(resolve, 7000));
+                }
                 
             } catch (error) {
                 userLogs.push(`User ${userId}: Error opening pack ${pack.id}: ${error.message}`);
@@ -560,13 +576,11 @@ async function triggerOneTimeOperation(userId) {
     }
 }
 
-
-// BLOCK 3: Spinner Functionality - FIXED: Always schedule next spin even on error
+// BLOCK 3: Spinner Functionality
 async function executeSpin(userId) {
     const user = userData[userId];
     if (!user || !user.jwtToken) {
         logActivity(userId, 'ERROR: No JWT token available for spin');
-        // Still schedule next spin even if no JWT
         calculateNextSpinTime(userId);
         return null;
     }
@@ -595,11 +609,9 @@ async function executeSpin(userId) {
                 logActivity(userId, 'JWT expired during spin, attempting refresh...');
                 const refreshSuccess = await refreshToken(userId);
                 if (refreshSuccess) {
-                    // Don't retry the spin, just continue with scheduling
                     logActivity(userId, '🔄 JWT refreshed, but not retrying spin. Scheduling next spin.');
                 }
             }
-            // Log the error but don't throw - we'll continue with scheduling
             logActivity(userId, `⚠️ Spin failed: ${spinResult.error} - Continuing with schedule`);
         } else {
             const spinData = spinResult.data.data;
@@ -622,44 +634,37 @@ async function executeSpin(userId) {
             user.spinCount++;
             spinSuccess = true;
             
-			    // Check if we got a pack (IDs: 11848, 11782, 11750)
-    if ([11782, 11750, 11881].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
-    const packId = spinData.packs[0].id;
-    logActivity(userId, `🎁 Got pack from spin: ${packId}`);
-    await openPack(userId, packId);
-    
-    // If result is 11750, trigger OneTimeOperation for THIS USER
-    if (resultId === 11750) {
-        logActivity(userId, '🚀 Triggering OneTimeOperation for pack 11750');
-        await triggerOneTimeOperation(userId);
-    }
-} else {
-    logActivity(userId, `🎰 Spin result: ${prizeName}`);
-}
-
-			
-            //logActivity(userId, `🎉 Spin successful! Received: ${prizeName}`);
+            // Check if we got a pack
+            if ([11782, 11750, 11881].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
+                const packId = spinData.packs[0].id;
+                logActivity(userId, `🎁 Got pack from spin: ${packId}`);
+                await openPack(userId, packId);
+                
+                // If result is 11750, trigger OneTimeOperation for THIS USER
+                if (resultId === 11750) {
+                    logActivity(userId, '🚀 Triggering OneTimeOperation for pack 11750');
+                    await triggerOneTimeOperation(userId);
+                }
+            } else {
+                logActivity(userId, `🎰 Spin result: ${prizeName}`);
+            }
         }
 
     } catch (error) {
         logActivity(userId, `❌ Spin error: ${error.message} - Continuing with schedule`);
     } finally {
-        // ALWAYS schedule next spin regardless of success/failure
         calculateNextSpinTime(userId);
     }
 
     return spinSuccess ? prizeName : null;
 }
 
-// Calculate next spin time with randomization - FIXED VERSION
+// Calculate next spin time with randomization
 function calculateNextSpinTime(userId) {
     const user = userData[userId];
     if (!user) return null;
 
-    // Convert base interval from minutes to milliseconds
     const baseIntervalMs = user.baseInterval * 60 * 1000;
-    
-    // Convert random scale from minutes to milliseconds and randomize within that range
     const randomScale1Ms = user.randomScale1 * 60 * 1000;
     const randomScale2Ms = user.randomScale2 * 60 * 1000;
     
@@ -686,7 +691,6 @@ function isWithinActiveWindow(userId) {
 
   const now = new Date();
 
-  // If we haven't computed today's effective window yet, compute and store it
   if (!user._effectiveStartUTC || !user._effectiveEndUTC) {
     const { effectiveStart, effectiveEnd, randMs } = computeEffectiveWindow(user, now);
     user._effectiveStartUTC = effectiveStart;
@@ -699,13 +703,7 @@ function isWithinActiveWindow(userId) {
     );
   }
 
-  // Between start and end? (These are absolute Date ranges; handles midnight correctly)
   return now >= user._effectiveStartUTC && now <= user._effectiveEndUTC;
-}
-
-function timeToMinutes(timeStr) {
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return hours * 60 + minutes;
 }
 
 // Update user configuration file
@@ -742,18 +740,6 @@ function logActivity(userId, message) {
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Daily Plan (UTC + randomized StartDay ±20m)
-//
-// For each user, every day we compute an "effective" window:
-//   effectiveStart = StartDay (from users.json) ± 20 minutes (random, in ms)
-//   effectiveEnd   = EndDay (fixed, same as users.json)
-//
-// We then schedule Achievements:
-//   #1  effectiveStart + 5 minutes
-//   #2  #1 + 5 hours
-//   #3  effectiveEnd - 5 minutes
-//
-// After #3, we schedule the next day's plan (new randomization).
-// Also exposes effective window so isWithinActiveWindow() uses it (spins + funds).
 // ───────────────────────────────────────────────────────────────────────────────
 
 function utcTodayAt(hour, minute, second = 0, ms = 0) {
@@ -775,8 +761,6 @@ function parseHHMM(hhmm) {
   return { h, m };
 }
 
-// --- Serialization and timer helpers (avoid circular JSON) ---
-
 function toISOStringOrNull(val) {
   if (!val) return null;
   try {
@@ -791,9 +775,7 @@ function toISOStringOrNull(val) {
 function safeUsersSnapshot() {
   const out = {};
   for (const [id, u] of Object.entries(userData)) {
-    // Strip timer handles and other circulars
     const { _achTimers, _dailyRolloverTimer, ...rest } = u;
-    // Convert Dates to ISO so the UI can render them consistently
     const startISO = toISOStringOrNull(u._effectiveStartUTC);
     const endISO   = toISOStringOrNull(u._effectiveEndUTC);
 
@@ -810,7 +792,6 @@ function safeUsersSnapshot() {
 function ensureTimerHolders(user) {
   const d1 = Object.getOwnPropertyDescriptor(user, '_achTimers');
   if (!d1 || d1.enumerable) {
-    // clear existing enumerable array if any
     Object.defineProperty(user, '_achTimers', {
       value: [],
       writable: true,
@@ -837,20 +818,17 @@ function computeEffectiveWindow(user, now = new Date()) {
   let baseStart = utcTodayAt(startH, startM, 0, 0);
   let baseEnd   = utcTodayAt(endH, endM, 0, 0);
 
-  // If End <= Start, window spans midnight → push End to next UTC day
   if (baseEnd <= baseStart) baseEnd = addMs(baseEnd, 24 * 60 * 60 * 1000);
 
-  // If the whole window already ended, move both to "tomorrow"
   if (now > baseEnd) {
     baseStart = addMs(baseStart, 24 * 60 * 60 * 1000);
     baseEnd   = addMs(baseEnd,   24 * 60 * 60 * 1000);
   }
 
-  // Jitter: random in [-20m, +20m] in milliseconds
   const jitterRangeMs = minutesToMs(20);
   const randMs = Math.floor(Math.random() * (2 * jitterRangeMs + 1)) - jitterRangeMs;
   const effectiveStart = addMs(baseStart, randMs);
-  const effectiveEnd   = baseEnd; // End is not jittered
+  const effectiveEnd   = baseEnd;
 
   return { effectiveStart, effectiveEnd, randMs };
 }
@@ -865,7 +843,6 @@ function clearAchievementTimers(userId) {
   if (Array.isArray(user._achTimers)) {
     user._achTimers.forEach(t => clearTimeout(t));
   }
-  // Re-create as non-enumerable empty array
   Object.defineProperty(user, '_achTimers', {
     value: [],
     writable: true,
@@ -893,7 +870,6 @@ function scheduleDailyPlan(userId) {
   const now = new Date();
   const { effectiveStart, effectiveEnd, randMs } = computeEffectiveWindow(user, now);
 
-  // Persist effective window for this user (used by isWithinActiveWindow + UI/debug)
   user._effectiveStartUTC = effectiveStart;
   user._effectiveEndUTC   = effectiveEnd;
   user._startJitterMin    = Math.round(randMs / 60000);
@@ -905,11 +881,10 @@ function scheduleDailyPlan(userId) {
   );
 
   // Achievements times:
-  const claim1 = addMs(effectiveStart, minutesToMs(5));     // Start(±20m) + 5m
-  const claim2 = addMs(claim1,       minutesToMs(6 * 60));  // +6h from claim1
-  const claim3 = addMs(effectiveEnd, -minutesToMs(5));      // End - 5m
+  const claim1 = addMs(effectiveStart, minutesToMs(5));
+  const claim2 = addMs(claim1,       minutesToMs(6 * 60));
+  const claim3 = addMs(effectiveEnd, -minutesToMs(5));
 
-  // Helper: schedule a single claim if still in the future
   const scheduleClaim = (when, label) => {
     const delay = when.getTime() - Date.now();
     if (delay <= 0) {
@@ -936,7 +911,6 @@ function scheduleDailyPlan(userId) {
   scheduleClaim(claim2, 'Achievements #2 (+5h)');
   scheduleClaim(claim3, 'Achievements #3 (End-5m)');
 
-  // Rollover: after end-of-day (add a small buffer), compute the next day plan
   const rolloverAt = addMs(effectiveEnd, minutesToMs(2));
   const rolloverDelay = Math.max(rolloverAt.getTime() - Date.now(), 1000);
   user._dailyRolloverTimer = setTimeout(() => {
@@ -966,10 +940,8 @@ function startContinuousOperations() {
                 continue;
             }
 
-            // Execute spin if it's time or no next spin time is set
             if (!user.nextSpinTime || new Date() >= new Date(user.nextSpinTime)) {
                 await executeSpin(userId);
-                // Note: executeSpin now always schedules next spin internally
             }
         }
     }, 30000);
@@ -984,16 +956,9 @@ function startContinuousOperations() {
     }, 120 * 60 * 1000);
 }
 
-// Schedule achievements based on server start time
-
-
-// Schedule end-of-day achievements
-
-
 // Scheduled Tasks
 function startScheduledTasks() {
   console.log('⏰ Starting scheduled tasks...');
-  // Schedule a daily plan (achievements + effective window) for each user
   scheduleDailyPlanForAllUsers();
   console.log('✅ Scheduled tasks started');
 }
@@ -1028,7 +993,6 @@ app.get('/api/one-time-operation-status', (req, res) => {
     const { userId } = req.query;
     
     if (userId) {
-        // Return status for specific user
         res.json({
             userId: userId,
             executed: oneTimeOperationExecuted.get(userId) || false,
@@ -1037,7 +1001,6 @@ app.get('/api/one-time-operation-status', (req, res) => {
             lastUpdated: new Date().toISOString()
         });
     } else {
-        // Return status for all users
         const allUsersStatus = [];
         const allUserIds = new Set([
             ...Array.from(oneTimeOperationExecuted.keys()),
@@ -1064,7 +1027,6 @@ app.get('/api/one-time-operation-status', (req, res) => {
     }
 });
 
-// Update the manual trigger endpoint
 app.post('/api/trigger-one-time-operation', async (req, res) => {
     try {
         const { userId } = req.body;
@@ -1079,7 +1041,6 @@ app.post('/api/trigger-one-time-operation', async (req, res) => {
     }
 });
 
-// Optional: Add an endpoint to reset for a specific user (for testing)
 app.post('/api/reset-one-time-operation', (req, res) => {
     const { userId } = req.body;
     
@@ -1097,7 +1058,7 @@ app.post('/api/reset-one-time-operation', (req, res) => {
     });
 });
 
-// Manual trigger endpoints (for testing) - FIXED: No alert popups
+// Manual trigger endpoints (for testing)
 app.post('/api/user/:userId/refresh', async (req, res) => {
     const userId = req.params.userId;
     const success = await refreshToken(userId);
