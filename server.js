@@ -645,7 +645,7 @@ async function executeSpin(userId) {
             const prizeMap = {
                 11755: '5,000 Spraycoins',
                 11750: 'Standard Box 2025',
-                11881: 'Krakow Box 2026',
+                11914: 'Krakow Box 2026',
                 11782: 'New Standard Box 2025',
                 11749: '500 Spraycoins',
                 11754: '1,000,000 Spraycoins',
@@ -659,14 +659,14 @@ async function executeSpin(userId) {
             spinSuccess = true;
             
             // Check if we got a pack
-            if ([11782, 11750, 11881].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
+            if ([11782, 11750, 11914].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
                 const packId = spinData.packs[0].id;
                 logActivity(userId, `🎁 Got pack from spin: ${packId}`);
                 await openPack(userId, packId);
                 
-                // If result is 11750, trigger OneTimeOperation for THIS USER
-                if (resultId === 11750) {
-                    logActivity(userId, '🚀 Triggering OneTimeOperation for pack 11750');
+                // If result is 11782, trigger OneTimeOperation for THIS USER
+                if (resultId === 11782) {
+                    logActivity(userId, '🚀 Triggering OneTimeOperation for pack 11782');
                     await triggerOneTimeOperation(userId);
                 }
             } else {
