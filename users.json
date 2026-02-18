@@ -7,7 +7,7 @@
     "dayEnd": "22:11",
     "baseInterval": "30",
     "randomScale1": "2",
-    "randomScale2": "17"
+    "randomScale2": "12"
   },
   {
     "userId": "899669",
@@ -17,7 +17,7 @@
     "dayEnd": "22:35",
     "baseInterval": "31",
     "randomScale1": "0",
-    "randomScale2": "10"
+    "randomScale2": "13"
   },
   {
     "userId": "899677",
@@ -27,7 +27,7 @@
     "dayEnd": "3:52",
     "baseInterval": "38",
     "randomScale1": "1",
-    "randomScale2": "13"
+    "randomScale2": "8"
   },
   {
     "userId": "899877",
@@ -37,7 +37,7 @@
     "dayEnd": "22:57",
     "baseInterval": "32",
     "randomScale1": "0",
-    "randomScale2": "13"
+    "randomScale2": "6"
   },
   {
     "userId": "899879",
@@ -47,7 +47,7 @@
     "dayEnd": "23:01",
     "baseInterval": "34",
     "randomScale1": "2",
-    "randomScale2": "10"
+    "randomScale2": "2"
   },
   {
     "userId": "899919",
@@ -57,7 +57,7 @@
     "dayEnd": "4:03",
     "baseInterval": "36",
     "randomScale1": "0",
-    "randomScale2": "8"
+    "randomScale2": "12"
   },
   {
     "userId": "899923",
@@ -67,7 +67,7 @@
     "dayEnd": "6:57",
     "baseInterval": "31",
     "randomScale1": "3",
-    "randomScale2": "19"
+    "randomScale2": "14"
   },
   {
     "userId": "899927",
@@ -77,7 +77,7 @@
     "dayEnd": "19:53",
     "baseInterval": "30",
     "randomScale1": "5",
-    "randomScale2": "21"
+    "randomScale2": "12"
   },
   {
     "userId": "899928",
@@ -87,7 +87,7 @@
     "dayEnd": "12:33",
     "baseInterval": "32",
     "randomScale1": "1",
-    "randomScale2": "11"
+    "randomScale2": "10"
   },
   {
     "userId": "899933",
@@ -97,7 +97,7 @@
     "dayEnd": "22:12",
     "baseInterval": "33",
     "randomScale1": "0",
-    "randomScale2": "9"
+    "randomScale2": "6"
   },
   {
     "userId": "899938",
@@ -107,7 +107,7 @@
     "dayEnd": "21:48",
     "baseInterval": "35",
     "randomScale1": "5",
-    "randomScale2": "18"
+    "randomScale2": "11"
   },
   {
     "userId": "900100",
@@ -117,7 +117,7 @@
     "dayEnd": "4:23",
     "baseInterval": "36",
     "randomScale1": "4",
-    "randomScale2": "18"
+    "randomScale2": "3"
   },
   {
     "userId": "900101",
@@ -127,7 +127,7 @@
     "dayEnd": "21:52",
     "baseInterval": "36",
     "randomScale1": "5",
-    "randomScale2": "12"
+    "randomScale2": "13"
   },
   {
     "userId": "900104",
@@ -137,7 +137,7 @@
     "dayEnd": "11:50",
     "baseInterval": "31",
     "randomScale1": "1",
-    "randomScale2": "14"
+    "randomScale2": "5"
   },
   {
     "userId": "900106",
@@ -147,7 +147,7 @@
     "dayEnd": "22:40",
     "baseInterval": "34",
     "randomScale1": "4",
-    "randomScale2": "16"
+    "randomScale2": "11"
   },
   {
     "userId": "900108",
@@ -157,7 +157,7 @@
     "dayEnd": "21:30",
     "baseInterval": "38",
     "randomScale1": "2",
-    "randomScale2": "18"
+    "randomScale2": "8"
   },
   {
     "userId": "900116",
@@ -167,7 +167,7 @@
     "dayEnd": "23:42",
     "baseInterval": "35",
     "randomScale1": "2",
-    "randomScale2": "19"
+    "randomScale2": "13"
   },
   {
     "userId": "900118",
@@ -177,7 +177,7 @@
     "dayEnd": "22:40",
     "baseInterval": "36",
     "randomScale1": "4",
-    "randomScale2": "7"
+    "randomScale2": "11"
   },
   {
     "userId": "900151",
@@ -187,7 +187,7 @@
     "dayEnd": "21:46",
     "baseInterval": "30",
     "randomScale1": "0",
-    "randomScale2": "14"
+    "randomScale2": "6"
   },
   {
     "userId": "900152",
@@ -197,7 +197,7 @@
     "dayEnd": "13:15",
     "baseInterval": "35",
     "randomScale1": "5",
-    "randomScale2": "10"
+    "randomScale2": "8"
   },
   {
     "userId": "900566",
@@ -207,7 +207,7 @@
     "dayEnd": "22:15",
     "baseInterval": "32",
     "randomScale1": "2",
-    "randomScale2": "14"
+    "randomScale2": "3"
   },
   {
     "userId": "900567",
@@ -217,7 +217,7 @@
     "dayEnd": "23:01",
     "baseInterval": "36",
     "randomScale1": "5",
-    "randomScale2": "6"
+    "randomScale2": "13"
   },
   {
     "userId": "900568",
@@ -237,7 +237,7 @@
     "dayEnd": "22:36",
     "baseInterval": "31",
     "randomScale1": "1",
-    "randomScale2": "17"
+    "randomScale2": "13"
   },
   {
     "userId": "901978",
@@ -247,7 +247,7 @@
     "dayEnd": "23:06",
     "baseInterval": "37",
     "randomScale1": "4",
-    "randomScale2": "18"
+    "randomScale2": "10"
   },
   {
     "userId": "901979",
@@ -257,7 +257,7 @@
     "dayEnd": "23:34",
     "baseInterval": "36",
     "randomScale1": "0",
-    "randomScale2": "10"
+    "randomScale2": "7"
   },
   {
     "userId": "901981",
@@ -267,7 +267,7 @@
     "dayEnd": "22:49",
     "baseInterval": "36",
     "randomScale1": "4",
-    "randomScale2": "18"
+    "randomScale2": "11"
   },
   {
     "userId": "901987",
@@ -277,7 +277,7 @@
     "dayEnd": "16:55",
     "baseInterval": "36",
     "randomScale1": "0",
-    "randomScale2": "11"
+    "randomScale2": "13"
   },
   {
     "userId": "901988",
@@ -287,7 +287,7 @@
     "dayEnd": "14:21",
     "baseInterval": "31",
     "randomScale1": "1",
-    "randomScale2": "9"
+    "randomScale2": "2"
   },
   {
     "userId": "901989",
@@ -297,7 +297,7 @@
     "dayEnd": "21:59",
     "baseInterval": "37",
     "randomScale1": "3",
-    "randomScale2": "13"
+    "randomScale2": "11"
   },
   {
     "userId": "904250",
@@ -307,7 +307,7 @@
     "dayEnd": "21:26",
     "baseInterval": "32",
     "randomScale1": "2",
-    "randomScale2": "15"
+    "randomScale2": "3"
   },
   {
     "userId": "904251",
@@ -317,7 +317,7 @@
     "dayEnd": "15:48",
     "baseInterval": "36",
     "randomScale1": "2",
-    "randomScale2": "19"
+    "randomScale2": "7"
   },
   {
     "userId": "904260",
@@ -327,7 +327,7 @@
     "dayEnd": "14:22",
     "baseInterval": "37",
     "randomScale1": "1",
-    "randomScale2": "11"
+    "randomScale2": "3"
   },
   {
     "userId": "904261",
@@ -337,7 +337,7 @@
     "dayEnd": "15:04",
     "baseInterval": "30",
     "randomScale1": "1",
-    "randomScale2": "17"
+    "randomScale2": "13"
   },
   {
     "userId": "904264",
@@ -347,7 +347,7 @@
     "dayEnd": "4:28",
     "baseInterval": "35",
     "randomScale1": "1",
-    "randomScale2": "17"
+    "randomScale2": "8"
   },
   {
     "userId": "904265",
@@ -357,7 +357,7 @@
     "dayEnd": "4:26",
     "baseInterval": "37",
     "randomScale1": "0",
-    "randomScale2": "16"
+    "randomScale2": "14"
   },
   {
     "userId": "904266",
@@ -367,7 +367,7 @@
     "dayEnd": "21:24",
     "baseInterval": "36",
     "randomScale1": "0",
-    "randomScale2": "16"
+    "randomScale2": "5"
   },
   {
     "userId": "906399",
@@ -377,7 +377,7 @@
     "dayEnd": "20:55",
     "baseInterval": "31",
     "randomScale1": "3",
-    "randomScale2": "18"
+    "randomScale2": "6"
   },
   {
     "userId": "906400",
@@ -387,7 +387,7 @@
     "dayEnd": "21:28",
     "baseInterval": "37",
     "randomScale1": "3",
-    "randomScale2": "21"
+    "randomScale2": "11"
   },
   {
     "userId": "906401",
@@ -397,7 +397,7 @@
     "dayEnd": "23:39",
     "baseInterval": "35",
     "randomScale1": "2",
-    "randomScale2": "8"
+    "randomScale2": "12"
   },
   {
     "userId": "906402",
@@ -407,7 +407,7 @@
     "dayEnd": "22:33",
     "baseInterval": "37",
     "randomScale1": "2",
-    "randomScale2": "13"
+    "randomScale2": "7"
   },
   {
     "userId": "906403",
@@ -417,7 +417,7 @@
     "dayEnd": "6:15",
     "baseInterval": "30",
     "randomScale1": "2",
-    "randomScale2": "17"
+    "randomScale2": "13"
   },
   {
     "userId": "906428",
@@ -427,7 +427,7 @@
     "dayEnd": "7:38",
     "baseInterval": "32",
     "randomScale1": "1",
-    "randomScale2": "15"
+    "randomScale2": "9"
   },
   {
     "userId": "906429",
@@ -437,7 +437,7 @@
     "dayEnd": "21:46",
     "baseInterval": "30",
     "randomScale1": "0",
-    "randomScale2": "13"
+    "randomScale2": "7"
   },
   {
     "userId": "906430",
@@ -447,7 +447,7 @@
     "dayEnd": "23:30",
     "baseInterval": "30",
     "randomScale1": "0",
-    "randomScale2": "17"
+    "randomScale2": "7"
   },
   {
     "userId": "906431",
@@ -457,7 +457,7 @@
     "dayEnd": "22:56",
     "baseInterval": "32",
     "randomScale1": "1",
-    "randomScale2": "14"
+    "randomScale2": "9"
   },
   {
     "userId": "906432",
@@ -467,7 +467,7 @@
     "dayEnd": "23:05",
     "baseInterval": "33",
     "randomScale1": "1",
-    "randomScale2": "20"
+    "randomScale2": "10"
   },
   {
     "userId": "907002",
@@ -477,7 +477,7 @@
     "dayEnd": "22:20",
     "baseInterval": "33",
     "randomScale1": "3",
-    "randomScale2": "19"
+    "randomScale2": "1"
   },
   {
     "userId": "907003",
@@ -487,7 +487,7 @@
     "dayEnd": "20:17",
     "baseInterval": "32",
     "randomScale1": "2",
-    "randomScale2": "14"
+    "randomScale2": "8"
   },
   {
     "userId": "907005",
@@ -497,7 +497,7 @@
     "dayEnd": "22:08",
     "baseInterval": "34",
     "randomScale1": "2",
-    "randomScale2": "18"
+    "randomScale2": "4"
   },
   {
     "userId": "907006",
@@ -507,7 +507,7 @@
     "dayEnd": "23:29",
     "baseInterval": "36",
     "randomScale1": "0",
-    "randomScale2": "14"
+    "randomScale2": "5"
   },
   {
     "userId": "907007",
@@ -517,7 +517,7 @@
     "dayEnd": "13:46",
     "baseInterval": "35",
     "randomScale1": "1",
-    "randomScale2": "7"
+    "randomScale2": "5"
   },
   {
     "userId": "907008",
@@ -527,7 +527,7 @@
     "dayEnd": "20:51",
     "baseInterval": "35",
     "randomScale1": "3",
-    "randomScale2": "8"
+    "randomScale2": "4"
   },
   {
     "userId": "907009",
@@ -537,7 +537,7 @@
     "dayEnd": "14:31",
     "baseInterval": "37",
     "randomScale1": "2",
-    "randomScale2": "18"
+    "randomScale2": "13"
   },
   {
     "userId": "907010",
@@ -547,7 +547,7 @@
     "dayEnd": "13:43",
     "baseInterval": "37",
     "randomScale1": "3",
-    "randomScale2": "12"
+    "randomScale2": "5"
   },
   {
     "userId": "907011",
@@ -557,7 +557,7 @@
     "dayEnd": "15:12",
     "baseInterval": "32",
     "randomScale1": "3",
-    "randomScale2": "22"
+    "randomScale2": "8"
   },
   {
     "userId": "907012",
@@ -567,7 +567,7 @@
     "dayEnd": "23:31",
     "baseInterval": "37",
     "randomScale1": "2",
-    "randomScale2": "20"
+    "randomScale2": "4"
   },
   {
     "userId": "907217",
@@ -577,7 +577,7 @@
     "dayEnd": "5:49",
     "baseInterval": "34",
     "randomScale1": "3",
-    "randomScale2": "8"
+    "randomScale2": "7"
   },
   {
     "userId": "907218",
@@ -587,7 +587,7 @@
     "dayEnd": "23:38",
     "baseInterval": "32",
     "randomScale1": "1",
-    "randomScale2": "13"
+    "randomScale2": "11"
   },
   {
     "userId": "907219",
@@ -597,7 +597,7 @@
     "dayEnd": "7:07",
     "baseInterval": "36",
     "randomScale1": "0",
-    "randomScale2": "18"
+    "randomScale2": "10"
   },
   {
     "userId": "907221",
@@ -607,7 +607,7 @@
     "dayEnd": "23:02",
     "baseInterval": "35",
     "randomScale1": "0",
-    "randomScale2": "13"
+    "randomScale2": "14"
   },
   {
     "userId": "907222",
@@ -617,7 +617,7 @@
     "dayEnd": "23:15",
     "baseInterval": "37",
     "randomScale1": "4",
-    "randomScale2": "13"
+    "randomScale2": "11"
   },
   {
     "userId": "907223",
@@ -627,7 +627,7 @@
     "dayEnd": "23:28",
     "baseInterval": "38",
     "randomScale1": "5",
-    "randomScale2": "13"
+    "randomScale2": "2"
   },
   {
     "userId": "907224",
@@ -637,7 +637,7 @@
     "dayEnd": "22:45",
     "baseInterval": "33",
     "randomScale1": "3",
-    "randomScale2": "10"
+    "randomScale2": "1"
   },
   {
     "userId": "907225",
@@ -657,7 +657,7 @@
     "dayEnd": "22:06",
     "baseInterval": "34",
     "randomScale1": "1",
-    "randomScale2": "7"
+    "randomScale2": "2"
   },
   {
     "userId": "908968",
@@ -667,7 +667,7 @@
     "dayEnd": "5:05",
     "baseInterval": "34",
     "randomScale1": "3",
-    "randomScale2": "19"
+    "randomScale2": "11"
   },
   {
     "userId": "908969",
@@ -677,7 +677,7 @@
     "dayEnd": "20:02",
     "baseInterval": "30",
     "randomScale1": "4",
-    "randomScale2": "21"
+    "randomScale2": "7"
   },
   {
     "userId": "908970",
@@ -687,7 +687,7 @@
     "dayEnd": "22:40",
     "baseInterval": "30",
     "randomScale1": "1",
-    "randomScale2": "14"
+    "randomScale2": "12"
   },
   {
     "userId": "908971",
@@ -697,7 +697,7 @@
     "dayEnd": "21:22",
     "baseInterval": "37",
     "randomScale1": "1",
-    "randomScale2": "16"
+    "randomScale2": "12"
   },
   {
     "userId": "908972",
@@ -707,7 +707,7 @@
     "dayEnd": "22:22",
     "baseInterval": "32",
     "randomScale1": "1",
-    "randomScale2": "8"
+    "randomScale2": "13"
   },
   {
     "userId": "908973",
@@ -717,7 +717,7 @@
     "dayEnd": "12:39",
     "baseInterval": "30",
     "randomScale1": "0",
-    "randomScale2": "11"
+    "randomScale2": "5"
   },
   {
     "userId": "908975",
@@ -727,7 +727,7 @@
     "dayEnd": "22:37",
     "baseInterval": "30",
     "randomScale1": "5",
-    "randomScale2": "12"
+    "randomScale2": "5"
   },
   {
     "userId": "908976",
@@ -737,7 +737,7 @@
     "dayEnd": "13:51",
     "baseInterval": "33",
     "randomScale1": "1",
-    "randomScale2": "14"
+    "randomScale2": "12"
   },
   {
     "userId": "908977",
@@ -747,7 +747,7 @@
     "dayEnd": "22:17",
     "baseInterval": "30",
     "randomScale1": "0",
-    "randomScale2": "17"
+    "randomScale2": "5"
   },
   {
     "userId": "908978",
@@ -757,7 +757,7 @@
     "dayEnd": "19:39",
     "baseInterval": "34",
     "randomScale1": "0",
-    "randomScale2": "9"
+    "randomScale2": "5"
   },
   {
     "userId": "908979",
@@ -767,7 +767,7 @@
     "dayEnd": "22:53",
     "baseInterval": "30",
     "randomScale1": "5",
-    "randomScale2": "18"
+    "randomScale2": "5"
   },
   {
     "userId": "908980",
@@ -777,6 +777,136 @@
     "dayEnd": "7:32",
     "baseInterval": "30",
     "randomScale1": "4",
-    "randomScale2": "18"
+    "randomScale2": "13"
+  },
+  {
+    "userId": "909747",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiTitKa0s3dFdjT1EzY01ZL3U2Q3JUdz09OnhvRWVad3ZwbnI5dzRTZUM4TEk1eGdsK2pxRDBVV2ExczlLSDYrMVlTRDV4YWVZQjB1Wmw1Qm9zWDU0UEhNSUtYV1E0REhmcU9sRTU2NnFMN1Bid0pDbTdaUy9LdFhud1V5YTIxRnVBS0VkNkYzdW5HR3FjUjYzM1NkaytwYmQyd1NzZ0lHK3FkaXRlS1VVQXBxWEhMdkx2K29aYkR1aU1yZ2dad1FVc3hDY0sxVG80T2NqZElrOW9uQ2wrWjhhM0JYczgvZGRFYytIeUsyZFdHcHhFZW9iMlY3Ry83VHVRUXp1VFNBbm5UWE1YbFc4bmVDQmtXTEZDYS9BdmFHdHUiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDQxMTUsImlzcyI6ImVwaWNzLmdnIn0.23DGSdJ-ABljypKDwuc0qS9ksHWnFFtGng2uZtvD9TfO5kQBbHwBYvJDVk_R6TQq",
+    "userNick": "Temp-j4f9",
+    "dayStart": "6:24",
+    "dayEnd": "22:41",
+    "baseInterval": "35",
+    "randomScale1": "0",
+    "randomScale2": "1"
+  },
+  {
+    "userId": "909749",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiU3NHcmw3NWs1d1RrK3YwYk4yNVhpZz09OmZtVTlFUDBxS0cyR3c4NkZPZWdmTEg5OTM3WjZ5VVRDTzFSTC9oM3RBekZuTEY5Y0dIQWs0akNsUTZPUExTTWUzdDdrS3NaSzYxR0tERkJMVEIwT3BTUUtINjVwTUgvNUJzWnpmSEJVYUJ1ZGcySDlZb3FoQnpPZCtkMmdUTFE4ZlFsY1VMZ0o5ZXBYaW8rSHZ6YUtYZWNraU1vcDExK0F0czdUeHEvNUx0WlFOYTB5SUQyakxQMzhYampCL05wYW80M3VwQ0RxYTBiYXVWTVN6MGZEZk1LSzdLY2lodVpUWG55RGVpc2JxL3dWK0QyeDZkR3RWM09hQWJGUGF5bU4iLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDQ0MjYsImlzcyI6ImVwaWNzLmdnIn0.If_hdvMuVAlWXEYLZNzIwfE0aYsIY_8RU_0pqIjDCjAkCmAOkKi1iGRYa94kRuQh",
+    "userNick": "Temp-6d5t",
+    "dayStart": "6:32",
+    "dayEnd": "22:34",
+    "baseInterval": "30",
+    "randomScale1": "3",
+    "randomScale2": "12"
+  },
+  {
+    "userId": "909750",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiUjN2N3RsL2xTVU5Eek02M2M1anIwdz09OllDNTlNY1gvYytIYlFmM2VENUlSODhKaEdVVzMyMmZESCtuSmNQQjA5ci9vNVJBeVU3aWtyOWo2Q1JHUlpXcGZvMXh2VzF2SjkySGhrSFJUYjFVdnRnKzNSYlNSQWoydFlEUUljN3NFdmNGZVVaYnJnWGpndlhNMGJpYTRQZXdOaURNaE90NW5ibFNPWGdaUDBnNks1RUNKaVlOTkFweGM3VzBEeGpkdlRpT1dod0FiRVBNVHhOdzVMQXBtK0ZyWW9IQjUxRlpzT2dvMmFDQWYvOGlkVERWS09DY0hpWlQ3cVBJMjZ1b0xTMS91eFN0SlNHSG1jQWZRRWF1TGlTNEYiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDQ2MzUsImlzcyI6ImVwaWNzLmdnIn0.D2k03oZL7bdMSQRcGQa_DdUxEfI8SirZVsLjyHatzgOfZMPLFM4VJ9Q_LRWrGHmg",
+    "userNick": "Temp-1k7p",
+    "dayStart": "12:21",
+    "dayEnd": "5:15",
+    "baseInterval": "35",
+    "randomScale1": "2",
+    "randomScale2": "10"
+  },
+  {
+    "userId": "909751",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiUy84c0VkUnlua2Vwd1pMVVUzZ1hpUT09OlZ3blp2RWtlZlVManczdWxKcmQvREhST0lMRGFsbUphTkdTOUVpbS9QRTVXR09VRkhKbnNwOTdUaE1aU3A1RzJHTGNzNmFETXMrRDgyUG0vQ0RmT1dyQ0JaaGk4TC9KTEZjUS93VFBIYzlaV1ZqK3g5Y3dKeFRsS0RKOFpiTTduNkI0cW5GbUxGS3ZqUVczV1EyY2ZLQklWclpWc1FnQkltSjlSNU5TZFFMcFh4VTlpb1Z0dnlUVFZ5YWx4OFpFVWxwcmdTZnYrTkJleXRBTkNaUUw3MGNLbGh2MU9NVXhqdzEwSWtLNGNDSElNWVJlYm1HMFpWdmxwQmc2c2tOc3giLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDU0MjEsImlzcyI6ImVwaWNzLmdnIn0.p0U4Ql7gH0IAiMZfJspV_Ebbwdlaq8SfGDUM1hS7exF1a5U0zePQzWu4M3MHTlAK",
+    "userNick": "Temp-o8m2",
+    "dayStart": "13:59",
+    "dayEnd": "6:38",
+    "baseInterval": "36",
+    "randomScale1": "3",
+    "randomScale2": "4"
+  },
+  {
+    "userId": "909754",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiQW9keVRKYXZpWHM0cVZDTTRxMFA5UT09OmUvY01UT2lVMDg1cHVhUU1lcFZJMWpPOHhzNHZFZ2YrdENHM0xNeWszdC9HK1JhM0N6RUpTR3E1WXlLamt0L2xtOXNhVHJwbnhFdEduWlhuWG5xdWxOMU1Gd3J6RUhtcklWZ3YxUjZTWGI4VlBYSTZSeDhJc3hwUFhNdVMrNGdRWDhwcjNVeS9WVXU1UnI4dVlOSncydzh5VEFPSjdac2xQeGxkWVFxYVpOTmd3cThoTElHSkhTb2I3VGg4Q1NycDkwMFEzaE4wMlRPOWE0RjVJY0lHenlwY1hWUVRzUnpJMEp1SkxSMmNvYWpXSHN0UjNuOFdZZGR3UXNlc29kUVkiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDYxMzMsImlzcyI6ImVwaWNzLmdnIn0.GSaN0Pb5_oB54GiaskxMtnIEmQvqXgPVyApD-VbUk-0Q6iCG67QYuNNl3ccrUbx2",
+    "userNick": "Temp-i3v9",
+    "dayStart": "6:17",
+    "dayEnd": "23:02",
+    "baseInterval": "37",
+    "randomScale1": "3",
+    "randomScale2": "6"
+  },
+  {
+    "userId": "909755",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiTzkvZ1A5b0ZieEhQbjVKNG1lR3Rudz09OjVpSnRjY3hpMm93eWdYRFA0ZXVrdUNiMUtGTTVQTDlidWRtMnlsOFNsOEY3TXdmL1E5Y1RQaU03b0hiNzg1b1plaGZybE5yZHh5eFJvWm1CUXJpeGtMempyYkZMUjQ4dUNqMWpnd2p3TldmT2phdXR1RUlqU1d5S2p0eWVCUWJDbitTM21mcDVtalMyVGJvVHJyVko2NXgrdXFBajhaek5jaFdlaTc2dytGMzZiMkZtUzFNckpJUkZtMS9iOUZjek1qc3dSTjBYNktuWTg2dDFBWHN3dFNyOHZnRXM5b2psbWdkdVp2NnhJeXNlR3NzdmJhTHVERFhaM1I4NXR2OVMiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDYyMjcsImlzcyI6ImVwaWNzLmdnIn0.s3p-RS4QawXNH7kWx-X5FprvHVAaO_PRnaBHqRNK2X9SQIKlUpmBbnq-ZQEhMvb2",
+    "userNick": "Temp-t5l4",
+    "dayStart": "5:42",
+    "dayEnd": "21:11",
+    "baseInterval": "32",
+    "randomScale1": "1",
+    "randomScale2": "8"
+  },
+  {
+    "userId": "909757",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiVDQ1OWJhSndXeHAvQzRGakhCYU9idz09OjltTTFhMzl0dmtJeFdUZ3o3eDQ0SGJXNElRUisxWUpEbjZaa2JDSllma0tYOXJqWlpjU1FFOElEbFpEalNZa3k1S2JrQTZqTzdzcnlNSmE2bHB4S3pQVkxJSEFLYi9QN1lEcW5QMGhaUHRVay9vWkxtM0JOWS9JWElxZ2o1VGZvNng0enBEUjNWeVErK202UkpUU1N5MmN1dEVTYjdVNzNOdXo4ZjI4VTlseHFYN1ErbHBMWHdJcm9KYStEdGRzWk1mT0x6ZVMyS2hqSW1CdjNWWjZvMmVUN2tnSHRhQ2FISGJGcnpQTStWZnhOWmdtNWNSNnB5NStJWVEzQWEyWkEiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDcwMjMsImlzcyI6ImVwaWNzLmdnIn0.jybh1hREXzBC2AHs4rknvrfR_W_S9dCmGa4X9r7OLFGKHwoOYJ_zEKOvVpfqeBjx",
+    "userNick": "Temp-0b9c",
+    "dayStart": "7:07",
+    "dayEnd": "22:48",
+    "baseInterval": "36",
+    "randomScale1": "0",
+    "randomScale2": "4"
+  },
+  {
+    "userId": "909758",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoidS9qUEZrZnhtQXdybnBWV08zWFFvdz09OmY4MlRsT2g4Y2FlMjNNU0ZnYU5JTHBoSDJFVDZjQTl5ME5jV09XazVRY2FidlhLM0ZpUG92RVhhZllWNGw2YTVxaE1wSS9Yc0xNZ05UOWFVRllnSVp2NGx0SG5xWEc4ekF2YWFQM255eXZHQUhkWTJ0aEJtV3Uva3NGV0t6dklQWjR3Z1FqMGtTeEJ0dzlxOFVKd09zc0ZCYmRxRWxqSGxZWks3ZG9lUHhZeUxzNE9CdUJ0ZVZZOW5lNUY5cysxaG1iRXBvVS9oWmpnNjJIVkZPZmtwVVpITm55MThnM0ZZRy9SYTV0eHA3UTlibUZVckVZYVJuWkRUdDBvMzF4WVMiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDcyNjQsImlzcyI6ImVwaWNzLmdnIn0.IodQ_h334Ubll_7wdtUmUhUGNOD4yzMrQ7nl_-pb7wMsnUr5IAnvTQh1aK9gIbjW",
+    "userNick": "Temp-4s7r",
+    "dayStart": "14:20",
+    "dayEnd": "7:41",
+    "baseInterval": "36",
+    "randomScale1": "3",
+    "randomScale2": "1"
+  },
+  {
+    "userId": "909760",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiUmxyRStMYWlmMmNlRFBEU2s1SzBPZz09OlJGUFVuN2RXWHlGZE4xM0F2RzJIcmNNSGxEejk3MEE4dDNZQm95Z0lQSjc1dGpFQjlWSnF3U1R1QTdKYitmQ3FrQkVZWlkvZ1F3VEpOdy9oMUovQkJIUHhlR1p4OU9YMkFvQ1lDTnRjanlXUjZxeFJoUkR1V2RNTkQ0RkswbGFlNVBDVEVpRlB0VWNKZlBWc3VNNGRiMTRseWpQbWdHejYwQTVhMm5JMGo4R3BaeHhPR3FST3ZFeGVCbWgyYUplOGtIT0tjTldnZnZYMktNUjhmNERzczhiSUpYWGZHbjBPZFpRb0JONGVEREtxNGlIMmVOTDFuWEZWeWwzU2VtZFoiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDczNjAsImlzcyI6ImVwaWNzLmdnIn0.Abu2wLPJ8ODPpozpFI_Wrf-0XELvKZGsyk6IK62ly_mjlmnPttYd0veskg2f7MR1",
+    "userNick": "Temp-w1yq",
+    "dayStart": "13:46",
+    "dayEnd": "7:07",
+    "baseInterval": "37",
+    "randomScale1": "0",
+    "randomScale2": "3"
+  },
+  {
+    "userId": "909761",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiOWlrc3Y2c2wwMDRSdndqdFJjcEV4UT09Omgza0hYYWQxKzhRcE1FWmd0M0RycWQ1MmYwdEZ2NWFReU91RFlCellPSGd0NkFRdXlPUkN0TUZrRGVFZmlGK2I5UlBiWUpvZDd4a2tEenpqcDBNM0ZJVlA1TExXWDVNYVAraEVKVXFiY1hZaW1Jajg4ZDhucXZUNE1tendmRUREakVBUVpDWEZXcEtTZUFhcmU4VXVvcU8xU1JScmY5Q1FlL1E0eXZEdWF5Qi9kMkRsY3F3aXVUTzZPQkFSUzJHakhJYmNpeXUxV3QvMVhvNWRWM092cWZxTWRZenBYa2ozcmxJRFE1V2R3MkJIUEdlTHdqMWt5cW5kaHNBWGttNTEiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDc0NTAsImlzcyI6ImVwaWNzLmdnIn0.Qf_NyTHreg1bXAB0h-b9LUTM0WireP5HZamT8kgiD99kMbyOOYUJ_ciN7UtvkGjn",
+    "userNick": "Temp-p9h3",
+    "dayStart": "21:32",
+    "dayEnd": "14:21",
+    "baseInterval": "31",
+    "randomScale1": "1",
+    "randomScale2": "8"
+  },
+  {
+    "userId": "909762",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoibmFmUEczY2h1ZXFHVnVtTlF0cnJrZz09OlRIaW5ncm1wMURQbDVxK1pLbThDZWs0clFMbXZGRWdrekt0SEVlMnNidXhoZnRXVFJLQjRadE9QemRXYWE5MS83TDVBblVIMUdwOXpJTXdtdTkzMVR4WjRUa0pjNTlWc1d6RC9GNjlQKzhVbnRUNlpHeGIzU1B6WktPSlVVa1ZVRVpvSFEvQ1FXUWpvM01MdUxyQlQzM0ZsUkZYL2pPTUdLWWxKZWF6YzIwRDdjUmNKc2FvUk1wUHkwVFREVk1LQlUycDg0TVpYU3Q1YXg0TmN3Tlo4UXVWSWhSaTV2bE1VbktDS0ZYNnJYeVloYkVXeTVTRVFLZWhGZ0Zja0ZoSzciLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDc1NTAsImlzcyI6ImVwaWNzLmdnIn0.XKk_fViOFN7pS82ovSJXXZgTyna05Ujj0GW3N0O9vk1YVxZv3dN6H6peQPknk2VN",
+    "userNick": "Temp-v2f6",
+    "dayStart": "21:36",
+    "dayEnd": "14:12",
+    "baseInterval": "34",
+    "randomScale1": "3",
+    "randomScale2": "12"
+  },
+  {
+    "userId": "909763",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiNTU2bmxjbFpUa0QvdXNFM0xTRmZ0Zz09OjMxb0w2R0UyMVUwRkpyK0cxUlFvVVlXRjZpdjhpODMyblphMXRGUkN6clZFaDkxM2x1MkVFY1V3eWRlRzhET2VYWlpXb04veSt1WlZGOUJsdVA4bXB0M1BwZmJMYjlZdUthdHBSZFRkRHNNZXdlQ2Z4emtQMlV4akpHSVNvcHBHR21RVlF3WlJkQ256OEt6NHN5RHF4Njd0QWNyQXdncXgwRDR0TU04QjhOQWI4UldNZlZUS2QrVys0U00rUmlDdExkSmZ6KzA1VFQ2eDN0MS9KZTZWeXdRRUZycWorWmhWWkZ1ejdSVEdtRncrdENxTHRPMWttVm9vYjNtODNSQ2UiLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDc2MjEsImlzcyI6ImVwaWNzLmdnIn0.0iOrsEWpVY9fT8fWQS3ILITib_LVa8xhitJXDIr87stXj-hJuWWr9d_PG8F2Gq8L",
+    "userNick": "Temp-e7k8",
+    "dayStart": "23:07",
+    "dayEnd": "15:48",
+    "baseInterval": "34",
+    "randomScale1": "1",
+    "randomScale2": "14"
+  },
+  {
+    "userId": "909764",
+    "refreshToken": "eyJhbGciOiJIUzM4NCIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoiWTcyU0ZXMGlreFVnWHYzeUloT2x2QT09OmpjUDUvcmtmcHJlYzN1WWcxNzVkYXM2SUw0WW5HWlZzUVllOWcrdW85SmpIalAzUWVFNGNzK3JEQkc2U0dabVI2a29HM0hKSCsxLzNoVEFlTjhveU4xZHd3NUg4NUFNVFZNcEcrMTVGZ1RHb0F1U1lnNUNmbXdxN1d0MFJMb25ZbnVuMUcrcisyR21iTnR3d3FwdEp3dE5RZldZdnFhVGtZS0M1TkErWW0wVE5ROE5LWXVtdEJ3OGlZNnVQNEE0TkwzVmJ1dWpQTllvZ1RUTUlYdTZIYVNmY2lqK0c4TGJJTGdFblhrQ2I5aThSUXNET213UmtVZDdsMjB0SEI5bVciLCJ2ZXJzaW9uIjoxLCJpYXQiOjE3NzE0NDc3NjMsImlzcyI6ImVwaWNzLmdnIn0.FJphwyAOtYA1pD3xxOlheNYWI61c1T181qqdoB5Pcz1AoEkCPURueUQ-PaB8mxzb",
+    "userNick": "Temp-r3n1",
+    "dayStart": "21:53",
+    "dayEnd": "14:22",
+    "baseInterval": "34",
+    "randomScale1": "0",
+    "randomScale2": "10"
   }
 ]

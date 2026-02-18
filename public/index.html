@@ -191,9 +191,9 @@
       const start = new Date(effStartISO);
       const end   = new Date(effEndISO);
 
-      const claim1 = new Date(start.getTime() + 5 * 60 * 1000);
-      const claim2 = new Date(claim1.getTime() + 5 * 60 * 60 * 1000);
-      const claim3 = new Date(end.getTime() - 5 * 60 * 1000);
+      const claim1 = new Date(start.getTime() + 35 * 60 * 1000);
+      const claim2 = new Date(claim1.getTime() + 8 * 60 * 60 * 1000);
+      const claim3 = new Date(end.getTime() - 25 * 60 * 1000);
 
       return {
         claim1ISO: claim1.toISOString(),
@@ -256,19 +256,17 @@
               <div class="muted">Active</div>
               <div>${u.isActive ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>'}</div>
 
-              <div class="muted">Effective Start (UTC / Local)</div>
-              <div><code class="time">${fmtUTC(effStartISO)}</code> / <code class="time">${fmtLocal(effStartISO)}</code> <span class="pill">jitter <b>${jitter}</b></span></div>
+              <div class="muted">Effective Start (UTC)</div>
+              <div><code class="time">${fmtUTC(effStartISO)}</code><span class="pill">jitter <b>${jitter}</b></span></div>
 
-              <div class="muted">Effective End (UTC / Local)</div>
-              <div><code class="time">${fmtUTC(effEndISO)}</code> / <code class="time">${fmtLocal(effEndISO)}</code></div>
+              <div class="muted">Effective End (UTC)</div>
+              <div><code class="time">${fmtUTC(effEndISO)}</code></div>
 
-              <div class="muted">Planned Achievements</div>
+              <div class="muted">Planned A4</div>
               <div>
                 ${ach ? `
                   <div class="grid-2 small">
-                    <div>#1 Start+5m</div><div><code class="time">${fmtUTC(ach.claim1ISO)}</code> · ${minsFromNow(ach.claim1ISO)}</div>
-                    <div>#2 +5h</div><div><code class="time">${fmtUTC(ach.claim2ISO)}</code> · ${minsFromNow(ach.claim2ISO)}</div>
-                    <div>#3 End-5m</div><div><code class="time">${fmtUTC(ach.claim3ISO)}</code> · ${minsFromNow(ach.claim3ISO)}</div>
+                    <div>#1 <code>${minsFromNow(ach.claim1ISO)}</code> · #2 <code>${minsFromNow(ach.claim2ISO)}</code> · #3 <code>${minsFromNow(ach.claim3ISO)}</code></div>
                   </div>` : '<span class="muted">Not scheduled yet (will appear after daily plan initializes)</span>'
                 }
               </div>
@@ -276,11 +274,14 @@
               <div class="muted">Next Spin</div>
               <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> · ${minsFromNow(u.nextSpinTime)}</div>
 
-              <div class="muted">Spins / Achievements Claimed</div>
+              <div class="muted">Sprays / A4 Claimed</div>
               <div>${u.spinCount ?? 0} / ${u.achievementsClaimed ?? 0}</div>
 
-              <div class="muted">Last Funds / Daily Funds Checks</div>
+              <div class="muted">Spraycoin / Total checks</div>
               <div>${(u.lastFunds ?? 0).toLocaleString()} / ${u.dailyFundsChecks ?? 0}</div>
+			  
+			  <div class="muted">Token</div>
+              <div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 0}</pre></div>
             </div>
           </div>
         `);
