@@ -2,382 +2,566 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>MegaTool Dashboard</title>
+  <title>Spin Bot Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
+  <style>
     :root {
-      --bg: #f8fafc;       /* slate-50 */
-      --panel: #ffffff;    /* white */
-      --muted: #64748b;    /* slate-500 */
-      --text: #1e293b;     /* slate-800 */
-      --accent: #0891b2;   /* cyan-600 */
-      --good: #16a34a;     /* green-600 */
-      --warn: #d97706;     /* amber-600 */
-      --bad:  #dc2626;     /* red-600 */
-      --chip: #f1f5f9;     /* slate-100 */
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --muted: #6b7280;
+      --text: #1f2937;
+      --accent: #2563eb;
+      --good: #059669;
+      --warn: #d97706;
+      --bad: #dc2626;
+      --chip: #e5e7eb;
+      --border: #e2e8f0;
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
-      background: radial-gradient(1000px 600px at 100% -10%, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
+      margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: var(--bg);
       color: var(--text);
     }
     header {
-      padding: 20px 16px;
-      border-bottom: 1px solid #e2e8f0;
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(10px);
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
       display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
+    h1 { margin: 0; font-size: 24px; font-weight: 600; }
     .accent { color: var(--accent); }
-    .wrap { padding: 16px; max-width: 1200px; margin: 0 auto; }
-    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 900px) { .grid { grid-template-columns: 2fr 1fr; } }
+    .wrap { padding: 24px; max-width: 1400px; margin: 0 auto; }
     .card { 
-      background: rgba(255, 255, 255, 0.8); 
-      border: 1px solid #e2e8f0; 
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 12px; 
       overflow: hidden; 
+      margin-bottom: 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      backdrop-filter: blur(10px);
     }
     .card h2 { 
       font-size: 16px; 
+      font-weight: 600;
       margin: 0; 
-      padding: 12px 14px; 
-      border-bottom: 1px solid #e2e8f0; 
-      background: rgba(241, 245, 249, 0.7);
+      padding: 16px 20px; 
+      border-bottom: 1px solid var(--border); 
+      background: #f9fafb;
     }
-    .section { padding: 12px 14px; }
-    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    .section { padding: 20px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
     .btn {
-      background: #f1f5f9; 
-      border: 1px solid #cbd5e1; 
+      background: white; 
+      border: 1px solid var(--border); 
       color: var(--text);
-      padding: 8px 12px; 
+      padding: 8px 16px; 
       border-radius: 8px; 
       cursor: pointer; 
       transition: all .15s;
+      font-size: 14px;
+      font-weight: 500;
     }
     .btn:hover { 
       border-color: var(--accent); 
-      color: var(--accent); 
-      background: #f0fdff;
+      color: var(--accent);
+      background: #f8fafc;
     }
-    .btn.small { padding: 6px 10px; font-size: 12px; }
-    .pill {
-      display: inline-flex; 
-      align-items: center; 
-      gap: 6px; 
-      background: var(--chip); 
-      border: 1px solid #cbd5e1;
-      padding: 6px 8px; 
-      border-radius: 999px; 
-      font-size: 12px; 
-      color: var(--muted);
-    }
-    .pill b { color: var(--text); font-weight: 600; }
+    .btn.small { padding: 4px 10px; font-size: 12px; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .btn.primary:hover { background: #1d4ed8; }
+    .btn.success { background: var(--good); border-color: var(--good); color: white; }
+    .btn.warning { background: var(--warn); border-color: var(--warn); color: white; }
+    .btn.danger { background: var(--bad); border-color: var(--bad); color: white; }
+    .btn.info { background: #6b7280; border-color: #6b7280; color: white; }
     .user-card {
-      background: rgba(248, 250, 252, 0.8); 
-      border: 1px solid #e2e8f0; 
+      background: #f9fafb; 
+      border: 1px solid var(--border); 
       border-radius: 10px; 
-      padding: 12px; 
-      margin-bottom: 10px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      padding: 16px; 
+      margin-bottom: 12px;
     }
-    .user-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
-    .user-head h3 { margin: 0; font-size: 15px; }
-    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; margin: 8px 0; font-size: 13px; }
+    .user-head { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
+    .user-head h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--accent); }
+    .user-nick {
+      font-size: 14px;
+      color: var(--muted);
+      margin-left: 4px;
+      font-weight: normal;
+    }
+    .kv { 
+      display: grid; 
+      grid-template-columns: 140px 1fr 140px 1fr; 
+      gap: 12px 16px; 
+      margin: 12px 0; 
+      font-size: 13px; 
+    }
     .muted { color: var(--muted); }
-    code.time { 
-      background: #f1f5f9; 
-      padding: 2px 6px; 
-      border-radius: 6px; 
-      border: 1px solid #cbd5e1; 
+    .ok { color: var(--good); }
+    .bad { color: var(--bad); }
+    .warn { color: var(--warn); }
+    .jwt-token {
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+      font-size: 8px;
+      color: #4b5563;
+      background: #f3f4f6;
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+      width: 100%;
+      overflow-x: auto;
+      white-space: nowrap;
+      margin: 8px 0;
+      user-select: all;
     }
     pre.logs {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
       white-space: pre-wrap; 
-      word-break: break-word; 
-      background: #f1f5f9; 
-      border: 1px solid #cbd5e1;
-      padding: 10px; 
-      border-radius: 10px; 
-      max-height: 520px; 
+      background: #f8fafc; 
+      border: 1px solid var(--border);
+      padding: 16px; 
+      border-radius: 8px; 
+      max-height: 400px; 
       overflow: auto; 
       font-size: 12px;
+      color: #1e293b;
+      line-height: 1.6;
     }
-    .ok { color: var(--good); }
-    .warn { color: var(--warn); }
-    .bad { color: var(--bad); }
-    .grid-2 { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
-    @media (max-width: 680px) { .grid-2 { grid-template-columns: 1fr; } }
-    .sep { height: 1px; background: #e2e8f0; margin: 10px 0; }
-    .small { font-size: 12px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--panel);
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--accent);
+      line-height: 1.2;
+    }
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--chip);
+      border-radius: 2px;
+      margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .settings-panel {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .input-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      min-width: 80px;
+    }
+    .input-group input {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      width: 100px;
+      font-size: 14px;
+    }
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-idle { background: #e5e7eb; color: #374151; }
+    .badge-refreshing { background: #fef3c7; color: #92400e; }
+    .badge-claiming { background: #ede9fe; color: #5b21b6; }
+    .badge-checking { background: #dbeafe; color: #1e40af; }
+    .badge-spinning { background: #cffafe; color: #155e75; }
+    .badge-ready { background: #d1fae5; color: #065f46; }
+    .badge-completed { background: #9ca3af; color: #1f2937; }
+    .badge-error { background: #fee2e2; color: #991b1b; }
+    .funds-diff {
+      font-size: 11px;
+      margin-left: 4px;
+    }
+    .positive { color: var(--good); }
+    .negative { color: var(--bad); }
   </style>
 </head>
 <body>
   <header>
-    <h1>MegaTool <span class="accent">Dashboard</span></h1>
+    <h1>Spin Bot <span class="accent">Dashboard</span></h1>
     <div class="row">
-      <button class="btn small" id="refreshAll">Refresh All Panels</button>
-      <label class="pill"><input type="checkbox" id="autoTick" style="accent-color:#22d3ee" /> Auto-refresh (10s)</label>
+      <button class="btn" id="refreshAll">🔄 Refresh</button>
+      <button class="btn info" id="checkAllFunds">💰 Check All Funds</button>
     </div>
   </header>
 
-  <div class="wrap grid">
-    <div class="card">
-      <h2>Users & Schedules</h2>
-      <div class="section" id="usersPanel">Loading users…</div>
+  <div class="wrap">
+    <!-- System Stats -->
+    <div class="stats-grid" id="systemStats">
+      <div class="stat-card">
+        <div class="stat-value" id="totalUsers">0</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="activeCount">0</div>
+        <div class="stat-label">Active in Pool</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="queueLength">0</div>
+        <div class="stat-label">In Queue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalSpins">0</div>
+        <div class="stat-label">Total Spins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="totalPacks">0</div>
+        <div class="stat-label">Total Packs</div>
+      </div>
     </div>
 
+    <!-- Control Panel -->
     <div class="card">
-      <h2>API Debug Logs</h2>
+      <h2>Control Panel</h2>
       <div class="section">
-        <div class="row" style="margin-bottom:8px;">
-          <button class="btn small" id="refreshLogs">Refresh</button>
-          <span class="muted small">Showing latest <span id="logLimit"></span> entries</span>
+        <div class="settings-panel">
+          <div class="input-group">
+            <label>Max Concurrent:</label>
+            <input type="number" id="maxConcurrent" min="1" max="50" value="5">
+          </div>
+          <div class="input-group">
+            <label>Spin Delay (s):</label>
+            <input type="number" id="spinDelay" min="1" max="30" step="0.1" value="7">
+          </div>
+          <div class="input-group">
+            <label>Min Funds:</label>
+            <input type="number" id="minFunds" min="1000" max="1000000" step="1000" value="10000">
+          </div>
+          <button class="btn success" id="startButton">▶️ Start</button>
+          <button class="btn warning" id="pauseButton">⏸️ Pause</button>
+          <button class="btn danger" id="resetButton">🔄 Reset Stats</button>
         </div>
-        <pre class="logs" id="logsBox">Loading debug logs…</pre>
+        <div class="row" style="margin-top: 16px;">
+          <span class="status-badge" id="systemStatus">System Ready</span>
+          <span class="muted" id="statusDetail"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Panel -->
+    <div class="card">
+      <h2>Users</h2>
+      <div class="section" id="usersPanel">
+        <div class="muted">Loading users...</div>
+      </div>
+    </div>
+
+    <!-- Activity Logs -->
+    <div class="card">
+      <h2>Activity Logs</h2>
+      <div class="section">
+        <div class="row" style="margin-bottom:16px; justify-content:space-between;">
+          <button class="btn small" id="refreshLogs">Refresh Logs</button>
+          <span class="muted">Showing latest events</span>
+        </div>
+        <pre class="logs" id="logsBox">Loading logs...</pre>
       </div>
     </div>
   </div>
 
   <script>
-    // === CONFIG ===
-    const DEBUG_LIMIT = 100;   // how many debug log rows
-    const USER_LOG_LIMIT = 50; // per-user activity (if you want to fetch later)
-    document.getElementById('logLimit').textContent = DEBUG_LIMIT;
+    // State
+    let systemState = {
+      isPaused: false,
+      settings: {
+        maxConcurrent: 5,
+        spinDelay: 7,
+        minFundsThreshold: 10000
+      },
+      activeCount: 0,
+      queueLength: 0,
+      totalUsers: 0
+    };
 
-    // --- Utilities ---
-    const pad2 = n => n.toString().padStart(2, '0');
+    let autoRefresh = true;
+    let lastScrollPosition = 0;
 
-    function fmtUTC(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return '—';
-      return d.toUTCString();
-    }
-    function fmtLocal(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return '—';
-      return d.toLocaleString();
-    }
-    function minsFromNow(iso) {
-      if (!iso) return '';
-      const d = new Date(iso);
-      const diff = Math.round((d - Date.now()) / 60000);
-      if (isNaN(diff)) return '';
-      return diff >= 0 ? `in ${diff}m` : `${diff}m ago`;
-    }
-    function toIso(val) {
-      // val may already be ISO string or a Date serialized by backend
-      if (!val) return null;
-      try {
-        const d = new Date(val);
-        return isNaN(d) ? null : d.toISOString();
-      } catch { return null; }
-    }
-
-    // Compute planned achievements times on the client
-    function computePlannedAchievements(user) {
-      const effStartISO = toIso(user._effectiveStartUTC);
-      const effEndISO   = toIso(user._effectiveEndUTC);
-      if (!effStartISO || !effEndISO) return null;
-
-      const start = new Date(effStartISO);
-      const end   = new Date(effEndISO);
-
-      const claim1 = new Date(start.getTime() + 35 * 60 * 1000);
-      const claim2 = new Date(claim1.getTime() + 8 * 60 * 60 * 1000);
-      const claim3 = new Date(end.getTime() - 25 * 60 * 1000);
-
-      return {
-        claim1ISO: claim1.toISOString(),
-        claim2ISO: claim2.toISOString(),
-        claim3ISO: claim3.toISOString()
-      };
-    }
-
-    // --- API fetchers (backend provides these) ---
+    // API Functions
     async function fetchUsers() {
       const r = await fetch('/api/users');
-      if (!r.ok) throw new Error('Failed to fetch /api/users');
-      return r.json(); // returns userData object keyed by userId
-    }
-
-    async function fetchDebugLogs(limit = DEBUG_LIMIT) {
-      const r = await fetch(`/api/debug-logs?limit=${encodeURIComponent(limit)}`);
-      if (!r.ok) throw new Error('Failed to fetch /api/debug-logs');
+      if (!r.ok) throw new Error('Failed to fetch users');
       return r.json();
     }
 
-    async function action(userId, route) {
-      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/${route}`, { method: 'POST' });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j?.message || `Action ${route} failed`);
-      return j;
+    async function fetchDebugLogs(limit = 100) {
+      const r = await fetch(`/api/debug-logs?limit=${limit}`);
+      if (!r.ok) throw new Error('Failed to fetch logs');
+      return r.json();
     }
 
-    // --- Renderers ---
+    async function fetchSystemState() {
+      const r = await fetch('/api/system-state');
+      if (!r.ok) throw new Error('Failed to fetch system state');
+      return r.json();
+    }
+
+    async function sendCommand(endpoint, body = {}) {
+      const r = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return r.json();
+    }
+
+    // Render Functions
     function renderUsers(users) {
       const panel = document.getElementById('usersPanel');
-      const ids = Object.keys(users);
-      if (!ids.length) {
+      const userIds = Object.keys(users).sort();
+      
+      if (!userIds.length) {
         panel.innerHTML = '<div class="muted">No users loaded.</div>';
         return;
       }
 
+      // Calculate totals
+      const totals = {
+        totalSpins: userIds.reduce((sum, id) => sum + (users[id].totalSpinsRun || 0), 0),
+        totalPacks: userIds.reduce((sum, id) => sum + (users[id].totalPacksOpened || 0), 0)
+      };
+
+      document.getElementById('totalSpins').textContent = totals.totalSpins;
+      document.getElementById('totalPacks').textContent = totals.totalPacks;
+
       const parts = [];
-      ids.forEach((id) => {
-        const u = users[id] || {};
 
-        const effStartISO = toIso(u._effectiveStartUTC);
-        const effEndISO   = toIso(u._effectiveEndUTC);
-        const jitter = (typeof u._startJitterMin === 'number') ? `${u._startJitterMin}m` : '—';
-        const ach = computePlannedAchievements(u);
-
+      userIds.forEach((id) => {
+        const u = users[id];
+        const statusClass = `badge-${u.status || 'idle'}`;
+        const progressPercent = u.spinsRemaining ? ((u.spinsDoneInRound || 0) / ((u.spinsDoneInRound || 0) + u.spinsRemaining) * 100) : 0;
+        
+        // Calculate funds difference
+        const fundsDiff = u.currentFunds - u.initialFunds;
+        const diffClass = fundsDiff > 0 ? 'positive' : (fundsDiff < 0 ? 'negative' : '');
+        const diffSign = fundsDiff > 0 ? '+' : '';
+        
         parts.push(`
-          <div class="user-card" data-user="${id}">
+          <div class="user-card">
             <div class="user-head">
-              <h3>${u.userNick ? `${id} - ${u.userNick}` : id}</h3>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h3>${id} <span class="user-nick">${u.nick || ''}</span></h3>
+                <span class="status-badge ${statusClass}">${u.status || 'idle'}</span>
+              </div>
               <div class="row">
-                <button class="btn small" data-act="refresh" data-id="${id}">Refresh JWT</button>
-                <button class="btn small" data-act="spin" data-id="${id}">Spin</button>
-                <button class="btn small" data-act="claim" data-id="${id}">Claim Ach.</button>
-                <button class="btn small" data-act="funds" data-id="${id}">Check Funds</button>
+                <button class="btn small" data-act="refresh" data-id="${id}">🔄 Refresh Token</button>
+                <button class="btn small" data-act="check-funds" data-id="${id}">💰 Check Funds</button>
               </div>
             </div>
-
+            
+            <!-- Full JWT token for copying -->
+            <div class="jwt-token" title="Select all to copy">
+              ${u.jwtToken || 'No token'}
+            </div>
+            
             <div class="kv">
-              <div class="muted">Active</div>
-              <div>${u.isActive ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>'}</div>
-
-              <div class="muted">Effective Start (UTC)</div>
-              <div><code class="time">${fmtUTC(effStartISO)}</code><span class="pill">jitter <b>${jitter}</b></span></div>
-
-              <div class="muted">Effective End (UTC)</div>
-              <div><code class="time">${fmtUTC(effEndISO)}</code></div>
-
-              <div class="muted">Planned A4</div>
-              <div>
-                ${ach ? `
-                  <div class="grid-2 small">
-                    <div>#1 <code>${minsFromNow(ach.claim1ISO)}</code> · #2 <code>${minsFromNow(ach.claim2ISO)}</code> · #3 <code>${minsFromNow(ach.claim3ISO)}</code></div>
-                  </div>` : '<span class="muted">Not scheduled yet (will appear after daily plan initializes)</span>'
-                }
-              </div>
-
-              <div class="muted">Next Spin</div>
-              <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> · ${minsFromNow(u.nextSpinTime)}</div>
-
-              <div class="muted">Sprays / A4 Claimed</div>
-              <div>${u.spinCount ?? 0} / ${u.achievementsClaimed ?? 0}</div>
-
-              <div class="muted">Spraycoin / Total checks</div>
-              <div>${(u.lastFunds ?? 0).toLocaleString()} / ${u.dailyFundsChecks ?? 0}</div>
-			  
-			  <div class="muted">Token</div>
-              <div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 0}</pre></div>
+              <span class="muted">Status</span>
+              <span>${u.isActive ? '✅ Active' : '❌ Inactive'}</span>
+              <span class="muted">Spins (Total/Round)</span>
+              <span>${u.totalSpinsRun || 0} / ${u.spinsDoneInRound || 0} of ${(u.spinsDoneInRound || 0) + (u.spinsRemaining || 0)}</span>
+              
+              <span class="muted">Initial Funds</span>
+              <span>${(u.initialFunds || 0).toLocaleString()}</span>
+              <span class="muted">Current Funds</span>
+              <span>
+                ${(u.currentFunds || 0).toLocaleString()}
+                <span class="funds-diff ${diffClass}">(${diffSign}${fundsDiff.toLocaleString()})</span>
+              </span>
+              
+              <span class="muted">Packs Opened</span>
+              <span>${u.totalPacksOpened || 0}</span>
+              <span class="muted">Achievements</span>
+              <span>${u.achievementsClaimed || 0}</span>
+              
+              <span class="muted">Last Error</span>
+              <span class="${u.lastError ? 'bad' : 'muted'}">${u.lastError || 'None'}</span>
             </div>
+            
+            ${(u.spinsRemaining || 0) > 0 ? `
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progressPercent}%"></div>
+            </div>
+            ` : ''}
+            
+            ${u.startTime ? `
+            <div style="margin-top:8px; font-size:11px; color:var(--muted);">
+              Started: ${new Date(u.startTime).toLocaleTimeString()}
+              ${u.endTime ? ` · Completed: ${new Date(u.endTime).toLocaleTimeString()}` : ''}
+            </div>
+            ` : ''}
           </div>
         `);
       });
 
       panel.innerHTML = parts.join('\n');
-      panel.querySelectorAll('button[data-act]').forEach(btn => {
+      
+      // Add event listeners
+      panel.querySelectorAll('button[data-act="refresh"]').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const id = e.currentTarget.getAttribute('data-id');
-          const act = e.currentTarget.getAttribute('data-act');
-          e.currentTarget.disabled = true;
           try {
-            if (act === 'refresh') await action(id, 'refresh');
-            if (act === 'spin')    await action(id, 'spin');
-            if (act === 'claim')   await action(id, 'claim-achievements');
-            if (act === 'funds')   await action(id, 'check-funds');
+            await sendCommand(`/api/user/${id}/refresh`);
+            await loadAll();
           } catch (err) {
-            alert(err.message || String(err));
-          } finally {
-            e.currentTarget.disabled = false;
-            // refresh users + logs after an action
-            loadUsers().catch(()=>{});
-            loadLogs().catch(()=>{});
+            alert(err.message);
+          }
+        });
+      });
+      
+      panel.querySelectorAll('button[data-act="check-funds"]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          try {
+            await sendCommand(`/api/user/${id}/check-funds`);
+            await loadAll();
+          } catch (err) {
+            alert(err.message);
           }
         });
       });
     }
 
-    function renderLogs(list) {
+    function renderLogs(logs) {
       const box = document.getElementById('logsBox');
-      if (!Array.isArray(list) || !list.length) {
-        box.textContent = 'No debug logs yet.';
+      if (!logs || !logs.length) {
+        box.textContent = 'No logs yet.';
         return;
       }
-      const lines = list.map((entry) => {
-        // entry fields come from server debugLog() response structure
-        // we keep it simple: timestamp, userId, action, request URL, status / error
-        const ts = entry.timestamp || '';
-        const who = entry.userId || 'system';
-        const action = entry.action || '';
-        const req = entry.request || {};
-        const url = req.url || '';
-        const method = req.method || '';
-        const resp = entry.response;
-        const err  = entry.error;
-
-        if (resp) {
-          return `[${ts}] [${who}] ${action} ${method} ${url} -> ${resp.status}`;
-        } else if (err) {
-          return `[${ts}] [${who}] ${action} ${method} ${url} -> ERROR ${err.status || ''} ${err.message}`;
-        } else {
-          return `[${ts}] [${who}] ${action} ${method} ${url}`;
-        }
+      
+      // Save scroll position
+      lastScrollPosition = box.scrollTop;
+      
+      const lines = logs.map(entry => {
+        const time = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : '';
+        return `[${time}] [${entry.type || 'INFO'}] ${entry.userId}: ${entry.message}`;
       });
+      
       box.textContent = lines.join('\n');
+      
+      // Restore scroll position
+      box.scrollTop = lastScrollPosition;
     }
 
-    // --- Loaders ---
-    async function loadUsers() {
-      try {
-        const data = await fetchUsers();
-        renderUsers(data);
-      } catch (e) {
-        document.getElementById('usersPanel').innerHTML = `<span class="bad">Failed to load users: ${e.message}</span>`;
-      }
+    function updateSystemStats(state) {
+      document.getElementById('totalUsers').textContent = state.totalUsers || 0;
+      document.getElementById('activeCount').textContent = state.activeCount || 0;
+      document.getElementById('queueLength').textContent = state.queueLength || 0;
+      
+      const systemStatus = document.getElementById('systemStatus');
+      systemStatus.textContent = state.isPaused ? '⏸️ PAUSED' : (state.activeCount > 0 ? '▶️ RUNNING' : '⏹️ STOPPED');
+      systemStatus.className = `status-badge ${state.isPaused ? 'badge-warning' : (state.activeCount > 0 ? 'badge-spinning' : 'badge-idle')}`;
+      
+      document.getElementById('statusDetail').textContent = 
+        `Max: ${state.settings.maxConcurrent}, Delay: ${state.settings.spinDelay}s, Min: ${state.settings.minFundsThreshold}`;
     }
 
-    async function loadLogs() {
+    // Load Functions
+    async function loadAll() {
       try {
-        const logs = await fetchDebugLogs(DEBUG_LIMIT);
+        const [users, logs, state] = await Promise.all([
+          fetchUsers(),
+          fetchDebugLogs(100),
+          fetchSystemState()
+        ]);
+        
+        systemState = state;
+        updateSystemStats(state);
+        renderUsers(users);
         renderLogs(logs);
-      } catch (e) {
-        document.getElementById('logsBox').textContent = `Failed to load debug logs: ${e.message}`;
+      } catch (err) {
+        console.error('Failed to load:', err);
       }
     }
 
-    // --- Wire up controls ---
+    // Event Listeners
     document.getElementById('refreshAll').addEventListener('click', () => {
-      loadUsers(); loadLogs();
+      autoRefresh = false;
+      loadAll();
+      setTimeout(() => { autoRefresh = true; }, 1000);
     });
-    document.getElementById('refreshLogs').addEventListener('click', () => loadLogs());
+    
+    document.getElementById('checkAllFunds').addEventListener('click', async () => {
+      await sendCommand('/api/check-all-funds');
+      await loadAll();
+    });
+    
+    document.getElementById('refreshLogs').addEventListener('click', async () => {
+      const logs = await fetchDebugLogs(100);
+      renderLogs(logs);
+    });
 
-    // Auto refresh toggle
-    let tickHandle = null;
-    document.getElementById('autoTick').addEventListener('change', (e) => {
-      if (e.target.checked) {
-        tickHandle = setInterval(() => { loadUsers(); loadLogs(); }, 10_000);
-      } else {
-        if (tickHandle) clearInterval(tickHandle);
-        tickHandle = null;
+    document.getElementById('startButton').addEventListener('click', async () => {
+      const maxConcurrent = document.getElementById('maxConcurrent').value;
+      const spinDelay = document.getElementById('spinDelay').value;
+      const minFundsThreshold = document.getElementById('minFunds').value;
+      
+      await sendCommand('/api/start', { maxConcurrent, spinDelay, minFundsThreshold });
+      await loadAll();
+    });
+
+    document.getElementById('pauseButton').addEventListener('click', async () => {
+      await sendCommand('/api/pause');
+      await loadAll();
+    });
+
+    document.getElementById('resetButton').addEventListener('click', async () => {
+      if (confirm('Reset all statistics? User tokens will be preserved.')) {
+        await sendCommand('/api/reset');
+        await loadAll();
       }
     });
+
+    // Auto-refresh every 3 seconds
+    setInterval(() => {
+      if (autoRefresh) {
+        loadAll();
+      }
+    }, 3000);
 
     // Initial load
-    loadUsers();
-    loadLogs();
+    loadAll();
   </script>
 </body>
 </html>
