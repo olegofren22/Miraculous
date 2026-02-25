@@ -1,23 +1,477 @@
 const express = require('express');
+const cron = require('node-cron');
 const axios = require('axios');
 const fs = require('fs').promises;
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuration
+// 🎯 ENHANCED DEBUGGING - You'll see EVERYTHING in console AND browser!
+const debugLogs = [];
+
+function debugLog(userId, action, url, method, headers = {}, data = null, response = null, error = null) {
+    const debugEntry = {
+        timestamp: new Date().toISOString(),
+        userId,
+        action,
+        request: {
+            url,
+            method,
+            headers: JSON.stringify(headers, null, 2),
+            body: data ? JSON.stringify(data, null, 2) : null
+        },
+        response: response ? {
+            status: response.status,
+            data: JSON.stringify(response.data, null, 2)
+        } : null,
+        error: error ? {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data ? JSON.stringify(error.response.data, null, 2) : null
+        } : null
+    };
+
+    debugLogs.unshift(debugEntry);
+    if (debugLogs.length > 200) debugLogs.pop(); // Keep last 200 debug entries
+
+    console.log('\n' + '='.repeat(80));
+    console.log(`🔍 DEBUG [${debugEntry.timestamp}] - USER: ${userId}`);
+    console.log(`📝 ACTION: ${action}`);
+    console.log(`📡 REQUEST:`);
+    console.log(`   URL: ${url}`);
+    console.log(`   METHOD: ${method}`);
+    console.log(`   HEADERS:`, JSON.stringify(headers, null, 2));
+    if (data) console.log(`   BODY:`, JSON.stringify(data, null, 2));
+    
+    if (response) {
+        console.log(`✅ RESPONSE:`);
+        console.log(`   STATUS: ${response.status}`);
+        console.log(`   DATA:`, JSON.stringify(response.data, null, 2));
+    }
+    
+    if (error) {
+        console.log(`❌ ERROR:`);
+        console.log(`   MESSAGE: ${error.message}`);
+        if (error.response) {
+            console.log(`   STATUS: ${error.response.status}`);
+            console.log(`   RESPONSE DATA:`, JSON.stringify(error.response.data, null, 2));
+        }
+    }
+    console.log('='.repeat(80) + '\n');
+}
+
+// Middleware
+app.use(express.json());
+app.use(express.static('public'));
+
+// 🎯 SIMPLE CONFIGURATION
 const CONFIG = {
+    BASE_URL: process.env.BASE_URL,
     BASE_URL_REF: process.env.BASE_URL_REF,
-    BASE_URL_SPIN: process.env.BASE_URL_SPIN,
-    BASE_URL_BUY_SPIN: process.env.BASE_URL_BUY_SPIN,
-    BASE_URL_OPENPACK: process.env.BASE_URL_OPENPACK,
-    BASE_URL_ACH: process.env.BASE_URL_ACH,
     BASE_URL_MONEY: process.env.BASE_URL_MONEY,
+    BASE_URL_SPRAY: process.env.BASE_URL_SPRAY,
+    BASE_URL_ACH: process.env.BASE_URL_ACH,
+	BASE_URL_OPENPACK: process.env.BASE_URL_OPENPACK,
+
+	//PORT = process.env.PORT || 3000;
     USERS_FILE: 'users.json',
 };
 
-// Prize mapping for console logs only
-const PRIZE_MAP = {
+const BASE_URL = CONFIG.BASE_URL;
+const BASE_URL_REF = CONFIG.BASE_URL_REF;
+const BASE_URL_MONEY = CONFIG.BASE_URL_MONEY;
+const BASE_URL_SPRAY = CONFIG.BASE_URL_SPRAY;
+const BASE_URL_ACH = CONFIG.BASE_URL_ACH;
+const USERS_CONFIG = CONFIG.USERS_FILE;
+const BASE_URL_OPENPACK = CONFIG.BASE_URL_OPENPACK;
+
+// Global storage for user data and logs
+let userData = {};
+let activityLogs = [];
+
+// Initialize the application
+async function initializeApp() {
+    try {
+        console.log('🚀 INITIALIZING APPLICATION...');
+        
+        // Load user configuration
+        await loadUserConfig();
+        
+        // Refresh tokens for ALL users at startup
+        console.log('🔄 REFRESHING TOKENS FOR ALL USERS AT STARTUP...');
+        for (const userId of Object.keys(userData)) {
+            await refreshToken(userId);
+        }
+        
+        console.log('✅ Application initialized successfully');
+        
+        // Start operations immediately after token refresh
+        startImmediateOperations();
+        
+        // Start scheduled tasks
+        startScheduledTasks();
+        
+        // Start continuous operations
+        startContinuousOperations();
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize application:', error);
+    }
+}
+
+// Start immediate operations after token refresh
+function startImmediateOperations() {
+    console.log('🎯 STARTING IMMEDIATE OPERATIONS...');
+    
+    // Give it 1 minute for JWT to be fully ready, then start achievements and funds
+    setTimeout(() => {
+        Object.keys(userData).forEach((userId) => {
+            const user = userData[userId];
+            if (user.isActive && isWithinActiveWindow(userId)) {
+                logActivity(userId, '🚀 Starting immediate operations after startup');
+                
+                // First achievements claim (immediately after startup)
+                new Promise((resolve) => setTimeout(resolve, 10000));
+				claimAchievements(userId);
+                
+                // First funds check
+                checkFunds(userId);
+                
+                // Schedule first spin if within active window
+                if (!user.nextSpinTime) {
+                    calculateNextSpinTime(userId);
+                }
+            }
+        });
+    }, 120000); // 1 minute delay
+}
+
+// Load user configuration from file
+async function loadUserConfig() {
+    try {
+        const configData = await fs.readFile(USERS_CONFIG, 'utf8');
+        const users = JSON.parse(configData);
+        
+        for (const user of users) {
+            userData[user.userId] = {
+                ...user,
+                jwtToken: null,
+                lastRefresh: null,
+                nextSpinTime: null,
+                spinCount: 0,
+                achievementsClaimed: 0,
+                lastFunds: 0,
+                logs: [],
+                isActive: false,
+                dailyAchievementsDone: false,
+                dailyFundsChecks: 0
+            };
+        }
+        console.log(`✅ Loaded configuration for ${users.length} users`);
+    } catch (error) {
+        console.error('❌ Error loading user config:', error);
+        userData = {};
+    }
+}
+
+// API request function with error handling
+async function makeAPIRequest(url, method = 'GET', headers = {}, data = null, userId = 'system') {
+    try {
+        debugLog(userId, 'SENDING_REQUEST', url, method, headers, data);
+        
+        const response = await axios({
+            method: method.toLowerCase(),
+            url: url,
+            headers: {
+                'Content-Type': 'application/json',
+                ...headers
+            },
+            data: data,
+            timeout: 10000
+        });
+
+        debugLog(userId, 'REQUEST_SUCCESS', url, method, headers, data, response);
+        return { success: true, data: response.data, status: response.status };
+        
+    } catch (error) {
+        debugLog(userId, 'REQUEST_ERROR', url, method, headers, data, null, error);
+        return {
+            success: false,
+            error: error.message,
+            status: error.response?.status,
+            responseData: error.response?.data
+        };
+    }
+}
+
+// BLOCK 1: Token Refresher
+async function refreshToken(userId) {
+    const user = userData[userId];
+    if (!user) {
+        logActivity(userId, 'ERROR: User not found in configuration');
+        return false;
+    }
+
+    const refreshEndpoint = `${BASE_URL_REF}`;
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+    const requestData = {
+        refreshToken: user.refreshToken,
+    };
+
+    logActivity(userId, 'Starting token refresh...');
+    const result = await makeAPIRequest(refreshEndpoint, 'POST', headers, requestData, userId);
+
+    if (result.success && result.data.data?.jwt) {
+        const newJWT = result.data.data.jwt;
+        const newRefreshToken = result.data.data?.refreshToken;
+
+        user.jwtToken = newJWT;
+        user.lastRefresh = new Date().toISOString();
+        user.isActive = true;
+
+        // Update refresh token if provided
+        if (newRefreshToken && newRefreshToken !== 'Not provided') {
+            user.refreshToken = newRefreshToken;
+            await updateUserConfig(userId, 'refreshToken', newRefreshToken);
+        }
+
+        logActivity(userId, '✅ Token refresh successful. New JWT stored.');
+        
+        // Schedule next token refresh at user's dayStart time
+        scheduleNextTokenRefresh(userId);
+        
+        return true;
+    } else {
+        logActivity(userId, `❌ Token refresh failed: ${result.error}`);
+        user.isActive = false;
+        return false;
+    }
+}
+
+// Schedule next token refresh at user's dayStart time
+function scheduleNextTokenRefresh(userId) {
+  const user = userData[userId];
+  if (!user) return;
+
+  // Compute tomorrow's randomized StartDay in UTC
+  const { h: startH, m: startM } = parseHHMM(user.dayStart);
+  let base = utcTodayAt(startH, startM, 0, 0);
+  base = addMs(base, 24 * 60 * 60 * 1000); // tomorrow
+
+  const jitterRangeMs = minutesToMs(20);
+  const randMs = Math.floor(Math.random() * (2 * jitterRangeMs + 1)) - jitterRangeMs;
+  const nextRefresh = addMs(base, randMs);
+
+  const delay = Math.max(nextRefresh.getTime() - Date.now(), 1000);
+
+  setTimeout(async () => {
+    logActivity(
+      userId,
+      `🔄 Daily token refresh firing at randomized StartDay (${Math.round(randMs / 60000)}m jitter)`
+    );
+    await refreshToken(userId);
+    // NOTE: refreshToken() will call scheduleNextTokenRefresh() again,
+    // which will compute a NEW randomized time for the following day.
+  }, delay);
+
+  logActivity(userId, `⏰ Next token refresh scheduled for: ${nextRefresh.toUTCString()} (jitter ${Math.round(randMs/60000)}m)`);
+}
+
+// BLOCK 2: Check Funds and Claim Achievements
+async function checkFunds(userId) {
+    const user = userData[userId];
+    if (!user || !user.jwtToken) {
+        logActivity(userId, 'ERROR: No JWT token available for funds check');
+        return null;
+    }
+
+    const fundsUrl = `${BASE_URL_MONEY}`;
+    const headers = {
+        'x-user-jwt': user.jwtToken,
+    };
+
+    const result = await makeAPIRequest(fundsUrl, 'GET', headers, null, userId);
+    
+    if (result.success && result.data.data) {
+        const silvercoins = result.data.data.silvercoins || 0;
+        user.lastFunds = silvercoins;
+        user.dailyFundsChecks = (user.dailyFundsChecks || 0) + 1;
+        logActivity(userId, `💰 Funds: ${silvercoins.toLocaleString()} silvercoins`);
+        return silvercoins;
+    } else {
+        if (result.status === 401) {
+            logActivity(userId, 'JWT expired during funds check, attempting refresh...');
+            const refreshSuccess = await refreshToken(userId);
+            if (refreshSuccess) {
+                return await checkFunds(userId);
+            }
+        }
+        logActivity(userId, `❌ Funds check failed: ${result.error}`);
+        return null;
+    }
+}
+
+async function claimAchievements(userId) {
+    const user = userData[userId];
+    if (!user || !user.jwtToken) {
+        logActivity(userId, 'ERROR: No JWT token available for achievements');
+        return 0;
+    }
+
+    let totalClaimed = 0;
+    const userAchievementsUrl = `${BASE_URL_ACH}/${user.userId}/user`;
+    const headers = {
+        'x-user-jwt': user.jwtToken,
+    };
+
+    logActivity(userId, '🎯 Starting achievements claim process...');
+
+    try {
+        // Get available achievements
+        const achievementsResult = await makeAPIRequest(userAchievementsUrl, 'GET', headers, null, userId);
+        
+        if (!achievementsResult.success) {
+            if (achievementsResult.status === 401) {
+                logActivity(userId, 'JWT expired during achievements check, attempting refresh...');
+                const refreshSuccess = await refreshToken(userId);
+                if (refreshSuccess) {
+                    return await claimAchievements(userId);
+                }
+            }
+            logActivity(userId, `❌ Achievements check failed: ${achievementsResult.error}`);
+            return 0;
+        }
+
+        const validIDs = [];
+        const categories = ['achievements', 'daily', 'weekly', 'monthly'];
+
+        // Collect claimable achievement IDs
+        categories.forEach((category) => {
+            if (achievementsResult.data.data[category]) {
+                achievementsResult.data.data[category].forEach((item) => {
+                    if (item.progress?.claimAvailable) {
+                        validIDs.push(item.id);
+                    }
+                });
+            }
+        });
+
+        if (validIDs.length === 0) {
+            logActivity(userId, 'ℹ️ No achievements available to claim');
+            return 0;
+        }
+
+        //logActivity(userId, `🎯 Found ${validIDs.length} achievements to claim`);
+
+        // Claim achievements in batches
+        const batchSize = 3;
+        for (let i = 0; i < validIDs.length; i += batchSize) {
+            const batch = validIDs.slice(i, i + batchSize);
+            
+            for (const achievementId of batch) {
+                const claimUrl = `${BASE_URL_ACH}/${achievementId}/claim/`;
+                const claimResult = await makeAPIRequest(claimUrl, 'POST', headers, null, userId);
+                
+                if (claimResult.success) {
+                    totalClaimed++;
+                    //logActivity(userId, `✅ Claimed achievement ID: ${achievementId}`);
+                } else {
+                    logActivity(userId, `❌ Failed to claim achievement ${achievementId}: ${claimResult.error}`);
+                }
+                
+                // Small delay between claims
+                await new Promise((resolve) => setTimeout(resolve, 800));
+            }
+            
+            // Delay between batches
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+
+        user.achievementsClaimed += totalClaimed;
+        logActivity(userId, `🎉 Successfully claimed ${totalClaimed} achievements`);
+        return totalClaimed;
+
+    } catch (error) {
+        logActivity(userId, `❌ Error in achievements process: ${error.message}`);
+        return 0;
+    }
+}
+
+// Open pack
+async function openPack(userId, packId) {
+    const user = userData[userId];
+    if (!user?.jwtToken) return false;
+
+    const result = await makeAPIRequest(
+        CONFIG.BASE_URL_OPENPACK,
+        'POST',
+        { 'x-user-jwt': user.jwtToken },
+        { packId },
+        userId
+    );
+
+    if (result.success) {
+        user.packsOpened++;
+        logActivity(userId, `✅ Pack opened: ${packId}`);
+        return true;
+    } else if (result.status === 401) {
+        const refreshSuccess = await refreshToken(userId);
+        if (refreshSuccess) return await openPack(userId, packId);
+    }
+    
+    logActivity(userId, `❌ Pack open failed: ${result.error}`);
+    return false;
+}
+
+// BLOCK 3: Spinner Functionality - FIXED: Always schedule next spin even on error
+async function executeSpin(userId) {
+    const user = userData[userId];
+    if (!user || !user.jwtToken) {
+        logActivity(userId, 'ERROR: No JWT token available for spin');
+        // Still schedule next spin even if no JWT
+        calculateNextSpinTime(userId);
+        return null;
+    }
+
+    if (!isWithinActiveWindow(userId)) {
+        logActivity(userId, '⏰ Outside active window, skipping spin');
+        return null;
+    }
+
+    logActivity(userId, '🎰 Executing free spin...');
+
+    let spinSuccess = false;
+    let prizeName = 'Unknown';
+
+    try {
+        const spinUrl = `${BASE_URL_SPRAY}`;
+        const headers = {
+            'x-user-jwt': user.jwtToken,
+            'Content-Type': 'application/json',
+        };
+
+        const spinResult = await makeAPIRequest(spinUrl, 'POST', headers, { spinnerId: 6832 }, userId);
+
+        if (!spinResult.success) {
+            if (spinResult.status === 401) {
+                logActivity(userId, 'JWT expired during spin, attempting refresh...');
+                const refreshSuccess = await refreshToken(userId);
+                if (refreshSuccess) {
+                    // Don't retry the spin, just continue with scheduling
+                    logActivity(userId, '🔄 JWT refreshed, but not retrying spin. Scheduling next spin.');
+                }
+            }
+            // Log the error but don't throw - we'll continue with scheduling
+            logActivity(userId, `⚠️ Spin failed: ${spinResult.error} - Continuing with schedule`);
+        } else {
+            const spinData = spinResult.data.data;
+            const resultId = spinData.id;
+
+            // Prize mapping
+            const prizeMap = {
     11948: '5,000 Spraycoins',
     11953: 'Standard Box 2026',
     11947: '500 Spraycoins',
@@ -25,757 +479,437 @@ const PRIZE_MAP = {
     11950: '100,000 Spraycoins',
     11951: '2,500 Spraycoins',
     11952: '1,000 Spraycoins'
-};
-
-// Pack IDs that need opening
-const PACK_IDS = [11953];
-
-// Retry configuration
-const RETRY_CONFIG = {
-    MAX_RETRIES: 3,
-    INITIAL_DELAY: 5000,      // 5 seconds
-    BACKOFF_MULTIPLIER: 3,    // 5, 15, 45 seconds
-    RATE_LIMIT_DELAY: 45000,   // 45 seconds for 429 errors
-    MAX_RETRY_DELAY: 60000     // Max 60 seconds
-};
-
-// Global state
-let userData = {};
-let userQueue = [];
-let activeUserIds = [];
-let processingTimeout = null;
-let isPaused = false;
-
-// Settings (will be set via dashboard)
-let settings = {
-    maxConcurrent: 5,
-    spinDelay: 7,
-    minFundsThreshold: 10000
-};
-
-// Debug logs (only important events for dashboard)
-const debugLogs = [];
-
-// Log function - important events only for dashboard
-function log(userId, message, type = 'INFO') {
-    const timestamp = new Date().toISOString();
-    const logEntry = { timestamp, userId, message, type };
-    
-    // Always show in console with type
-    console.log(`[${timestamp}] [${type}] ${userId}: ${message}`);
-    
-    // Store for dashboard (limited to 200)
-    debugLogs.unshift(logEntry);
-    if (debugLogs.length > 200) debugLogs.pop();
-}
-
-// API request function with detailed console logging and error handling
-async function makeAPIRequest(url, method = 'GET', headers = {}, data = null, userId = 'system') {
-    const methodUpper = method.toUpperCase();
-    console.log(`[${new Date().toISOString()}] [API] ${userId}: 🌐 ${methodUpper} ${url.split('?')[0]}`);
-    
-    try {
-        const response = await axios({
-            method: methodUpper,
-            url,
-            headers: { 'Content-Type': 'application/json', ...headers },
-            data,
-            timeout: 15000
-        });
-        console.log(`[${new Date().toISOString()}] [API] ${userId}: ✅ ${methodUpper} ${url.split('?')[0]} (${response.status})`);
-        return { success: true, data: response.data, status: response.status };
-    } catch (error) {
-        const status = error.response?.status;
-        const errorMsg = error.message;
-        
-        console.log(`[${new Date().toISOString()}] [API] ${userId}: ❌ ${methodUpper} ${url.split('?')[0]} - ${errorMsg} (${status || 'unknown'})`);
-        
-        // Handle specific error codes
-        if (status === 401) {
-            return {
-                success: false,
-                error: 'unauthorized',
-                status: 401,
-                retryable: true,
-                needsRefresh: true
             };
-        }
-        
-        if (status === 429) {
-            return {
-                success: false,
-                error: 'rate_limit',
-                status: 429,
-                retryable: true,
-                rateLimit: true
-            };
-        }
-        
-        // All other errors (including 403) are retryable if they're server errors or network issues
-        const isRetryable = !status || status >= 400 || status === 408 || error.code === 'ECONNABORTED';
-        
-        return {
-            success: false,
-            error: errorMsg,
-            status,
-            retryable: isRetryable
-        };
-    }
-}
 
-// Retry wrapper with exponential backoff for atomic operations
-async function retryAtomicOperation(operation, userId, context = 'operation', retryCount = 0) {
-    try {
-        // Attempt the operation
-        const result = await operation();
-        
-        // Check if we need special handling
-        if (!result.success) {
-            // Handle rate limiting
-            if (result.rateLimit) {
-                if (retryCount < RETRY_CONFIG.MAX_RETRIES) {
-                    const waitTime = RETRY_CONFIG.RATE_LIMIT_DELAY;
-                    log(userId, `Rate limited, waiting ${waitTime/1000}s before retry ${retryCount + 1}/${RETRY_CONFIG.MAX_RETRIES}`, 'RETRY');
-                    await new Promise(resolve => setTimeout(resolve, waitTime));
-                    return retryAtomicOperation(operation, userId, context, retryCount + 1);
-                }
-            }
+            prizeName = prizeMap[resultId] || `ID = ${resultId}`;
+            user.spinCount++;
+            spinSuccess = true;
             
-            // Handle token expiration
-            if (result.needsRefresh) {
-                log(userId, `Token expired, refreshing...`, 'RETRY');
-                const refreshSuccess = await refreshToken(userId);
-                if (refreshSuccess) {
-                    // Retry immediately with new token (don't count as retry)
-                    return retryAtomicOperation(operation, userId, context, retryCount);
-                }
-            }
-            
-            // Handle other retryable errors with exponential backoff
-            if (result.retryable && retryCount < RETRY_CONFIG.MAX_RETRIES) {
-                const delay = Math.min(
-                    RETRY_CONFIG.INITIAL_DELAY * Math.pow(RETRY_CONFIG.BACKOFF_MULTIPLIER, retryCount),
-                    RETRY_CONFIG.MAX_RETRY_DELAY
-                );
-                log(userId, `${context} failed, waiting ${delay/1000}s before retry ${retryCount + 1}/${RETRY_CONFIG.MAX_RETRIES}`, 'RETRY');
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return retryAtomicOperation(operation, userId, context, retryCount + 1);
-            }
-            
-            // Max retries exceeded
-            log(userId, `${context} failed permanently after ${retryCount} retries`, 'ERROR');
-            return result;
-        }
-        
-        // Success! Reset any retry tracking
-        if (userData[userId]) {
-            userData[userId].retryCount = 0;
-        }
-        return result;
-        
-    } catch (error) {
-        // Unexpected error in the retry logic itself
-        log(userId, `Unexpected error in retry logic: ${error.message}`, 'ERROR');
-        return { success: false, error: error.message, permanent: true };
-    }
-}
-
-// Load user configuration
-async function loadUserConfig() {
-    try {
-        const configData = await fs.readFile(CONFIG.USERS_FILE, 'utf8');
-        const users = JSON.parse(configData);
-        
-        for (const user of users) {
-            userData[user.userId] = {
-                userId: user.userId,
-                nick: user.userNick || user.nick || user.name || user.userId,
-                refreshToken: user.refreshToken,
-                jwtToken: null,
-                isActive: false,
-                status: 'idle',
-                initialFunds: 0,
-                currentFunds: 0,
-                totalSpinsRun: 0,
-                totalPacksOpened: 0,
-                achievementsClaimed: 0,
-                spinsRemaining: 0,
-                spinsDoneInRound: 0,
-                lastError: null,
-                startTime: null,
-                endTime: null,
-                retryCount: 0
-            };
-        }
-        
-        log('system', `Loaded ${users.length} users from config`, 'INIT');
-        return true;
-    } catch (error) {
-        console.error('Error loading user config:', error);
-        return false;
-    }
-}
-
-// Refresh token for a user
-async function refreshToken(userId) {
-    const user = userData[userId];
-    if (!user) return false;
-    
-    const result = await makeAPIRequest(
-        CONFIG.BASE_URL_REF, 
-        'POST', 
-        { 'Content-Type': 'application/json' },
-        { refreshToken: user.refreshToken },
-        userId
-    );
-
-    if (result.success && result.data.data?.jwt) {
-        user.jwtToken = result.data.data.jwt;
-        user.isActive = true;
-        log(userId, 'Token refreshed', 'TOKEN');
-        return true;
-    } else {
-        user.isActive = false;
-        user.status = 'error';
-        user.lastError = 'Token refresh failed';
-        log(userId, 'Token refresh failed', 'ERROR');
-        return false;
-    }
-}
-
-// Check user funds (updates currentFunds)
-async function checkFunds(userId, isInitial = false) {
-    const user = userData[userId];
-    if (!user || !user.jwtToken) return null;
-
-    const result = await retryAtomicOperation(
-        async () => await makeAPIRequest(
-            CONFIG.BASE_URL_MONEY, 
-            'GET', 
-            { 'x-user-jwt': user.jwtToken }, 
-            null, 
-            userId
-        ),
-        userId,
-        'check funds'
-    );
-    
-    if (result.success && result.data.data) {
-        const silvercoins = result.data.data.silvercoins || 0;
-        user.currentFunds = silvercoins;
-        
-        // Only set initial funds if this is the first check
-        if (isInitial && user.initialFunds === 0) {
-            user.initialFunds = silvercoins;
-            log(userId, `Initial funds: ${silvercoins.toLocaleString()}`, 'FUNDS');
-        } else if (!isInitial) {
-            console.log(`[${new Date().toISOString()}] [FUNDS] ${userId}: Current funds: ${silvercoins.toLocaleString()}`);
-        }
-        
-        return silvercoins;
-    }
-    return null;
-}
-
-// Claim achievements for a user
-async function claimAchievements(userId) {
-    const user = userData[userId];
-    if (!user || !user.jwtToken) return 0;
-
-    let totalClaimed = 0;
-    const userAchievementsUrl = `${CONFIG.BASE_URL_ACH}/${user.userId}/user`;
-    const headers = { 'x-user-jwt': user.jwtToken };
-
-    const achievementsResult = await retryAtomicOperation(
-        async () => await makeAPIRequest(userAchievementsUrl, 'GET', headers, null, userId),
-        userId,
-        'fetch achievements'
-    );
-    
-    if (!achievementsResult.success) {
-        return 0;
-    }
-
-    const validIDs = [];
-    const categories = ['achievements', 'daily', 'weekly', 'monthly'];
-
-    categories.forEach((category) => {
-        if (achievementsResult.data.data[category]) {
-            achievementsResult.data.data[category].forEach((item) => {
-                if (item.progress?.claimAvailable) {
-                    validIDs.push(item.id);
-                }
-            });
-        }
-    });
-
-    if (validIDs.length === 0) return 0;
-
-    log(userId, `Found ${validIDs.length} achievements to claim`, 'ACH');
-
-    for (const achievementId of validIDs) {
-        const claimUrl = `${CONFIG.BASE_URL_ACH}/${achievementId}/claim/`;
-        const claimResult = await retryAtomicOperation(
-            async () => await makeAPIRequest(claimUrl, 'POST', headers, null, userId),
-            userId,
-            'claim achievement'
-        );
-        
-        if (claimResult.success) {
-            totalClaimed++;
-        }
-        
-        // Small delay between claims
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    if (totalClaimed > 0) {
-        user.achievementsClaimed += totalClaimed;
-        log(userId, `Claimed ${totalClaimed} achievements`, 'ACH');
-    }
-    
-    return totalClaimed;
-}
-
-// Buy and execute spin as ONE ATOMIC OPERATION
-async function buyAndSpinAtomic(userId) {
-    const user = userData[userId];
-    if (!user?.jwtToken) return { success: false };
-
-    // Buy spin
-    const buyResult = await makeAPIRequest(
-        CONFIG.BASE_URL_BUY_SPIN,
-        'POST',
-        { 'x-user-jwt': user.jwtToken },
-        { categoryId: 1, amount: 1 },
-        userId
-    );
-
-    if (!buyResult.success) {
-        // Pass through error types
-        return {
-            success: false,
-            needsRefresh: buyResult.needsRefresh,
-            rateLimit: buyResult.rateLimit,
-            retryable: buyResult.retryable,
-            error: buyResult.error,
-            stage: 'buy'
-        };
-    }
-
-    // Execute spin (only if buy succeeded)
-    const spinResult = await makeAPIRequest(
-        CONFIG.BASE_URL_SPIN,
-        'POST',
-        { 'x-user-jwt': user.jwtToken },
-        { spinnerId: 6832 },
-        userId
-    );
-
-    if (!spinResult.success) {
-        // Spin failed but buy succeeded - log it
-        log(userId, 'CRITICAL: Spin purchased but execution failed', 'ERROR');
-        return {
-            success: false,
-            needsRefresh: spinResult.needsRefresh,
-            rateLimit: spinResult.rateLimit,
-            retryable: spinResult.retryable,
-            error: spinResult.error,
-            stage: 'spin',
-            boughtButFailed: true
-        };
-    }
-
-    // Both operations succeeded
-    const spinData = spinResult.data.data;
-    const resultId = spinData.id;
-    
-    // Log spin result to console only
-    const prizeName = PRIZE_MAP[resultId] || `Prize ID ${resultId}`;
-    console.log(`[${new Date().toISOString()}] [SPIN] ${userId}: 🎰 Result: ${prizeName}`);
-
-    // Check for pack
-    let packOpened = false;
-    if (PACK_IDS.includes(resultId) && spinData.packs?.length > 0) {
+			    // Check if we got a pack (IDs: 11953)
+    if ([11953].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
         const packId = spinData.packs[0].id;
-        log(userId, `Got pack from spin!`, 'PACK');
-        
-        const packResult = await makeAPIRequest(
-            CONFIG.BASE_URL_OPENPACK,
-            'POST',
-            { 'x-user-jwt': user.jwtToken },
-            { packId },
-            userId
-        );
-
-        if (packResult.success) {
-            packOpened = true;
-            log(userId, `Pack opened successfully`, 'PACK');
-        }
+        logActivity(userId, `🎁 Got pack from spin: ${packId}`);
+        await openPack(userId, packId);
+    } else {
+        logActivity(userId, `🎰 Spin result: ${prizeName}`);
     }
 
-    return {
-        success: true,
-        spinData,
-        packOpened,
-        resultId,
-        prizeName
-    };
+			
+            //logActivity(userId, `🎉 Spin successful! Received: ${prizeName}`);
+        }
+
+    } catch (error) {
+        logActivity(userId, `❌ Spin error: ${error.message} - Continuing with schedule`);
+    } finally {
+        // ALWAYS schedule next spin regardless of success/failure
+        calculateNextSpinTime(userId);
+    }
+
+    return spinSuccess ? prizeName : null;
 }
 
-// Process a single spin for a user (with full atomic retry)
-async function processUserSpin(userId) {
+// Calculate next spin time with randomization - FIXED VERSION
+function calculateNextSpinTime(userId) {
     const user = userData[userId];
-    if (!user) return { success: false };
+    if (!user) return null;
 
-    // Use the atomic retry wrapper around the entire buy+spin operation
-    const result = await retryAtomicOperation(
-        async () => await buyAndSpinAtomic(userId),
-        userId,
-        'buy+spin'
+    // Convert base interval from minutes to milliseconds
+    const baseIntervalMs = user.baseInterval * 60 * 1000;
+    
+    // Convert random scale from minutes to milliseconds and randomize within that range
+    const randomScale1Ms = user.randomScale1 * 60 * 1000;
+    const randomScale2Ms = user.randomScale2 * 60 * 1000;
+    
+    const randomAddMs = Math.floor(
+        Math.random() * (randomScale2Ms - randomScale1Ms) + randomScale1Ms
     );
 
-    if (result.success) {
-        // Update user stats
-        user.totalSpinsRun++;
-        user.spinsDoneInRound++;
-        user.spinsRemaining--;
-        user.retryCount = 0;
+    const totalDelayMs = baseIntervalMs + randomAddMs;
+    const nextSpinTime = new Date(Date.now() + totalDelayMs);
+    user.nextSpinTime = nextSpinTime.toISOString();
+
+    logActivity(
+        userId,
+        `⏰ Next spin in ${Math.round(totalDelayMs / 1000 / 60)} minutes (at ${nextSpinTime.toUTCString()})`
+    );
+
+    return nextSpinTime;
+}
+
+// Check if current time is within user's active window
+function isWithinActiveWindow(userId) {
+  const user = userData[userId];
+  if (!user) return false;
+
+  const now = new Date();
+
+  // If we haven't computed today's effective window yet, compute and store it
+  if (!user._effectiveStartUTC || !user._effectiveEndUTC) {
+    const { effectiveStart, effectiveEnd, randMs } = computeEffectiveWindow(user, now);
+    user._effectiveStartUTC = effectiveStart;
+    user._effectiveEndUTC   = effectiveEnd;
+    user._startJitterMin    = Math.round(randMs / 60000);
+    logActivity(
+      userId,
+      `ℹ️ Effective window initialized in isWithinActiveWindow: ` +
+      `start=${effectiveStart.toUTCString()}, end=${effectiveEnd.toUTCString()}`
+    );
+  }
+
+  // Between start and end? (These are absolute Date ranges; handles midnight correctly)
+  return now >= user._effectiveStartUTC && now <= user._effectiveEndUTC;
+}
+
+function timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+// Update user configuration file
+async function updateUserConfig(userId, field, value) {
+    try {
+        const configData = await fs.readFile(USERS_CONFIG, 'utf8');
+        const users = JSON.parse(configData);
+        const userIndex = users.findIndex((u) => u.userId === userId);
         
-        // Handle pack opening delay if needed
-        if (result.packOpened) {
-            user.totalPacksOpened++;
-            await new Promise(resolve => setTimeout(resolve, 3000));
+        if (userIndex !== -1) {
+            users[userIndex][field] = value;
+            await fs.writeFile(USERS_CONFIG, JSON.stringify(users, null, 2));
         }
-        
-        return { success: true };
-        
-    } else {
-        // Mark as error
-        user.status = 'error';
-        user.lastError = result.error || 'Spin failed';
-        
-        if (result.boughtButFailed) {
-            log(userId, 'WARNING: Spin was purchased but execution failed', 'ERROR');
-        }
-        
-        return { success: false };
+    } catch (error) {
+        console.error('Error updating user config:', error);
     }
 }
 
-// Initialize a user for a new round (checks current funds)
-async function initializeUserRound(userId) {
-    const user = userData[userId];
-    if (!user || !user.isActive) return false;
+// Activity logging
+function logActivity(userId, message) {
+    const timestamp = new Date().toISOString();
+    const logEntry = { timestamp, userId, message };
 
-    // Check current funds (this updates currentFunds)
-    const funds = await checkFunds(userId, false);
-    if (!funds) return false;
+    activityLogs.unshift(logEntry);
+    activityLogs = activityLogs.slice(0, 1000);
 
-    // If funds below threshold, user is done
-    if (funds < settings.minFundsThreshold) {
-        user.status = 'completed';
-        user.endTime = new Date().toISOString();
-        log(userId, `User completed (final funds: ${funds.toLocaleString()})`, 'DONE');
-        return false;
+    if (userData[userId]) {
+        userData[userId].logs.unshift(logEntry);
+        userData[userId].logs = userData[userId].logs.slice(0, 200);
     }
 
-    // Calculate spins for this round (funds / 1000)
-    const spinsThisRound = Math.floor(funds / 1000);
-    user.spinsRemaining = spinsThisRound;
-    user.spinsDoneInRound = 0;
-    user.status = 'ready';
-    
-    log(userId, `New round: ${spinsThisRound} spins (funds: ${funds.toLocaleString()})`, 'ROUND');
-    return true;
+    console.log(`[${timestamp}] User ${userId}: ${message}`);
 }
 
-// Process next user in the active pool
-async function processNextUser() {
-    if (isPaused || activeUserIds.length === 0) return;
+// ───────────────────────────────────────────────────────────────────────────────
+// Daily Plan (UTC + randomized StartDay ±20m)
+//
+// For each user, every day we compute an "effective" window:
+//   effectiveStart = StartDay (from users.json) ± 20 minutes (random, in ms)
+//   effectiveEnd   = EndDay (fixed, same as users.json)
+//
+// We then schedule Achievements:
+//   #1  effectiveStart + 35 minutes
+//   #2  #1 + 8 hours
+//   #3  effectiveEnd - 25 minutes
+//
+// After #3, we schedule the next day's plan (new randomization).
+// Also exposes effective window so isWithinActiveWindow() uses it (spins + funds).
+// ───────────────────────────────────────────────────────────────────────────────
 
-    // Filter out users that are not ready
-    const readyUsers = activeUserIds.filter(id => {
-        const user = userData[id];
-        return user && user.isActive && user.status === 'ready' && user.spinsRemaining > 0;
-    });
-
-    if (readyUsers.length === 0) {
-        // No ready users, try to add more from queue
-        await addUsersToActivePool();
-        return;
-    }
-
-    // Pick a random user from ready pool
-    const randomIndex = Math.floor(Math.random() * readyUsers.length);
-    const userId = readyUsers[randomIndex];
-    const user = userData[userId];
-
-    // Mark as spinning
-    user.status = 'spinning';
-    
-    // Process one spin (with atomic retry)
-    const spinResult = await processUserSpin(userId);
-    
-    if (spinResult.success) {
-        // If no spins remaining, check if user needs a new round or is done
-        if (user.spinsRemaining <= 0) {
-            log(userId, 'Round complete, claiming achievements...', 'ROUND');
-            await claimAchievements(userId);
-            
-            // Check funds for next round
-            const funds = await checkFunds(userId, false);
-            if (funds && funds >= settings.minFundsThreshold) {
-                // Start new round
-                const newSpins = Math.floor(funds / 1000);
-                user.spinsRemaining = newSpins;
-                user.spinsDoneInRound = 0;
-                user.status = 'ready';
-                log(userId, `New round started: ${newSpins} spins (funds: ${funds.toLocaleString()})`, 'ROUND');
-            } else {
-                // User is done
-                user.status = 'completed';
-                user.endTime = new Date().toISOString();
-                log(userId, `User completed (final funds: ${funds?.toLocaleString() || 0})`, 'DONE');
-                
-                // Remove from active pool
-                activeUserIds = activeUserIds.filter(id => id !== userId);
-                
-                // Add next user from queue
-                await addUsersToActivePool();
-            }
-        } else {
-            // Still has spins, mark as ready again
-            user.status = 'ready';
-        }
-    } else {
-        // Spin failed, mark as error and remove from active pool
-        user.status = 'error';
-        user.lastError = 'Spin failed after retries';
-        log(userId, 'Spin failed permanently, removing from pool', 'ERROR');
-        activeUserIds = activeUserIds.filter(id => id !== userId);
-        await addUsersToActivePool();
-    }
-
-    // Schedule next user after delay
-    if (!isPaused) {
-        if (processingTimeout) {
-            clearTimeout(processingTimeout);
-        }
-        processingTimeout = setTimeout(processNextUser, settings.spinDelay * 1000);
-    }
+function utcTodayAt(hour, minute, second = 0, ms = 0) {
+  const d = new Date();
+  d.setUTCHours(hour, minute, second, ms);
+  return d;
 }
 
-// Add users from queue to active pool
-async function addUsersToActivePool() {
-    while (activeUserIds.length < settings.maxConcurrent && userQueue.length > 0) {
-        const nextUserId = userQueue.shift();
-        const user = userData[nextUserId];
-        
-        if (!user || !user.isActive) continue;
-
-        // Initialize user for first round
-        const initialized = await initializeUserRound(nextUserId);
-        if (initialized) {
-            activeUserIds.push(nextUserId);
-            user.startTime = user.startTime || new Date().toISOString();
-            log(nextUserId, `Added to active pool`, 'QUEUE');
-        } else {
-            // User couldn't be initialized (probably below threshold)
-            user.status = 'completed';
-            user.endTime = new Date().toISOString();
-            log(nextUserId, `Skipped - below threshold`, 'QUEUE');
-        }
-    }
+function addMs(date, ms) {
+  return new Date(date.getTime() + ms);
 }
 
-// Initialize all users (refresh tokens, check initial funds)
-async function initializeAllUsers() {
-    log('system', 'Initializing application...', 'INIT');
-    
-    const success = await loadUserConfig();
-    if (!success) return false;
-    
-    log('system', 'Refreshing tokens for all users...', 'INIT');
-    
-    const userIds = Object.keys(userData);
-    for (const userId of userIds) {
-        await refreshToken(userId);
-        await checkFunds(userId, true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    
-    // Create random queue
-    userQueue = userIds.sort(() => Math.random() - 0.5);
-    
-    log('system', `System ready. ${userIds.length} users in queue. Click Start to begin.`, 'INIT');
-    return true;
+function minutesToMs(min) {
+  return min * 60 * 1000;
 }
 
-// Start processing
-function startProcessing(newSettings) {
-    if (newSettings) {
-        if (newSettings.maxConcurrent) settings.maxConcurrent = parseInt(newSettings.maxConcurrent);
-        if (newSettings.spinDelay) settings.spinDelay = parseFloat(newSettings.spinDelay);
-        if (newSettings.minFundsThreshold) settings.minFundsThreshold = parseInt(newSettings.minFundsThreshold);
-    }
-    
-    isPaused = false;
-    
-    if (processingTimeout) {
-        clearTimeout(processingTimeout);
-        processingTimeout = null;
-    }
-    
-    activeUserIds = [];
-    
-    Object.values(userData).forEach(user => {
-        if (user.status !== 'completed') {
-            user.status = 'idle';
-            user.spinsRemaining = 0;
-            user.spinsDoneInRound = 0;
-        }
-    });
-    
-    addUsersToActivePool().then(() => {
-        log('system', `Processing started (Max: ${settings.maxConcurrent}, Delay: ${settings.spinDelay}s, Min Funds: ${settings.minFundsThreshold})`, 'START');
-        
-        if (activeUserIds.length > 0) {
-            processNextUser();
-        } else {
-            log('system', 'No users available to start', 'WARN');
-        }
-    });
+function parseHHMM(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return { h, m };
 }
 
-// Pause processing
-function pauseProcessing() {
-    isPaused = true;
-    if (processingTimeout) {
-        clearTimeout(processingTimeout);
-        processingTimeout = null;
-    }
-    log('system', 'Processing paused', 'PAUSE');
+// --- Serialization and timer helpers (avoid circular JSON) ---
+
+function toISOStringOrNull(val) {
+  if (!val) return null;
+  try {
+    const d = new Date(val);
+    return isNaN(d) ? null : d.toISOString();
+  } catch {
+    return null;
+  }
 }
 
-// Reset everything
-function resetSystem() {
-    isPaused = false;
-    if (processingTimeout) {
-        clearTimeout(processingTimeout);
-        processingTimeout = null;
-    }
-    
-    Object.values(userData).forEach(user => {
-        user.totalSpinsRun = 0;
-        user.totalPacksOpened = 0;
-        user.achievementsClaimed = 0;
-        user.initialFunds = user.currentFunds;
-        user.spinsRemaining = 0;
-        user.spinsDoneInRound = 0;
-        user.status = 'idle';
-        user.lastError = null;
-        user.startTime = null;
-        user.endTime = null;
-        user.retryCount = 0;
-    });
-    
-    userQueue = Object.keys(userData).sort(() => Math.random() - 0.5);
-    activeUserIds = [];
-    
-    log('system', `System reset. ${userQueue.length} users in queue.`, 'RESET');
-}
-
-// Safe user data for frontend
+// Returns a safe, serializable snapshot of userData (no timers).
 function safeUsersSnapshot() {
-    const out = {};
-    for (const [id, u] of Object.entries(userData)) {
-        out[id] = {
-            userId: u.userId,
-            nick: u.nick,
-            jwtToken: u.jwtToken || 'No token',
-            isActive: u.isActive,
-            status: u.status || 'idle',
-            totalSpinsRun: u.totalSpinsRun || 0,
-            totalPacksOpened: u.totalPacksOpened || 0,
-            initialFunds: u.initialFunds || 0,
-            currentFunds: u.currentFunds || 0,
-            spinsRemaining: u.spinsRemaining || 0,
-            spinsDoneInRound: u.spinsDoneInRound || 0,
-            achievementsClaimed: u.achievementsClaimed || 0,
-            lastError: u.lastError,
-            startTime: u.startTime,
-            endTime: u.endTime
-        };
-    }
-    return out;
+  const out = {};
+  for (const [id, u] of Object.entries(userData)) {
+    // Strip timer handles and other circulars
+    const { _achTimers, _dailyRolloverTimer, ...rest } = u;
+    // Convert Dates to ISO so the UI can render them consistently
+    const startISO = toISOStringOrNull(u._effectiveStartUTC);
+    const endISO   = toISOStringOrNull(u._effectiveEndUTC);
+
+    out[id] = {
+      ...rest,
+      _effectiveStartUTC: startISO,
+      _effectiveEndUTC: endISO,
+    };
+  }
+  return out;
 }
 
-// Middleware
-app.use(express.json());
-app.use(express.static('public'));
-
-// API Routes
-app.get('/api/users', (req, res) => {
-    res.json(safeUsersSnapshot());
-});
-
-app.get('/api/debug-logs', (req, res) => {
-    res.json(debugLogs.slice(0, 100));
-});
-
-app.get('/api/system-state', (req, res) => {
-    res.json({
-        settings,
-        isPaused,
-        activeCount: activeUserIds.length,
-        queueLength: userQueue.length,
-        totalUsers: Object.keys(userData).length
+// Ensure timer fields exist and are non-enumerable to avoid JSON.stringify picking them up
+function ensureTimerHolders(user) {
+  const d1 = Object.getOwnPropertyDescriptor(user, '_achTimers');
+  if (!d1 || d1.enumerable) {
+    // clear existing enumerable array if any
+    Object.defineProperty(user, '_achTimers', {
+      value: [],
+      writable: true,
+      configurable: true,
+      enumerable: false,
     });
-});
+  }
+  const d2 = Object.getOwnPropertyDescriptor(user, '_dailyRolloverTimer');
+  if (!d2 || d2.enumerable) {
+    Object.defineProperty(user, '_dailyRolloverTimer', {
+      value: null,
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    });
+  }
+}
 
-// Control endpoints
-app.post('/api/start', (req, res) => {
-    const { maxConcurrent, spinDelay, minFundsThreshold } = req.body;
-    startProcessing({ maxConcurrent, spinDelay, minFundsThreshold });
-    res.json({ success: true });
-});
+// Compute today's effective Start & End with ±20m jitter on Start
+function computeEffectiveWindow(user, now = new Date()) {
+  const { h: startH, m: startM } = parseHHMM(user.dayStart);
+  const { h: endH, m: endM } = parseHHMM(user.dayEnd);
 
-app.post('/api/pause', (req, res) => {
-    pauseProcessing();
-    res.json({ success: true });
-});
+  let baseStart = utcTodayAt(startH, startM, 0, 0);
+  let baseEnd   = utcTodayAt(endH, endM, 0, 0);
 
-app.post('/api/reset', (req, res) => {
-    resetSystem();
-    res.json({ success: true });
-});
+  // If End <= Start, window spans midnight → push End to next UTC day
+  if (baseEnd <= baseStart) baseEnd = addMs(baseEnd, 24 * 60 * 60 * 1000);
 
-app.post('/api/check-all-funds', async (req, res) => {
-    log('system', 'Manual check funds for all users', 'FUNDS');
-    const userIds = Object.keys(userData);
-    for (const userId of userIds) {
-        await checkFunds(userId, false);
-        await new Promise(resolve => setTimeout(resolve, 500));
+  // If the whole window already ended, move both to "tomorrow"
+  if (now > baseEnd) {
+    baseStart = addMs(baseStart, 24 * 60 * 60 * 1000);
+    baseEnd   = addMs(baseEnd,   24 * 60 * 60 * 1000);
+  }
+
+  // Jitter: random in [-20m, +20m] in milliseconds
+  const jitterRangeMs = minutesToMs(20);
+  const randMs = Math.floor(Math.random() * (2 * jitterRangeMs + 1)) - jitterRangeMs;
+  const effectiveStart = addMs(baseStart, randMs);
+  const effectiveEnd   = baseEnd; // End is not jittered
+
+  return { effectiveStart, effectiveEnd, randMs };
+}
+
+// Clear previously scheduled timers (avoid duplicates)
+function clearAchievementTimers(userId) {
+  const user = userData[userId];
+  if (!user) return;
+
+  ensureTimerHolders(user);
+
+  if (Array.isArray(user._achTimers)) {
+    user._achTimers.forEach(t => clearTimeout(t));
+  }
+  // Re-create as non-enumerable empty array
+  Object.defineProperty(user, '_achTimers', {
+    value: [],
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  });
+
+  if (user._dailyRolloverTimer) clearTimeout(user._dailyRolloverTimer);
+  Object.defineProperty(user, '_dailyRolloverTimer', {
+    value: null,
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  });
+}
+
+// Schedules one day's plan for a user (achievements + rollover)
+function scheduleDailyPlan(userId) {
+  const user = userData[userId];
+  if (!user) return;
+  ensureTimerHolders(user);
+
+  clearAchievementTimers(userId);
+
+  const now = new Date();
+  const { effectiveStart, effectiveEnd, randMs } = computeEffectiveWindow(user, now);
+
+  // Persist effective window for this user (used by isWithinActiveWindow + UI/debug)
+  user._effectiveStartUTC = effectiveStart;
+  user._effectiveEndUTC   = effectiveEnd;
+  user._startJitterMin    = Math.round(randMs / 60000);
+
+  logActivity(
+    userId,
+    `📅 Daily plan set (UTC): start=${effectiveStart.toUTCString()} ` +
+    `(jitter ${user._startJitterMin}m), end=${effectiveEnd.toUTCString()}`
+  );
+
+  // Achievements times:
+  const claim1 = addMs(effectiveStart, minutesToMs(35));     // Start(±20m) + 35m
+  const claim2 = addMs(claim1,       minutesToMs(8 * 60));  // +8h from claim1
+  const claim3 = addMs(effectiveEnd, -minutesToMs(25));      // End - 25m
+
+  // Helper: schedule a single claim if still in the future
+  const scheduleClaim = (when, label) => {
+    const delay = when.getTime() - Date.now();
+    if (delay <= 0) {
+      logActivity(userId, `⏭️ ${label} skipped (time passed)`);
+      return;
     }
-    res.json({ success: true });
+    const timer = setTimeout(async () => {
+      try {
+        if (!user.isActive) {
+          logActivity(userId, `⏸️ ${label} skipped (user inactive)`);
+        } else {
+          logActivity(userId, `🏁 ${label} firing`);
+          await claimAchievements(userId);
+        }
+      } catch (e) {
+        logActivity(userId, `⚠️ ${label} error: ${e.message}`);
+      }
+    }, delay);
+    user._achTimers.push(timer);
+    logActivity(userId, `⏰ ${label} scheduled for ${when.toUTCString()} (in ${Math.round(delay/60000)}m)`);
+  };
+
+  scheduleClaim(claim1, 'Achievements #1 (Start+35m)');
+  scheduleClaim(claim2, 'Achievements #2 (+8h)');
+  scheduleClaim(claim3, 'Achievements #3 (End-25m)');
+
+  // Rollover: after end-of-day (add a small buffer), compute the next day plan
+  const rolloverAt = addMs(effectiveEnd, minutesToMs(2));
+  const rolloverDelay = Math.max(rolloverAt.getTime() - Date.now(), 1000);
+  user._dailyRolloverTimer = setTimeout(() => {
+    logActivity(userId, '🔁 Rollover: computing next day plan (new randomized StartDay)');
+    scheduleDailyPlan(userId);
+  }, rolloverDelay);
+}
+
+// Apply the daily plan to all users (run at server start)
+function scheduleDailyPlanForAllUsers() {
+  logActivity('system', '🗓️ Scheduling daily plans for all users (UTC + randomized StartDay)');
+  Object.keys(userData).forEach((userId) => {
+    scheduleDailyPlan(userId);
+  });
+}
+
+// Continuous operations for each user
+function startContinuousOperations() {
+    console.log('🚀 Starting continuous operations for all users...');
+    
+    // Spin operations - check every 30 seconds
+    setInterval(async () => {
+        for (const userId of Object.keys(userData)) {
+            const user = userData[userId];
+            
+            if (!user.isActive || !isWithinActiveWindow(userId)) {
+                continue;
+            }
+
+            // Execute spin if it's time or no next spin time is set
+            if (!user.nextSpinTime || new Date() >= new Date(user.nextSpinTime)) {
+                await executeSpin(userId);
+                // Note: executeSpin now always schedules next spin internally
+            }
+        }
+    }, 30000);
+
+    // Funds check during active windows - every hour
+    setInterval(async () => {
+        for (const userId of Object.keys(userData)) {
+            if (isWithinActiveWindow(userId) && userData[userId].isActive) {
+                await checkFunds(userId);
+            }
+        }
+    }, 120 * 60 * 1000);
+}
+
+// Schedule achievements based on server start time
+
+
+// Schedule end-of-day achievements
+
+
+// Scheduled Tasks
+function startScheduledTasks() {
+  console.log('⏰ Starting scheduled tasks...');
+  // Schedule a daily plan (achievements + effective window) for each user
+  scheduleDailyPlanForAllUsers();
+  console.log('✅ Scheduled tasks started');
+}
+
+// API Routes for frontend
+app.get('/api/users', (req, res) => {
+  res.json(safeUsersSnapshot());
 });
 
+app.get('/api/activity', (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    res.json(activityLogs.slice(0, limit));
+});
+
+app.get('/api/user/:userId/activity', (req, res) => {
+    const userId = req.params.userId;
+    const user = userData[userId];
+    if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+    }
+    const limit = parseInt(req.query.limit) || 50;
+    res.json(user.logs.slice(0, limit));
+});
+
+// Debug logs endpoint - For browser F12 debugging
+app.get('/api/debug-logs', (req, res) => {
+    const limit = parseInt(req.query.limit) || 50;
+    res.json(debugLogs.slice(0, limit));
+});
+
+// Manual trigger endpoints (for testing) - FIXED: No alert popups
 app.post('/api/user/:userId/refresh', async (req, res) => {
     const userId = req.params.userId;
     const success = await refreshToken(userId);
-    await checkFunds(userId, false);
-    res.json({ success });
+    res.json({ success, message: success ? 'Token refreshed' : 'Refresh failed' });
+});
+
+app.post('/api/user/:userId/spin', async (req, res) => {
+    const userId = req.params.userId;
+    const result = await executeSpin(userId);
+    res.json({ success: !!result, result });
+});
+
+app.post('/api/user/:userId/claim-achievements', async (req, res) => {
+    const userId = req.params.userId;
+    const claimed = await claimAchievements(userId);
+    res.json({ success: claimed > 0, claimed });
 });
 
 app.post('/api/user/:userId/check-funds', async (req, res) => {
     const userId = req.params.userId;
-    const funds = await checkFunds(userId, false);
+    const funds = await checkFunds(userId);
     res.json({ success: funds !== null, funds });
 });
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    initializeAllUsers();
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📊 Dashboard available at http://localhost:${PORT}`);
+    console.log(`🔍 Debug logs available at http://localhost:${PORT}/api/debug-logs`);
+    initializeApp();
 });
