@@ -453,7 +453,7 @@ async function executeSpin(userId) {
             'Content-Type': 'application/json',
         };
 
-        const spinResult = await makeAPIRequest(spinUrl, 'POST', headers, { spinnerId: 6832 }, userId);
+        const spinResult = await makeAPIRequest(spinUrl, 'POST', headers, { spinnerId: 6865 }, userId);
 
         if (!spinResult.success) {
             if (spinResult.status === 401) {
@@ -472,13 +472,14 @@ async function executeSpin(userId) {
 
             // Prize mapping
             const prizeMap = {
-    11948: '5,000 Spraycoins',
-    11953: 'Standard Box 2026',
-    11947: '500 Spraycoins',
-    11949: '1,000,000 Spraycoins',
-    11950: '100,000 Spraycoins',
-    11951: '2,500 Spraycoins',
-    11952: '1,000 Spraycoins'
+    11986: '5,000 Spraycoins',
+    11981: 'Standard Box 2026',
+    12013: 'EPL 23 Box 2026',
+    11980: '500 Spraycoins',
+    11985: '1,000,000 Spraycoins',
+    11984: '100,000 Spraycoins',
+    11983: '2,500 Spraycoins',
+    11982: '1,000 Spraycoins'
             };
 
             prizeName = prizeMap[resultId] || `ID = ${resultId}`;
@@ -486,7 +487,7 @@ async function executeSpin(userId) {
             spinSuccess = true;
             
 			    // Check if we got a pack (IDs: 11953)
-    if ([11953].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
+    if ([11953, 12013].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
         const packId = spinData.packs[0].id;
         logActivity(userId, `🎁 Got pack from spin: ${packId}`);
         await openPack(userId, packId);
