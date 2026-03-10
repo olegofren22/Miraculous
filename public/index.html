@@ -32,7 +32,7 @@
     }
     h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
     .accent { color: var(--accent); }
-    .wrap { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    .wrap { padding: 16px; max-width: 1400px; margin: 0 auto; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
     @media (min-width: 900px) { .grid { grid-template-columns: 2fr 1fr; } }
     .card { 
@@ -67,6 +67,15 @@
       background: #f0fdff;
     }
     .btn.small { padding: 6px 10px; font-size: 12px; }
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #0c7a9c;
+      color: white;
+    }
     .pill {
       display: inline-flex; 
       align-items: center; 
@@ -89,7 +98,7 @@
     }
     .user-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
     .user-head h3 { margin: 0; font-size: 15px; }
-    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; margin: 8px 0; font-size: 13px; }
+    .kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin: 8px 0; font-size: 13px; }
     .muted { color: var(--muted); }
     code.time { 
       background: #f1f5f9; 
@@ -97,7 +106,7 @@
       border-radius: 6px; 
       border: 1px solid #cbd5e1; 
     }
-    pre.logs {
+    pre.logs, pre.token-display {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
       white-space: pre-wrap; 
       word-break: break-word; 
@@ -105,9 +114,14 @@
       border: 1px solid #cbd5e1;
       padding: 10px; 
       border-radius: 10px; 
-      max-height: 520px; 
+      max-height: 150px; 
       overflow: auto; 
-      font-size: 12px;
+      font-size: 11px;
+      margin: 4px 0;
+    }
+    .token-container {
+      grid-column: 1 / -1;
+      margin: 8px 0;
     }
     .ok { color: var(--good); }
     .warn { color: var(--warn); }
@@ -121,18 +135,41 @@
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 12px;
-      width: 100%;
+      width: 200px;
     }
     .config-group {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
-      margin-bottom: 8px;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
     }
     .config-label {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--muted);
       font-weight: 500;
+      white-space: nowrap;
+    }
+    .global-config {
+      background: #e6f7ff;
+      border: 1px solid #91d5ff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .save-indicator {
+      color: var(--good);
+      font-size: 12px;
+      margin-left: 10px;
+      animation: fadeOut 2s;
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; }
     }
   </style>
 </head>
@@ -141,61 +178,68 @@
     <h1>MegaTool <span class="accent">Dashboard</span></h1>
     <div class="row">
       <button class="btn small" id="refreshAll">Refresh All Panels</button>
-      <label class="pill"><input type="checkbox" id="autoTick" style="accent-color:#22d3ee" /> Auto-refresh (10s)</label>
+      <label class="pill"><input type="checkbox" id="autoTick" style="accent-color:#22d3ee" checked /> Auto-refresh (10s)</label>
     </div>
   </header>
 
-  <div class="wrap grid">
-    <div class="card">
-      <h2>Users & Schedules</h2>
-      <div class="section" id="usersPanel">Loading users…</div>
+  <div class="wrap">
+    <!-- GLOBAL CONFIGURATION - ONE FOR ALL USERS -->
+    <div class="global-config">
+      <div class="config-group">
+        <span class="config-label">🎰 Spinner ID (all users):</span>
+        <input type="number" class="config-input" id="globalSpinnerId" min="1" value="6865" placeholder="Spinner ID">
+      </div>
+      <div class="config-group">
+        <span class="config-label">📦 Pack IDs (comma separated):</span>
+        <input type="text" class="config-input" id="globalPackIds" value="11953, 12013, 12079" placeholder="e.g. 11953, 12013, 12079" style="width: 300px;">
+      </div>
+      <button class="btn btn-primary" id="updateGlobalConfig">Save Global Config</button>
+      <span id="saveIndicator" class="save-indicator" style="display: none;">✓ Saved</span>
     </div>
 
-    <div class="card">
-      <h2>API Debug Logs</h2>
-      <div class="section">
-        <div class="row" style="margin-bottom:8px;">
-          <button class="btn small" id="refreshLogs">Refresh</button>
-          <span class="muted small">Showing latest <span id="logLimit"></span> entries</span>
+    <div class="grid">
+      <div class="card">
+        <h2>Users & Schedules</h2>
+        <div class="section" id="usersPanel">Loading users…</div>
+      </div>
+
+      <div class="card">
+        <h2>API Debug Logs</h2>
+        <div class="section">
+          <div class="row" style="margin-bottom:8px;">
+            <button class="btn small" id="refreshLogs">Refresh</button>
+            <span class="muted small">Showing latest <span id="logLimit"></span> entries</span>
+          </div>
+          <pre class="logs" id="logsBox">Loading debug logs…</pre>
         </div>
-        <pre class="logs" id="logsBox">Loading debug logs…</pre>
       </div>
     </div>
   </div>
 
   <script>
     // === CONFIG ===
-    const DEBUG_LIMIT = 100;   // how many debug log rows
-    const USER_LOG_LIMIT = 50; // per-user activity (if you want to fetch later)
+    const DEBUG_LIMIT = 100;
     document.getElementById('logLimit').textContent = DEBUG_LIMIT;
 
-    // Store spinner config per user
-    let userSpinnerConfigs = {};
-
     // --- Utilities ---
-    const pad2 = n => n.toString().padStart(2, '0');
-
     function fmtUTC(iso) {
       if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return '—';
-      return d.toUTCString();
+      try {
+        const d = new Date(iso);
+        return isNaN(d) ? '—' : d.toUTCString();
+      } catch { return '—'; }
     }
-    function fmtLocal(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return '—';
-      return d.toLocaleString();
-    }
+
     function minsFromNow(iso) {
       if (!iso) return '';
-      const d = new Date(iso);
-      const diff = Math.round((d - Date.now()) / 60000);
-      if (isNaN(diff)) return '';
-      return diff >= 0 ? `in ${diff}m` : `${diff}m ago`;
+      try {
+        const d = new Date(iso);
+        const diff = Math.round((d - Date.now()) / 60000);
+        return isNaN(diff) ? '' : (diff >= 0 ? `in ${diff}m` : `${diff}m ago`);
+      } catch { return ''; }
     }
+
     function toIso(val) {
-      // val may already be ISO string or a Date serialized by backend
       if (!val) return null;
       try {
         const d = new Date(val);
@@ -203,83 +247,106 @@
       } catch { return null; }
     }
 
-    // Compute planned achievements times on the client
+    // Compute planned achievements times
     function computePlannedAchievements(user) {
       const effStartISO = toIso(user._effectiveStartUTC);
-      const effEndISO   = toIso(user._effectiveEndUTC);
+      const effEndISO = toIso(user._effectiveEndUTC);
       if (!effStartISO || !effEndISO) return null;
 
       const start = new Date(effStartISO);
-      const end   = new Date(effEndISO);
-
-      const claim1 = new Date(start.getTime() + 35 * 60 * 1000);
-      const claim2 = new Date(claim1.getTime() + 8 * 60 * 60 * 1000);
-      const claim3 = new Date(end.getTime() - 25 * 60 * 1000);
+      const end = new Date(effEndISO);
 
       return {
-        claim1ISO: claim1.toISOString(),
-        claim2ISO: claim2.toISOString(),
-        claim3ISO: claim3.toISOString()
+        claim1ISO: new Date(start.getTime() + 35 * 60 * 1000).toISOString(),
+        claim2ISO: new Date(start.getTime() + 35 * 60 * 1000 + 8 * 60 * 60 * 1000).toISOString(),
+        claim3ISO: new Date(end.getTime() - 25 * 60 * 1000).toISOString()
       };
     }
 
-    // --- API fetchers (backend provides these) ---
+    // --- API functions ---
     async function fetchUsers() {
       const r = await fetch('/api/users');
       if (!r.ok) throw new Error('Failed to fetch /api/users');
-      return r.json(); // returns userData object keyed by userId
+      return r.json();
     }
 
     async function fetchDebugLogs(limit = DEBUG_LIMIT) {
-      const r = await fetch(`/api/debug-logs?limit=${encodeURIComponent(limit)}`);
+      const r = await fetch(`/api/debug-logs?limit=${limit}`);
       if (!r.ok) throw new Error('Failed to fetch /api/debug-logs');
       return r.json();
     }
 
-    async function action(userId, route) {
-      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/${route}`, { method: 'POST' });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j?.message || `Action ${route} failed`);
-      return j;
+    async function fetchGlobalConfig() {
+      try {
+        const r = await fetch('/api/spinner-config');
+        if (r.ok) {
+          const config = await r.json();
+          document.getElementById('globalSpinnerId').value = config.spinnerId || 6865;
+          document.getElementById('globalPackIds').value = config.packIds ? config.packIds.join(', ') : '11953, 12013, 12079';
+        }
+      } catch (e) {
+        console.error('Failed to fetch global config:', e);
+      }
     }
 
-    // NEW: Update spinner configuration for a user
-    async function updateSpinnerConfig(userId, spinnerId, packIds) {
-      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/spinner-config`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spinnerId, packIds })
-      });
-      if (!r.ok) throw new Error('Failed to update spinner config');
+    async function updateGlobalConfig() {
+      const spinnerId = document.getElementById('globalSpinnerId').value;
+      const packIds = document.getElementById('globalPackIds').value;
+      
+      const saveIndicator = document.getElementById('saveIndicator');
+      saveIndicator.style.display = 'inline';
+      
+      try {
+        const r = await fetch('/api/spinner-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spinnerId, packIds })
+        });
+        
+        if (!r.ok) throw new Error('Failed to update config');
+        
+        saveIndicator.textContent = '✓ Saved';
+        setTimeout(() => {
+          saveIndicator.style.display = 'none';
+        }, 2000);
+      } catch (err) {
+        saveIndicator.textContent = '✗ Error';
+        saveIndicator.style.color = 'var(--bad)';
+        setTimeout(() => {
+          saveIndicator.style.display = 'none';
+          saveIndicator.style.color = 'var(--good)';
+        }, 2000);
+      }
+    }
+
+    async function action(userId, route) {
+      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/${route}`, { method: 'POST' });
+      if (!r.ok) throw new Error(`Action ${route} failed`);
       return r.json();
     }
 
-    // --- Renderers ---
+    // --- Render functions ---
     function renderUsers(users) {
       const panel = document.getElementById('usersPanel');
       const ids = Object.keys(users);
+      
       if (!ids.length) {
         panel.innerHTML = '<div class="muted">No users loaded.</div>';
         return;
       }
 
       const parts = [];
-      ids.forEach((id) => {
+      ids.sort().forEach((id) => {
         const u = users[id] || {};
-
-        const effStartISO = toIso(u._effectiveStartUTC);
-        const effEndISO   = toIso(u._effectiveEndUTC);
-        const jitter = (typeof u._startJitterMin === 'number') ? `${u._startJitterMin}m` : '—';
         const ach = computePlannedAchievements(u);
-        
-        // Get spinner config (from backend or use defaults)
-        const spinnerConfig = u.spinnerConfig || { spinnerId: 6865, packIds: [11953, 12013, 12079] };
-        const packIdsString = spinnerConfig.packIds ? spinnerConfig.packIds.join(', ') : '11953, 12013, 12079';
+        const startISO = toIso(u._effectiveStartUTC);
+        const endISO = toIso(u._effectiveEndUTC);
+        const jitter = u._startJitterMin ? `${u._startJitterMin}m` : '—';
 
         parts.push(`
           <div class="user-card" data-user="${id}">
             <div class="user-head">
-              <h3>${u.userNick ? `${id} - ${u.userNick}` : id}</h3>
+              <h3>${u.userNick ? `${u.userNick} (${id})` : id}</h3>
               <div class="row">
                 <button class="btn small" data-act="refresh" data-id="${id}">Refresh JWT</button>
                 <button class="btn small" data-act="spin" data-id="${id}">Spin</button>
@@ -292,45 +359,30 @@
               <div class="muted">Active</div>
               <div>${u.isActive ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>'}</div>
 
-              <div class="muted">Effective Start (UTC)</div>
-              <div><code class="time">${fmtUTC(effStartISO)}</code><span class="pill">jitter <b>${jitter}</b></span></div>
-
-              <div class="muted">Effective End (UTC)</div>
-              <div><code class="time">${fmtUTC(effEndISO)}</code></div>
+              <div class="muted">Active Window</div>
+              <div><code class="time">${fmtUTC(startISO)}</code> <span class="pill">jitter ${jitter}</span><br><code class="time">${fmtUTC(endISO)}</code></div>
 
               <div class="muted">Planned A4</div>
               <div>
                 ${ach ? `
-                  <div class="grid-2 small">
-                    <div>#1 <code>${minsFromNow(ach.claim1ISO)}</code> · #2 <code>${minsFromNow(ach.claim2ISO)}</code> · #3 <code>${minsFromNow(ach.claim3ISO)}</code></div>
-                  </div>` : '<span class="muted">Not scheduled yet (will appear after daily plan initializes)</span>'
-                }
+                  #1 <code class="time">${minsFromNow(ach.claim1ISO)}</code><br>
+                  #2 <code class="time">${minsFromNow(ach.claim2ISO)}</code><br>
+                  #3 <code class="time">${minsFromNow(ach.claim3ISO)}</code>
+                ` : '—'}
               </div>
 
               <div class="muted">Next Spin</div>
-              <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> · ${minsFromNow(u.nextSpinTime)}</div>
+              <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> ${minsFromNow(u.nextSpinTime) ? `<span class="pill">${minsFromNow(u.nextSpinTime)}</span>` : ''}</div>
 
-              <div class="muted">Spins / A4 Claimed</div>
-              <div>${u.spinCount ?? 0} / ${u.achievementsClaimed ?? 0}</div>
+              <div class="muted">Spins / A4</div>
+              <div>${u.spinCount || 0} / ${u.achievementsClaimed || 0}</div>
 
-              <div class="muted">Spraycoin / Total checks</div>
-              <div>${(u.lastFunds ?? 0).toLocaleString()} / ${u.dailyFundsChecks ?? 0}</div>
-			  
-			  <div class="muted">Token</div>
-              <div class="muted small"><pre class="logs" style="font-size: 9pt; max-height: 100px;">${u.jwtToken ? u.jwtToken.substring(0, 50) + '...' : 'No token'}</pre></div>
+              <div class="muted">Funds / Checks</div>
+              <div>${(u.lastFunds || 0).toLocaleString()} / ${u.dailyFundsChecks || 0}</div>
               
-              <!-- Spinner Configuration Inputs -->
-              <div class="muted">Spinner Config</div>
-              <div>
-                <div class="config-group">
-                  <span class="config-label">Spinner ID:</span>
-                  <input type="number" class="config-input spinner-id-input" data-user="${id}" value="${spinnerConfig.spinnerId}" min="1" placeholder="Spinner ID">
-                </div>
-                <div class="config-group">
-                  <span class="config-label">Pack IDs (comma separated):</span>
-                  <input type="text" class="config-input pack-ids-input" data-user="${id}" value="${packIdsString}" placeholder="e.g. 11953, 12013, 12079">
-                </div>
-                <button class="btn small update-config-btn" data-user="${id}" style="margin-top: 5px;">Update Config</button>
+              <div class="token-container">
+                <div class="muted">JWT Token (full):</div>
+                <pre class="token-display">${u.jwtToken || 'No token'}</pre>
               </div>
             </div>
           </div>
@@ -346,48 +398,13 @@
           const act = e.currentTarget.getAttribute('data-act');
           e.currentTarget.disabled = true;
           try {
-            if (act === 'refresh') await action(id, 'refresh');
-            if (act === 'spin')    await action(id, 'spin');
-            if (act === 'claim')   await action(id, 'claim-achievements');
-            if (act === 'funds')   await action(id, 'check-funds');
+            await action(id, act);
           } catch (err) {
-            alert(err.message || String(err));
+            alert(err.message);
           } finally {
             e.currentTarget.disabled = false;
-            // refresh users + logs after an action
             loadUsers().catch(()=>{});
             loadLogs().catch(()=>{});
-          }
-        });
-      });
-      
-      // Add event listeners for config update buttons
-      panel.querySelectorAll('.update-config-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const userId = e.currentTarget.getAttribute('data-user');
-          const spinnerInput = document.querySelector(`.spinner-id-input[data-user="${userId}"]`);
-          const packInput = document.querySelector(`.pack-ids-input[data-user="${userId}"]`);
-          
-          if (!spinnerInput || !packInput) return;
-          
-          const spinnerId = parseInt(spinnerInput.value);
-          const packIds = packInput.value;
-          
-          btn.disabled = true;
-          btn.textContent = 'Updating...';
-          
-          try {
-            await updateSpinnerConfig(userId, spinnerId, packIds);
-            // Show success feedback
-            btn.textContent = 'Updated!';
-            setTimeout(() => {
-              btn.textContent = 'Update Config';
-              btn.disabled = false;
-            }, 1500);
-          } catch (err) {
-            alert(`Failed to update config: ${err.message}`);
-            btn.textContent = 'Update Config';
-            btn.disabled = false;
           }
         });
       });
@@ -399,26 +416,23 @@
         box.textContent = 'No debug logs yet.';
         return;
       }
-      const lines = list.map((entry) => {
-        // entry fields come from server debugLog() response structure
-        // we keep it simple: timestamp, userId, action, request URL, status / error
+      
+      const lines = list.map(entry => {
         const ts = entry.timestamp || '';
         const who = entry.userId || 'system';
         const action = entry.action || '';
-        const req = entry.request || {};
-        const url = req.url || '';
-        const method = req.method || '';
-        const resp = entry.response;
-        const err  = entry.error;
-
-        if (resp) {
-          return `[${ts}] [${who}] ${action} ${method} ${url} -> ${resp.status}`;
-        } else if (err) {
-          return `[${ts}] [${who}] ${action} ${method} ${url} -> ERROR ${err.status || ''} ${err.message}`;
+        const method = entry.request?.method || '';
+        const url = entry.request?.url || '';
+        
+        if (entry.response) {
+          return `[${ts}] [${who}] ${action} ${method} ${url} -> ${entry.response.status}`;
+        } else if (entry.error) {
+          return `[${ts}] [${who}] ${action} ${method} ${url} -> ERROR ${entry.error.status || ''} ${entry.error.message}`;
         } else {
           return `[${ts}] [${who}] ${action} ${method} ${url}`;
         }
       });
+      
       box.textContent = lines.join('\n');
     }
 
@@ -437,28 +451,39 @@
         const logs = await fetchDebugLogs(DEBUG_LIMIT);
         renderLogs(logs);
       } catch (e) {
-        document.getElementById('logsBox').textContent = `Failed to load debug logs: ${e.message}`;
+        document.getElementById('logsBox').textContent = `Failed to load logs: ${e.message}`;
       }
     }
 
-    // --- Wire up controls ---
+    // --- Event Listeners ---
     document.getElementById('refreshAll').addEventListener('click', () => {
-      loadUsers(); loadLogs();
+      loadUsers();
+      loadLogs();
+      fetchGlobalConfig();
     });
-    document.getElementById('refreshLogs').addEventListener('click', () => loadLogs());
 
-    // Auto refresh toggle
-    let tickHandle = null;
+    document.getElementById('refreshLogs').addEventListener('click', loadLogs);
+    document.getElementById('updateGlobalConfig').addEventListener('click', updateGlobalConfig);
+
+    // Auto refresh
+    let tickHandle = setInterval(() => {
+      loadUsers();
+      loadLogs();
+    }, 10000);
+
     document.getElementById('autoTick').addEventListener('change', (e) => {
       if (e.target.checked) {
-        tickHandle = setInterval(() => { loadUsers(); loadLogs(); }, 10_000);
+        tickHandle = setInterval(() => {
+          loadUsers();
+          loadLogs();
+        }, 10000);
       } else {
-        if (tickHandle) clearInterval(tickHandle);
-        tickHandle = null;
+        clearInterval(tickHandle);
       }
     });
 
     // Initial load
+    fetchGlobalConfig();
     loadUsers();
     loadLogs();
   </script>

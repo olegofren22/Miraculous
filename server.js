@@ -90,8 +90,11 @@ const BASE_URL_OPENPACK = CONFIG.BASE_URL_OPENPACK;
 let userData = {};
 let activityLogs = [];
 
-// Store current spinnerId and packIds for each user (dynamic)
-let userSpinnerConfig = {};
+// GLOBAL configuration for all users (not per user)
+let globalSpinnerConfig = {
+    spinnerId: 6865,
+    packIds: [11953, 12013, 12079]
+};
 
 // Initialize the application
 async function initializeApp() {
@@ -101,13 +104,21 @@ async function initializeApp() {
         // Load user configuration
         await loadUserConfig();
         
-        // Initialize spinner config for each user
-        Object.keys(userData).forEach(userId => {
-            userSpinnerConfig[userId] = {
-                spinnerId: 6865, // Default spinner ID
-                packIds: [11953, 12013, 12079] // Default pack IDs that trigger pack opening
+        // Try to load saved spinner config from file
+        try {
+            const savedConfig = await fs.readFile('spinner-config.json', 'utf8');
+            const parsed = JSON.parse(savedConfig);
+            globalSpinnerConfig = {
+                spinnerId: parsed.spinnerId || 6865,
+                packIds: parsed.packIds || [11953, 12013, 12079]
             };
-        });
+            console.log('✅ Loaded saved spinner config:', globalSpinnerConfig);
+        } catch (err) {
+            // No saved config, use defaults
+            console.log('ℹ️ Using default spinner config:', globalSpinnerConfig);
+            // Save default config
+            await fs.writeFile('spinner-config.json', JSON.stringify(globalSpinnerConfig, null, 2));
+        }
         
         // Refresh tokens for ALL users at startup
         console.log('🔄 REFRESHING TOKENS FOR ALL USERS AT STARTUP...');
@@ -411,7 +422,7 @@ async function claimAchievements(userId) {
     }
 }
 
-// Open pack - UPDATED to use dynamic pack IDs from config
+// Open pack - using global pack IDs
 async function openPack(userId, packId) {
     const user = userData[userId];
     if (!user?.jwtToken) return false;
@@ -437,7 +448,7 @@ async function openPack(userId, packId) {
     return false;
 }
 
-// BLOCK 3: Spinner Functionality - UPDATED to use dynamic spinnerId
+// BLOCK 3: Spinner Functionality - using GLOBAL spinnerId
 async function executeSpin(userId) {
     const user = userData[userId];
     if (!user || !user.jwtToken) {
@@ -452,8 +463,8 @@ async function executeSpin(userId) {
         return null;
     }
 
-    // Get dynamic spinnerId from config
-    const spinnerId = userSpinnerConfig[userId]?.spinnerId || 6865;
+    // Get GLOBAL spinnerId from config
+    const spinnerId = globalSpinnerConfig.spinnerId;
     logActivity(userId, `🎰 Executing free spin with spinnerId: ${spinnerId}...`);
 
     let spinSuccess = false;
@@ -497,8 +508,8 @@ async function executeSpin(userId) {
             user.spinCount++;
             spinSuccess = true;
             
-            // Check if we got a pack - using dynamic pack IDs
-            const packTriggerIds = userSpinnerConfig[userId]?.packIds || [11953, 12013, 12079];
+            // Check if we got a pack - using GLOBAL pack IDs
+            const packTriggerIds = globalSpinnerConfig.packIds;
             if (packTriggerIds.includes(resultId) && spinData.packs && spinData.packs.length > 0) {
                 const packId = spinData.packs[0].id;
                 logActivity(userId, `🎁 Got pack from spin: ${packId}`);
@@ -667,9 +678,7 @@ function safeUsersSnapshot() {
     out[id] = {
       ...rest,
       _effectiveStartUTC: startISO,
-      _effectiveEndUTC: endISO,
-      // Add spinner config to snapshot
-      spinnerConfig: userSpinnerConfig[id] || { spinnerId: 6865, packIds: [11953, 12013, 12079] }
+      _effectiveEndUTC: endISO
     };
   }
   return out;
@@ -893,6 +902,41 @@ app.get('/api/debug-logs', (req, res) => {
     res.json(debugLogs.slice(0, limit));
 });
 
+// NEW: Get global spinner config
+app.get('/api/spinner-config', (req, res) => {
+    res.json(globalSpinnerConfig);
+});
+
+// NEW: Update global spinner config (saves to file)
+app.post('/api/spinner-config', async (req, res) => {
+    const { spinnerId, packIds } = req.body;
+    
+    if (spinnerId !== undefined) {
+        globalSpinnerConfig.spinnerId = parseInt(spinnerId) || 6865;
+    }
+    
+    if (packIds !== undefined) {
+        if (typeof packIds === 'string') {
+            // Parse comma-separated string to array of numbers
+            globalSpinnerConfig.packIds = packIds.split(',')
+                .map(id => parseInt(id.trim()))
+                .filter(id => !isNaN(id));
+        } else if (Array.isArray(packIds)) {
+            globalSpinnerConfig.packIds = packIds.map(id => parseInt(id)).filter(id => !isNaN(id));
+        }
+    }
+    
+    // Save to file for persistence across restarts
+    try {
+        await fs.writeFile('spinner-config.json', JSON.stringify(globalSpinnerConfig, null, 2));
+        logActivity('system', `⚙️ Global spinner config updated - spinnerId: ${globalSpinnerConfig.spinnerId}, packIds: ${globalSpinnerConfig.packIds.join(',')}`);
+    } catch (error) {
+        console.error('Failed to save spinner config:', error);
+    }
+    
+    res.json({ success: true, config: globalSpinnerConfig });
+});
+
 // Manual trigger endpoints (for testing) - FIXED: No alert popups
 app.post('/api/user/:userId/refresh', async (req, res) => {
     const userId = req.params.userId;
@@ -916,34 +960,6 @@ app.post('/api/user/:userId/check-funds', async (req, res) => {
     const userId = req.params.userId;
     const funds = await checkFunds(userId);
     res.json({ success: funds !== null, funds });
-});
-
-// NEW: Endpoint to update spinner configuration for a user
-app.post('/api/user/:userId/spinner-config', (req, res) => {
-    const userId = req.params.userId;
-    const { spinnerId, packIds } = req.body;
-    
-    if (!userSpinnerConfig[userId]) {
-        userSpinnerConfig[userId] = {};
-    }
-    
-    if (spinnerId !== undefined) {
-        userSpinnerConfig[userId].spinnerId = parseInt(spinnerId) || 6865;
-    }
-    
-    if (packIds !== undefined) {
-        if (typeof packIds === 'string') {
-            // Parse comma-separated string to array of numbers
-            userSpinnerConfig[userId].packIds = packIds.split(',')
-                .map(id => parseInt(id.trim()))
-                .filter(id => !isNaN(id));
-        } else if (Array.isArray(packIds)) {
-            userSpinnerConfig[userId].packIds = packIds.map(id => parseInt(id)).filter(id => !isNaN(id));
-        }
-    }
-    
-    logActivity(userId, `⚙️ Spinner config updated - spinnerId: ${userSpinnerConfig[userId].spinnerId}, packIds: ${userSpinnerConfig[userId].packIds.join(',')}`);
-    res.json({ success: true, config: userSpinnerConfig[userId] });
 });
 
 // Start server
