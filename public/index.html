@@ -87,7 +87,7 @@
       margin-bottom: 10px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
-    .user-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+    .user-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
     .user-head h3 { margin: 0; font-size: 15px; }
     .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; margin: 8px 0; font-size: 13px; }
     .muted { color: var(--muted); }
@@ -116,6 +116,24 @@
     @media (max-width: 680px) { .grid-2 { grid-template-columns: 1fr; } }
     .sep { height: 1px; background: #e2e8f0; margin: 10px 0; }
     .small { font-size: 12px; }
+    .config-input {
+      padding: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 100%;
+    }
+    .config-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .config-label {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -150,6 +168,9 @@
     const DEBUG_LIMIT = 100;   // how many debug log rows
     const USER_LOG_LIMIT = 50; // per-user activity (if you want to fetch later)
     document.getElementById('logLimit').textContent = DEBUG_LIMIT;
+
+    // Store spinner config per user
+    let userSpinnerConfigs = {};
 
     // --- Utilities ---
     const pad2 = n => n.toString().padStart(2, '0');
@@ -222,6 +243,17 @@
       return j;
     }
 
+    // NEW: Update spinner configuration for a user
+    async function updateSpinnerConfig(userId, spinnerId, packIds) {
+      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/spinner-config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ spinnerId, packIds })
+      });
+      if (!r.ok) throw new Error('Failed to update spinner config');
+      return r.json();
+    }
+
     // --- Renderers ---
     function renderUsers(users) {
       const panel = document.getElementById('usersPanel');
@@ -239,6 +271,10 @@
         const effEndISO   = toIso(u._effectiveEndUTC);
         const jitter = (typeof u._startJitterMin === 'number') ? `${u._startJitterMin}m` : '—';
         const ach = computePlannedAchievements(u);
+        
+        // Get spinner config (from backend or use defaults)
+        const spinnerConfig = u.spinnerConfig || { spinnerId: 6865, packIds: [11953, 12013, 12079] };
+        const packIdsString = spinnerConfig.packIds ? spinnerConfig.packIds.join(', ') : '11953, 12013, 12079';
 
         parts.push(`
           <div class="user-card" data-user="${id}">
@@ -274,20 +310,36 @@
               <div class="muted">Next Spin</div>
               <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> · ${minsFromNow(u.nextSpinTime)}</div>
 
-              <div class="muted">Sprays / A4 Claimed</div>
+              <div class="muted">Spins / A4 Claimed</div>
               <div>${u.spinCount ?? 0} / ${u.achievementsClaimed ?? 0}</div>
 
               <div class="muted">Spraycoin / Total checks</div>
               <div>${(u.lastFunds ?? 0).toLocaleString()} / ${u.dailyFundsChecks ?? 0}</div>
 			  
 			  <div class="muted">Token</div>
-              <div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 0}</pre></div>
+              <div class="muted small"><pre class="logs" style="font-size: 9pt; max-height: 100px;">${u.jwtToken ? u.jwtToken.substring(0, 50) + '...' : 'No token'}</pre></div>
+              
+              <!-- Spinner Configuration Inputs -->
+              <div class="muted">Spinner Config</div>
+              <div>
+                <div class="config-group">
+                  <span class="config-label">Spinner ID:</span>
+                  <input type="number" class="config-input spinner-id-input" data-user="${id}" value="${spinnerConfig.spinnerId}" min="1" placeholder="Spinner ID">
+                </div>
+                <div class="config-group">
+                  <span class="config-label">Pack IDs (comma separated):</span>
+                  <input type="text" class="config-input pack-ids-input" data-user="${id}" value="${packIdsString}" placeholder="e.g. 11953, 12013, 12079">
+                </div>
+                <button class="btn small update-config-btn" data-user="${id}" style="margin-top: 5px;">Update Config</button>
+              </div>
             </div>
           </div>
         `);
       });
 
       panel.innerHTML = parts.join('\n');
+      
+      // Add event listeners for action buttons
       panel.querySelectorAll('button[data-act]').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const id = e.currentTarget.getAttribute('data-id');
@@ -305,6 +357,37 @@
             // refresh users + logs after an action
             loadUsers().catch(()=>{});
             loadLogs().catch(()=>{});
+          }
+        });
+      });
+      
+      // Add event listeners for config update buttons
+      panel.querySelectorAll('.update-config-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const userId = e.currentTarget.getAttribute('data-user');
+          const spinnerInput = document.querySelector(`.spinner-id-input[data-user="${userId}"]`);
+          const packInput = document.querySelector(`.pack-ids-input[data-user="${userId}"]`);
+          
+          if (!spinnerInput || !packInput) return;
+          
+          const spinnerId = parseInt(spinnerInput.value);
+          const packIds = packInput.value;
+          
+          btn.disabled = true;
+          btn.textContent = 'Updating...';
+          
+          try {
+            await updateSpinnerConfig(userId, spinnerId, packIds);
+            // Show success feedback
+            btn.textContent = 'Updated!';
+            setTimeout(() => {
+              btn.textContent = 'Update Config';
+              btn.disabled = false;
+            }, 1500);
+          } catch (err) {
+            alert(`Failed to update config: ${err.message}`);
+            btn.textContent = 'Update Config';
+            btn.disabled = false;
           }
         });
       });

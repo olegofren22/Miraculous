@@ -90,6 +90,9 @@ const BASE_URL_OPENPACK = CONFIG.BASE_URL_OPENPACK;
 let userData = {};
 let activityLogs = [];
 
+// Store current spinnerId and packIds for each user (dynamic)
+let userSpinnerConfig = {};
+
 // Initialize the application
 async function initializeApp() {
     try {
@@ -97,6 +100,14 @@ async function initializeApp() {
         
         // Load user configuration
         await loadUserConfig();
+        
+        // Initialize spinner config for each user
+        Object.keys(userData).forEach(userId => {
+            userSpinnerConfig[userId] = {
+                spinnerId: 6865, // Default spinner ID
+                packIds: [11953, 12013, 12079] // Default pack IDs that trigger pack opening
+            };
+        });
         
         // Refresh tokens for ALL users at startup
         console.log('🔄 REFRESHING TOKENS FOR ALL USERS AT STARTUP...');
@@ -400,7 +411,7 @@ async function claimAchievements(userId) {
     }
 }
 
-// Open pack
+// Open pack - UPDATED to use dynamic pack IDs from config
 async function openPack(userId, packId) {
     const user = userData[userId];
     if (!user?.jwtToken) return false;
@@ -414,7 +425,7 @@ async function openPack(userId, packId) {
     );
 
     if (result.success) {
-        user.packsOpened++;
+        user.packsOpened = (user.packsOpened || 0) + 1;
         logActivity(userId, `✅ Pack opened: ${packId}`);
         return true;
     } else if (result.status === 401) {
@@ -426,7 +437,7 @@ async function openPack(userId, packId) {
     return false;
 }
 
-// BLOCK 3: Spinner Functionality - FIXED: Always schedule next spin even on error
+// BLOCK 3: Spinner Functionality - UPDATED to use dynamic spinnerId
 async function executeSpin(userId) {
     const user = userData[userId];
     if (!user || !user.jwtToken) {
@@ -441,7 +452,9 @@ async function executeSpin(userId) {
         return null;
     }
 
-    logActivity(userId, '🎰 Executing free spin...');
+    // Get dynamic spinnerId from config
+    const spinnerId = userSpinnerConfig[userId]?.spinnerId || 6865;
+    logActivity(userId, `🎰 Executing free spin with spinnerId: ${spinnerId}...`);
 
     let spinSuccess = false;
     let prizeName = 'Unknown';
@@ -453,18 +466,16 @@ async function executeSpin(userId) {
             'Content-Type': 'application/json',
         };
 
-        const spinResult = await makeAPIRequest(spinUrl, 'POST', headers, { spinnerId: 6865 }, userId);
+        const spinResult = await makeAPIRequest(spinUrl, 'POST', headers, { spinnerId }, userId);
 
         if (!spinResult.success) {
             if (spinResult.status === 401) {
                 logActivity(userId, 'JWT expired during spin, attempting refresh...');
                 const refreshSuccess = await refreshToken(userId);
                 if (refreshSuccess) {
-                    // Don't retry the spin, just continue with scheduling
                     logActivity(userId, '🔄 JWT refreshed, but not retrying spin. Scheduling next spin.');
                 }
             }
-            // Log the error but don't throw - we'll continue with scheduling
             logActivity(userId, `⚠️ Spin failed: ${spinResult.error} - Continuing with schedule`);
         } else {
             const spinData = spinResult.data.data;
@@ -472,31 +483,29 @@ async function executeSpin(userId) {
 
             // Prize mapping
             const prizeMap = {
-    11986: '5,000 Spraycoins',
-    11981: 'Standard Box 2026',
-    12013: 'EPL 23 Box 2026',
-    11980: '500 Spraycoins',
-    11985: '1,000,000 Spraycoins',
-    11984: '100,000 Spraycoins',
-    11983: '2,500 Spraycoins',
-    11982: '1,000 Spraycoins'
+                11986: '5,000 Spraycoins',
+                11981: 'Standard Box 2026',
+                12013: 'EPL 23 Box 2026',
+                11980: '500 Spraycoins',
+                11985: '1,000,000 Spraycoins',
+                11984: '100,000 Spraycoins',
+                11983: '2,500 Spraycoins',
+                11982: '1,000 Spraycoins'
             };
 
             prizeName = prizeMap[resultId] || `ID = ${resultId}`;
             user.spinCount++;
             spinSuccess = true;
             
-			    // Check if we got a pack (IDs: 11953)
-    if ([11953, 12013].includes(resultId) && spinData.packs && spinData.packs.length > 0) {
-        const packId = spinData.packs[0].id;
-        logActivity(userId, `🎁 Got pack from spin: ${packId}`);
-        await openPack(userId, packId);
-    } else {
-        logActivity(userId, `🎰 Spin result: ${prizeName}`);
-    }
-
-			
-            //logActivity(userId, `🎉 Spin successful! Received: ${prizeName}`);
+            // Check if we got a pack - using dynamic pack IDs
+            const packTriggerIds = userSpinnerConfig[userId]?.packIds || [11953, 12013, 12079];
+            if (packTriggerIds.includes(resultId) && spinData.packs && spinData.packs.length > 0) {
+                const packId = spinData.packs[0].id;
+                logActivity(userId, `🎁 Got pack from spin: ${packId}`);
+                await openPack(userId, packId);
+            } else {
+                logActivity(userId, `🎰 Spin result: ${prizeName}`);
+            }
         }
 
     } catch (error) {
@@ -659,6 +668,8 @@ function safeUsersSnapshot() {
       ...rest,
       _effectiveStartUTC: startISO,
       _effectiveEndUTC: endISO,
+      // Add spinner config to snapshot
+      spinnerConfig: userSpinnerConfig[id] || { spinnerId: 6865, packIds: [11953, 12013, 12079] }
     };
   }
   return out;
@@ -905,6 +916,34 @@ app.post('/api/user/:userId/check-funds', async (req, res) => {
     const userId = req.params.userId;
     const funds = await checkFunds(userId);
     res.json({ success: funds !== null, funds });
+});
+
+// NEW: Endpoint to update spinner configuration for a user
+app.post('/api/user/:userId/spinner-config', (req, res) => {
+    const userId = req.params.userId;
+    const { spinnerId, packIds } = req.body;
+    
+    if (!userSpinnerConfig[userId]) {
+        userSpinnerConfig[userId] = {};
+    }
+    
+    if (spinnerId !== undefined) {
+        userSpinnerConfig[userId].spinnerId = parseInt(spinnerId) || 6865;
+    }
+    
+    if (packIds !== undefined) {
+        if (typeof packIds === 'string') {
+            // Parse comma-separated string to array of numbers
+            userSpinnerConfig[userId].packIds = packIds.split(',')
+                .map(id => parseInt(id.trim()))
+                .filter(id => !isNaN(id));
+        } else if (Array.isArray(packIds)) {
+            userSpinnerConfig[userId].packIds = packIds.map(id => parseInt(id)).filter(id => !isNaN(id));
+        }
+    }
+    
+    logActivity(userId, `⚙️ Spinner config updated - spinnerId: ${userSpinnerConfig[userId].spinnerId}, packIds: ${userSpinnerConfig[userId].packIds.join(',')}`);
+    res.json({ success: true, config: userSpinnerConfig[userId] });
 });
 
 // Start server
