@@ -2,566 +2,531 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Spin Bot Dashboard</title>
+  <title>MegaTool Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
+<style>
     :root {
-      --bg: #f5f7fa;
+      --bg: #f8fafc;
       --panel: #ffffff;
-      --muted: #6b7280;
-      --text: #1f2937;
-      --accent: #2563eb;
-      --good: #059669;
+      --muted: #64748b;
+      --text: #1e293b;
+      --accent: #0891b2;
+      --good: #16a34a;
       --warn: #d97706;
-      --bad: #dc2626;
-      --chip: #e5e7eb;
-      --border: #e2e8f0;
+      --bad:  #dc2626;
+      --chip: #f1f5f9;
     }
     * { box-sizing: border-box; }
     body {
-      margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-      background: var(--bg);
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1000px 600px at 100% -10%, #e2e8f0 0%, #f8fafc 50%, #e2e8f0 100%);
       color: var(--text);
     }
     header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
+      padding: 20px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
       display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
-    h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
     .accent { color: var(--accent); }
-    .wrap { padding: 24px; max-width: 1400px; margin: 0 auto; }
+    .wrap { padding: 16px; max-width: 1400px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 900px) { .grid { grid-template-columns: 2fr 1fr; } }
     .card { 
-      background: var(--panel);
-      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.8); 
+      border: 1px solid #e2e8f0; 
       border-radius: 12px; 
       overflow: hidden; 
-      margin-bottom: 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      backdrop-filter: blur(10px);
     }
     .card h2 { 
       font-size: 16px; 
-      font-weight: 600;
       margin: 0; 
-      padding: 16px 20px; 
-      border-bottom: 1px solid var(--border); 
-      background: #f9fafb;
+      padding: 12px 14px; 
+      border-bottom: 1px solid #e2e8f0; 
+      background: rgba(241, 245, 249, 0.7);
     }
-    .section { padding: 20px; }
-    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .section { padding: 12px 14px; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .btn {
-      background: white; 
-      border: 1px solid var(--border); 
+      background: #f1f5f9; 
+      border: 1px solid #cbd5e1; 
       color: var(--text);
-      padding: 8px 16px; 
+      padding: 8px 12px; 
       border-radius: 8px; 
       cursor: pointer; 
       transition: all .15s;
-      font-size: 14px;
-      font-weight: 500;
     }
     .btn:hover { 
       border-color: var(--accent); 
-      color: var(--accent);
-      background: #f8fafc;
+      color: var(--accent); 
+      background: #f0fdff;
     }
-    .btn.small { padding: 4px 10px; font-size: 12px; }
-    .btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
-    .btn.primary:hover { background: #1d4ed8; }
-    .btn.success { background: var(--good); border-color: var(--good); color: white; }
-    .btn.warning { background: var(--warn); border-color: var(--warn); color: white; }
-    .btn.danger { background: var(--bad); border-color: var(--bad); color: white; }
-    .btn.info { background: #6b7280; border-color: #6b7280; color: white; }
-    .user-card {
-      background: #f9fafb; 
-      border: 1px solid var(--border); 
-      border-radius: 10px; 
-      padding: 16px; 
-      margin-bottom: 12px;
-    }
-    .user-head { display: flex; gap: 16px; align-items: center; justify-content: space-between; }
-    .user-head h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--accent); }
-    .user-nick {
-      font-size: 14px;
-      color: var(--muted);
-      margin-left: 4px;
-      font-weight: normal;
-    }
-    .kv { 
-      display: grid; 
-      grid-template-columns: 140px 1fr 140px 1fr; 
-      gap: 12px 16px; 
-      margin: 12px 0; 
-      font-size: 13px; 
-    }
-    .muted { color: var(--muted); }
-    .ok { color: var(--good); }
-    .bad { color: var(--bad); }
-    .warn { color: var(--warn); }
-    .jwt-token {
-      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-      font-size: 8px;
-      color: #4b5563;
-      background: #f3f4f6;
-      padding: 6px 10px;
-      border-radius: 4px;
-      border: 1px solid #e5e7eb;
-      width: 100%;
-      overflow-x: auto;
-      white-space: nowrap;
-      margin: 8px 0;
-      user-select: all;
-    }
-    pre.logs {
-      font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
-      white-space: pre-wrap; 
-      background: #f8fafc; 
-      border: 1px solid var(--border);
-      padding: 16px; 
-      border-radius: 8px; 
-      max-height: 400px; 
-      overflow: auto; 
-      font-size: 12px;
-      color: #1e293b;
-      line-height: 1.6;
-    }
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-bottom: 20px;
-    }
-    .stat-card {
-      background: var(--panel);
-      padding: 16px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-    }
-    .stat-value {
-      font-size: 28px;
-      font-weight: 600;
-      color: var(--accent);
-      line-height: 1.2;
-    }
-    .stat-label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 4px;
-    }
-    .progress-bar {
-      width: 100%;
-      height: 4px;
-      background: var(--chip);
-      border-radius: 2px;
-      margin-top: 8px;
-    }
-    .progress-fill {
-      height: 100%;
+    .btn.small { padding: 6px 10px; font-size: 12px; }
+    .btn-primary {
       background: var(--accent);
-      border-radius: 2px;
-      transition: width 0.3s ease;
+      border-color: var(--accent);
+      color: white;
     }
-    .settings-panel {
+    .btn-primary:hover {
+      background: #0c7a9c;
+      color: white;
+    }
+    .pill {
+      display: inline-flex; 
+      align-items: center; 
+      gap: 6px; 
+      background: var(--chip); 
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px; 
+      border-radius: 999px; 
+      font-size: 12px; 
+      color: var(--muted);
+    }
+    .pill b { color: var(--text); font-weight: 600; }
+    .user-card {
+      background: rgba(248, 250, 252, 0.8); 
+      border: 1px solid #e2e8f0; 
+      border-radius: 10px; 
+      padding: 12px; 
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .user-head { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .user-head h3 { margin: 0; font-size: 15px; }
+    .kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin: 8px 0; font-size: 13px; }
+    .muted { color: var(--muted); }
+    code.time { 
+      background: #f1f5f9; 
+      padding: 2px 6px; 
+      border-radius: 6px; 
+      border: 1px solid #cbd5e1; 
+    }
+    pre.logs, pre.token-display {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      white-space: pre-wrap; 
+      word-break: break-word; 
+      background: #f1f5f9; 
+      border: 1px solid #cbd5e1;
+      padding: 10px; 
+      border-radius: 10px; 
+      max-height: 150px; 
+      overflow: auto; 
+      font-size: 11px;
+      margin: 4px 0;
+    }
+    .token-container {
+      grid-column: 1 / -1;
+      margin: 8px 0;
+    }
+    .ok { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+    .grid-2 { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+    @media (max-width: 680px) { .grid-2 { grid-template-columns: 1fr; } }
+    .sep { height: 1px; background: #e2e8f0; margin: 10px 0; }
+    .small { font-size: 12px; }
+    .config-input {
+      padding: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 12px;
+      width: 200px;
+    }
+    .config-group {
       display: flex;
-      gap: 24px;
       align-items: center;
+      gap: 10px;
       flex-wrap: wrap;
     }
-    .input-group {
+    .config-label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .global-config {
+      background: #e6f7ff;
+      border: 1px solid #91d5ff;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      flex-wrap: wrap;
+      gap: 20px;
     }
-    .input-group label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--muted);
-      min-width: 80px;
-    }
-    .input-group input {
-      background: white;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 12px;
-      border-radius: 6px;
-      width: 100px;
-      font-size: 14px;
-    }
-    .input-group input:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
+    .save-indicator {
+      color: var(--good);
       font-size: 12px;
-      font-weight: 500;
+      margin-left: 10px;
+      animation: fadeOut 2s;
     }
-    .badge-idle { background: #e5e7eb; color: #374151; }
-    .badge-refreshing { background: #fef3c7; color: #92400e; }
-    .badge-claiming { background: #ede9fe; color: #5b21b6; }
-    .badge-checking { background: #dbeafe; color: #1e40af; }
-    .badge-spinning { background: #cffafe; color: #155e75; }
-    .badge-ready { background: #d1fae5; color: #065f46; }
-    .badge-completed { background: #9ca3af; color: #1f2937; }
-    .badge-error { background: #fee2e2; color: #991b1b; }
-    .funds-diff {
-      font-size: 11px;
-      margin-left: 4px;
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; }
     }
-    .positive { color: var(--good); }
-    .negative { color: var(--bad); }
   </style>
 </head>
 <body>
   <header>
-    <h1>Spin Bot <span class="accent">Dashboard</span></h1>
+    <h1>MegaTool <span class="accent">Dashboard</span></h1>
     <div class="row">
-      <button class="btn" id="refreshAll">🔄 Refresh</button>
-      <button class="btn info" id="checkAllFunds">💰 Check All Funds</button>
+      <button class="btn small" id="refreshAll">Refresh All Panels</button>
+      <label class="pill"><input type="checkbox" id="autoTick" style="accent-color:#22d3ee" checked /> Auto-refresh (10s)</label>
     </div>
   </header>
 
   <div class="wrap">
-    <!-- System Stats -->
-    <div class="stats-grid" id="systemStats">
-      <div class="stat-card">
-        <div class="stat-value" id="totalUsers">0</div>
-        <div class="stat-label">Total Users</div>
+    <!-- GLOBAL CONFIGURATION - ONE FOR ALL USERS -->
+    <div class="global-config">
+      <div class="config-group">
+        <span class="config-label">🎰 Spinner ID (all users):</span>
+        <input type="number" class="config-input" id="globalSpinnerId" min="1" value="6898" placeholder="Spinner ID">
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="activeCount">0</div>
-        <div class="stat-label">Active in Pool</div>
+      <div class="config-group">
+        <span class="config-label">📦 Pack IDs (comma separated):</span>
+        <input type="text" class="config-input" id="globalPackIds" value="11953, 12053, 12079" placeholder="e.g. 11953, 12053, 12079" style="width: 300px;">
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="queueLength">0</div>
-        <div class="stat-label">In Queue</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="totalSpins">0</div>
-        <div class="stat-label">Total Spins</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="totalPacks">0</div>
-        <div class="stat-label">Total Packs</div>
-      </div>
+      <button class="btn btn-primary" id="updateGlobalConfig">Save Global Config</button>
+      <span id="saveIndicator" class="save-indicator" style="display: none;">✓ Saved</span>
     </div>
 
-    <!-- Control Panel -->
-    <div class="card">
-      <h2>Control Panel</h2>
-      <div class="section">
-        <div class="settings-panel">
-          <div class="input-group">
-            <label>Max Concurrent:</label>
-            <input type="number" id="maxConcurrent" min="1" max="50" value="17">
-          </div>
-          <div class="input-group">
-            <label>Spin Delay (s):</label>
-            <input type="number" id="spinDelay" min="1" max="30" step="0.1" value="2.5">
-          </div>
-          <div class="input-group">
-            <label>Min Funds:</label>
-            <input type="number" id="minFunds" min="1000" max="1000000" step="1000" value="200000">
-          </div>
-          <button class="btn success" id="startButton">▶️ Start</button>
-          <button class="btn warning" id="pauseButton">⏸️ Pause</button>
-          <button class="btn danger" id="resetButton">🔄 Reset Stats</button>
-        </div>
-        <div class="row" style="margin-top: 16px;">
-          <span class="status-badge" id="systemStatus">System Ready</span>
-          <span class="muted" id="statusDetail"></span>
-        </div>
+    <div class="grid">
+      <div class="card">
+        <h2>Users & Schedules</h2>
+        <div class="section" id="usersPanel">Loading users…</div>
       </div>
-    </div>
 
-    <!-- Users Panel -->
-    <div class="card">
-      <h2>Users</h2>
-      <div class="section" id="usersPanel">
-        <div class="muted">Loading users...</div>
-      </div>
-    </div>
-
-    <!-- Activity Logs -->
-    <div class="card">
-      <h2>Activity Logs</h2>
-      <div class="section">
-        <div class="row" style="margin-bottom:16px; justify-content:space-between;">
-          <button class="btn small" id="refreshLogs">Refresh Logs</button>
-          <span class="muted">Showing latest events</span>
+      <div class="card">
+        <h2>API Debug Logs</h2>
+        <div class="section">
+          <div class="row" style="margin-bottom:8px;">
+            <button class="btn small" id="refreshLogs">Refresh</button>
+            <span class="muted small">Showing latest <span id="logLimit"></span> entries</span>
+          </div>
+          <pre class="logs" id="logsBox">Loading debug logs…</pre>
         </div>
-        <pre class="logs" id="logsBox">Loading logs...</pre>
       </div>
     </div>
   </div>
 
   <script>
-    // State
-    let systemState = {
-      isPaused: false,
-      settings: {
-        maxConcurrent: 17,
-        spinDelay: 2.5,
-        minFundsThreshold: 200000
-      },
-      activeCount: 0,
-      queueLength: 0,
-      totalUsers: 0
-    };
+    // === CONFIG ===
+    const DEBUG_LIMIT = 100;
+    document.getElementById('logLimit').textContent = DEBUG_LIMIT;
 
-    let autoRefresh = true;
-    let lastScrollPosition = 0;
+    // --- Utilities ---
+    function fmtUTC(iso) {
+      if (!iso) return '—';
+      try {
+        const d = new Date(iso);
+        return isNaN(d) ? '—' : d.toUTCString();
+      } catch { return '—'; }
+    }
 
-    // API Functions
+    function minsFromNow(iso) {
+      if (!iso) return '';
+      try {
+        const d = new Date(iso);
+        const diff = Math.round((d - Date.now()) / 60000);
+        return isNaN(diff) ? '' : (diff >= 0 ? `in ${diff}m` : `${-diff}m ago`);
+      } catch { return ''; }
+    }
+
+    function toIso(val) {
+      if (!val) return null;
+      try {
+        const d = new Date(val);
+        return isNaN(d) ? null : d.toISOString();
+      } catch { return null; }
+    }
+
+    // Compute planned achievements times
+    function computePlannedAchievements(user) {
+      const effStartISO = toIso(user._effectiveStartUTC);
+      const effEndISO = toIso(user._effectiveEndUTC);
+      if (!effStartISO || !effEndISO) return null;
+
+      const start = new Date(effStartISO);
+      const end = new Date(effEndISO);
+
+      return {
+        claim1ISO: new Date(start.getTime() + 35 * 60 * 1000).toISOString(),
+        claim2ISO: new Date(start.getTime() + 35 * 60 * 1000 + 8 * 60 * 60 * 1000).toISOString(),
+        claim3ISO: new Date(end.getTime() - 25 * 60 * 1000).toISOString()
+      };
+    }
+
+    // --- API functions ---
     async function fetchUsers() {
       const r = await fetch('/api/users');
-      if (!r.ok) throw new Error('Failed to fetch users');
+      if (!r.ok) throw new Error('Failed to fetch /api/users');
       return r.json();
     }
 
-    async function fetchDebugLogs(limit = 100) {
+    async function fetchDebugLogs(limit = DEBUG_LIMIT) {
       const r = await fetch(`/api/debug-logs?limit=${limit}`);
-      if (!r.ok) throw new Error('Failed to fetch logs');
+      if (!r.ok) throw new Error('Failed to fetch /api/debug-logs');
       return r.json();
     }
 
-    async function fetchSystemState() {
-      const r = await fetch('/api/system-state');
-      if (!r.ok) throw new Error('Failed to fetch system state');
-      return r.json();
+    async function fetchGlobalConfig() {
+      try {
+        const r = await fetch('/api/spinner-config');
+        if (r.ok) {
+          const config = await r.json();
+          document.getElementById('globalSpinnerId').value = config.spinnerId || 6898;
+          document.getElementById('globalPackIds').value = config.packIds ? config.packIds.join(', ') : '11953, 12053, 12079';
+        }
+      } catch (e) {
+        console.error('Failed to fetch global config:', e);
+      }
     }
 
-    async function sendCommand(endpoint, body = {}) {
-      const r = await fetch(endpoint, {
+    async function updateGlobalConfig() {
+      const spinnerId = document.getElementById('globalSpinnerId').value;
+      const packIds = document.getElementById('globalPackIds').value;
+      
+      const saveIndicator = document.getElementById('saveIndicator');
+      saveIndicator.style.display = 'inline';
+      
+      try {
+        const r = await fetch('/api/spinner-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ spinnerId, packIds })
+        });
+        
+        if (!r.ok) throw new Error('Failed to update config');
+        
+        saveIndicator.textContent = '✓ Saved';
+        setTimeout(() => {
+          saveIndicator.style.display = 'none';
+        }, 2000);
+      } catch (err) {
+        saveIndicator.textContent = '✗ Error';
+        saveIndicator.style.color = 'var(--bad)';
+        setTimeout(() => {
+          saveIndicator.style.display = 'none';
+          saveIndicator.style.color = 'var(--good)';
+        }, 2000);
+      }
+    }
+
+    // Fixed action function with proper route mapping
+    async function action(userId, actionType) {
+      // Map UI action names to API routes
+      const routeMap = {
+        'refresh': 'refresh',
+        'spin': 'spin',
+        'claim': 'claim-achievements',  // Fixed: was 'claim-ach' now 'claim-achievements'
+        'funds': 'check-funds'
+      };
+      
+      const route = routeMap[actionType];
+      if (!route) {
+        throw new Error(`Unknown action: ${actionType}`);
+      }
+      
+      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/${route}`, { 
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        headers: { 'Content-Type': 'application/json' }
       });
+      
+      if (!r.ok) {
+        const errorText = await r.text();
+        throw new Error(`Action ${actionType} failed: ${r.status} ${errorText}`);
+      }
+      
       return r.json();
     }
 
-    // Render Functions
+    // --- Render functions ---
     function renderUsers(users) {
       const panel = document.getElementById('usersPanel');
-      const userIds = Object.keys(users).sort();
+      const ids = Object.keys(users);
       
-      if (!userIds.length) {
+      if (!ids.length) {
         panel.innerHTML = '<div class="muted">No users loaded.</div>';
         return;
       }
 
-      // Calculate totals
-      const totals = {
-        totalSpins: userIds.reduce((sum, id) => sum + (users[id].totalSpinsRun || 0), 0),
-        totalPacks: userIds.reduce((sum, id) => sum + (users[id].totalPacksOpened || 0), 0)
-      };
-
-      document.getElementById('totalSpins').textContent = totals.totalSpins;
-      document.getElementById('totalPacks').textContent = totals.totalPacks;
-
       const parts = [];
+      ids.sort().forEach((id) => {
+        const u = users[id] || {};
+        const ach = computePlannedAchievements(u);
+        const startISO = toIso(u._effectiveStartUTC);
+        const endISO = toIso(u._effectiveEndUTC);
+        const jitter = u._startJitterMin ? `${u._startJitterMin}m` : '—';
 
-      userIds.forEach((id) => {
-        const u = users[id];
-        const statusClass = `badge-${u.status || 'idle'}`;
-        const progressPercent = u.spinsRemaining ? ((u.spinsDoneInRound || 0) / ((u.spinsDoneInRound || 0) + u.spinsRemaining) * 100) : 0;
-        
-        // Calculate funds difference
-        const fundsDiff = u.currentFunds - u.initialFunds;
-        const diffClass = fundsDiff > 0 ? 'positive' : (fundsDiff < 0 ? 'negative' : '');
-        const diffSign = fundsDiff > 0 ? '+' : '';
-        
         parts.push(`
-          <div class="user-card">
+          <div class="user-card" data-user="${id}">
             <div class="user-head">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <h3>${id} <span class="user-nick">${u.nick || ''}</span></h3>
-                <span class="status-badge ${statusClass}">${u.status || 'idle'}</span>
-              </div>
+              <h3>${u.userNick ? `${u.userNick} (${id})` : id}</h3>
               <div class="row">
-                <button class="btn small" data-act="refresh" data-id="${id}">🔄 Refresh Token</button>
-                <button class="btn small" data-act="check-funds" data-id="${id}">💰 Check Funds</button>
+                <button class="btn small" data-act="refresh" data-id="${id}">Refresh JWT</button>
+                <button class="btn small" data-act="spin" data-id="${id}">Spin</button>
+                <button class="btn small" data-act="claim" data-id="${id}">Claim Ach.</button>
+                <button class="btn small" data-act="funds" data-id="${id}">Check Funds</button>
               </div>
             </div>
-            
-            <!-- Full JWT token for copying -->
-            <div class="jwt-token" title="Select all to copy">
-              ${u.jwtToken || 'No token'}
-            </div>
-            
+
             <div class="kv">
-              <span class="muted">Status</span>
-              <span>${u.isActive ? '✅ Active' : '❌ Inactive'}</span>
-              <span class="muted">Spins (Total/Round)</span>
-              <span>${u.totalSpinsRun || 0} / ${u.spinsDoneInRound || 0} of ${(u.spinsDoneInRound || 0) + (u.spinsRemaining || 0)}</span>
+              <div class="muted">Active</div>
+              <div>${u.isActive ? '<span class="ok">Yes</span>' : '<span class="bad">No</span>'}</div>
+
+              <div class="muted">Window</div>
+              <div><code class="time">${fmtUTC(startISO)}</code> <span class="pill">jitter ${jitter}</span><code class="time">${fmtUTC(endISO)}</code></div>
+
+              <div class="muted">Planned A4</div>
+              <div>
+                ${ach ? `
+                  #1 <code class="time">${minsFromNow(ach.claim1ISO)}</code>
+                  #2 <code class="time">${minsFromNow(ach.claim2ISO)}</code>
+                  #3 <code class="time">${minsFromNow(ach.claim3ISO)}</code>
+                ` : '—'}
+              </div>
+
+              <div class="muted">Next Spin</div>
+              <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> ${minsFromNow(u.nextSpinTime) ? `<span class="pill">${minsFromNow(u.nextSpinTime)}</span>` : ''}</div>
+
+              <div class="muted">Spins / A4</div>
+              <div>${u.spinCount || 0} / ${u.achievementsClaimed || 0}</div>
+
+              <div class="muted">Funds / Checks</div>
+              <div>${(u.lastFunds || 0).toLocaleString()} / ${u.dailyFundsChecks || 0}</div>
               
-              <span class="muted">Initial Funds</span>
-              <span>${(u.initialFunds || 0).toLocaleString()}</span>
-              <span class="muted">Current Funds</span>
-              <span>
-                ${(u.currentFunds || 0).toLocaleString()}
-                <span class="funds-diff ${diffClass}">(${diffSign}${fundsDiff.toLocaleString()})</span>
-              </span>
+              <div class="muted">Packs Opened</div>
+              <div>${u.packsOpened || 0}</div>
               
-              <span class="muted">Packs Opened</span>
-              <span>${u.totalPacksOpened || 0}</span>
-              <span class="muted">Achievements</span>
-              <span>${u.achievementsClaimed || 0}</span>
-              
-              <span class="muted">Last Error</span>
-              <span class="${u.lastError ? 'bad' : 'muted'}">${u.lastError || 'None'}</span>
+              <div class="token-container">
+<div class="muted">Token</div>
+<div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 0}</pre></div>
+              </div>
             </div>
-            
-            ${(u.spinsRemaining || 0) > 0 ? `
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${progressPercent}%"></div>
-            </div>
-            ` : ''}
-            
-            ${u.startTime ? `
-            <div style="margin-top:8px; font-size:11px; color:var(--muted);">
-              Started: ${new Date(u.startTime).toLocaleTimeString()}
-              ${u.endTime ? ` · Completed: ${new Date(u.endTime).toLocaleTimeString()}` : ''}
-            </div>
-            ` : ''}
           </div>
         `);
       });
 
       panel.innerHTML = parts.join('\n');
       
-      // Add event listeners
-      panel.querySelectorAll('button[data-act="refresh"]').forEach(btn => {
+      // Add event listeners for action buttons
+      panel.querySelectorAll('button[data-act]').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const id = e.currentTarget.getAttribute('data-id');
+          const act = e.currentTarget.getAttribute('data-act');
+          e.currentTarget.disabled = true;
+          
           try {
-            await sendCommand(`/api/user/${id}/refresh`);
-            await loadAll();
+            await action(id, act);
+            // Show success feedback
+            e.currentTarget.style.backgroundColor = '#16a34a';
+            e.currentTarget.style.color = 'white';
+            setTimeout(() => {
+              e.currentTarget.style.backgroundColor = '';
+              e.currentTarget.style.color = '';
+            }, 500);
           } catch (err) {
-            alert(err.message);
-          }
-        });
-      });
-      
-      panel.querySelectorAll('button[data-act="check-funds"]').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const id = e.currentTarget.getAttribute('data-id');
-          try {
-            await sendCommand(`/api/user/${id}/check-funds`);
-            await loadAll();
-          } catch (err) {
-            alert(err.message);
+            e.currentTarget.style.backgroundColor = '#dc2626';
+            e.currentTarget.style.color = 'white';
+            setTimeout(() => {
+              e.currentTarget.style.backgroundColor = '';
+              e.currentTarget.style.color = '';
+            }, 500);
+          } finally {
+            e.currentTarget.disabled = false;
+            // Refresh data after action
+            await Promise.all([
+              loadUsers().catch(()=>{}),
+              loadLogs().catch(()=>{})
+            ]);
           }
         });
       });
     }
 
-    function renderLogs(logs) {
+    function renderLogs(list) {
       const box = document.getElementById('logsBox');
-      if (!logs || !logs.length) {
-        box.textContent = 'No logs yet.';
+      if (!Array.isArray(list) || !list.length) {
+        box.textContent = 'No debug logs yet.';
         return;
       }
       
-      // Save scroll position
-      lastScrollPosition = box.scrollTop;
-      
-      const lines = logs.map(entry => {
-        const time = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : '';
-        return `[${time}] [${entry.type || 'INFO'}] ${entry.userId}: ${entry.message}`;
+      const lines = list.map(entry => {
+        const ts = entry.timestamp || '';
+        const who = entry.userId || 'system';
+        const action = entry.action || '';
+        const method = entry.request?.method || '';
+        const url = entry.request?.url || '';
+        
+        if (entry.response) {
+          return `[${ts}] [${who}] ${action} ${method} ${url} -> ${entry.response.status}`;
+        } else if (entry.error) {
+          return `[${ts}] [${who}] ${action} ${method} ${url} -> ERROR ${entry.error.status || ''} ${entry.error.message}`;
+        } else {
+          return `[${ts}] [${who}] ${action} ${method} ${url}`;
+        }
       });
       
       box.textContent = lines.join('\n');
-      
-      // Restore scroll position
-      box.scrollTop = lastScrollPosition;
     }
 
-    function updateSystemStats(state) {
-      document.getElementById('totalUsers').textContent = state.totalUsers || 0;
-      document.getElementById('activeCount').textContent = state.activeCount || 0;
-      document.getElementById('queueLength').textContent = state.queueLength || 0;
-      
-      const systemStatus = document.getElementById('systemStatus');
-      systemStatus.textContent = state.isPaused ? '⏸️ PAUSED' : (state.activeCount > 0 ? '▶️ RUNNING' : '⏹️ STOPPED');
-      systemStatus.className = `status-badge ${state.isPaused ? 'badge-warning' : (state.activeCount > 0 ? 'badge-spinning' : 'badge-idle')}`;
-      
-      document.getElementById('statusDetail').textContent = 
-        `Max: ${state.settings.maxConcurrent}, Delay: ${state.settings.spinDelay}s, Min: ${state.settings.minFundsThreshold}`;
-    }
-
-    // Load Functions
-    async function loadAll() {
+    // --- Loaders ---
+    async function loadUsers() {
       try {
-        const [users, logs, state] = await Promise.all([
-          fetchUsers(),
-          fetchDebugLogs(100),
-          fetchSystemState()
-        ]);
-        
-        systemState = state;
-        updateSystemStats(state);
-        renderUsers(users);
-        renderLogs(logs);
-      } catch (err) {
-        console.error('Failed to load:', err);
+        const data = await fetchUsers();
+        renderUsers(data);
+      } catch (e) {
+        document.getElementById('usersPanel').innerHTML = `<span class="bad">Failed to load users: ${e.message}</span>`;
       }
     }
 
-    // Event Listeners
+    async function loadLogs() {
+      try {
+        const logs = await fetchDebugLogs(DEBUG_LIMIT);
+        renderLogs(logs);
+      } catch (e) {
+        document.getElementById('logsBox').textContent = `Failed to load logs: ${e.message}`;
+      }
+    }
+
+    // --- Event Listeners ---
     document.getElementById('refreshAll').addEventListener('click', () => {
-      autoRefresh = false;
-      loadAll();
-      setTimeout(() => { autoRefresh = true; }, 1000);
-    });
-    
-    document.getElementById('checkAllFunds').addEventListener('click', async () => {
-      await sendCommand('/api/check-all-funds');
-      await loadAll();
-    });
-    
-    document.getElementById('refreshLogs').addEventListener('click', async () => {
-      const logs = await fetchDebugLogs(100);
-      renderLogs(logs);
+      loadUsers();
+      loadLogs();
+      fetchGlobalConfig();
     });
 
-    document.getElementById('startButton').addEventListener('click', async () => {
-      const maxConcurrent = document.getElementById('maxConcurrent').value;
-      const spinDelay = document.getElementById('spinDelay').value;
-      const minFundsThreshold = document.getElementById('minFunds').value;
-      
-      await sendCommand('/api/start', { maxConcurrent, spinDelay, minFundsThreshold });
-      await loadAll();
-    });
+    document.getElementById('refreshLogs').addEventListener('click', loadLogs);
+    document.getElementById('updateGlobalConfig').addEventListener('click', updateGlobalConfig);
 
-    document.getElementById('pauseButton').addEventListener('click', async () => {
-      await sendCommand('/api/pause');
-      await loadAll();
-    });
+    // Auto refresh
+    let tickHandle = setInterval(() => {
+      loadUsers();
+      loadLogs();
+    }, 10000);
 
-    document.getElementById('resetButton').addEventListener('click', async () => {
-      if (confirm('Reset all statistics? User tokens will be preserved.')) {
-        await sendCommand('/api/reset');
-        await loadAll();
+    document.getElementById('autoTick').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        tickHandle = setInterval(() => {
+          loadUsers();
+          loadLogs();
+        }, 10000);
+      } else {
+        clearInterval(tickHandle);
       }
     });
-
-    // Auto-refresh every 3 seconds
-    setInterval(() => {
-      if (autoRefresh) {
-        loadAll();
-      }
-    }, 3000);
 
     // Initial load
-    loadAll();
+    fetchGlobalConfig();
+    loadUsers();
+    loadLogs();
   </script>
 </body>
 </html>
