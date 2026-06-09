@@ -28,6 +28,8 @@
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(10px);
       display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     h1 { margin: 0; font-size: 20px; letter-spacing: .3px; }
@@ -75,6 +77,14 @@
     .btn-primary:hover {
       background: #0c7a9c;
       color: white;
+    }
+    .btn-success {
+      background: var(--good);
+      border-color: var(--good);
+      color: white;
+    }
+    .btn-success:hover {
+      background: #138c3c;
     }
     .pill {
       display: inline-flex; 
@@ -166,18 +176,37 @@
       margin-left: 10px;
       animation: fadeOut 2s;
     }
+    .top-buttons {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
     @keyframes fadeOut {
       0% { opacity: 1; }
       70% { opacity: 1; }
       100% { opacity: 0; }
+    }
+    .copy-success {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--good);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 1000;
+      animation: fadeOut 2s;
     }
   </style>
 </head>
 <body>
   <header>
     <h1>MegaTool <span class="accent">Dashboard</span></h1>
-    <div class="row">
-      <button class="btn small" id="refreshAll">Refresh All Panels</button>
+    <div class="top-buttons">
+      <button class="btn btn-success" id="copyInfoBtn">📋 Copy Info (ID + JWT)</button>
+      <button class="btn btn-primary" id="exportCsvBtn">📊 Export CSV</button>
+      <button class="btn small" id="refreshAll">⟳ Refresh Panels</button>
       <label class="pill"><input type="checkbox" id="autoTick" style="accent-color:#22d3ee" checked /> Auto-refresh (10s)</label>
     </div>
   </header>
@@ -187,7 +216,7 @@
     <div class="global-config">
       <div class="config-group">
         <span class="config-label">🎰 Spinner ID (all users):</span>
-        <input type="number" class="config-input" id="globalSpinnerId" min="1" value="6931" placeholder="Spinner ID">
+        <input type="number" class="config-input" id="globalSpinnerId" min="1" value="6997" placeholder="Spinner ID">
       </div>
       <div class="config-group">
         <span class="config-label">📦 Pack IDs (comma separated):</span>
@@ -215,6 +244,8 @@
       </div>
     </div>
   </div>
+
+  <div id="copySuccessMsg" style="display: none;"></div>
 
   <script>
     // === CONFIG ===
@@ -247,26 +278,33 @@
       } catch { return null; }
     }
 
-    // Compute planned achievements times
-    function computePlannedAchievements(user) {
-      const effStartISO = toIso(user._effectiveStartUTC);
-      const effEndISO = toIso(user._effectiveEndUTC);
-      if (!effStartISO || !effEndISO) return null;
-
-      const start = new Date(effStartISO);
-      const end = new Date(effEndISO);
-
-      return {
-        claim1ISO: new Date(start.getTime() + 35 * 60 * 1000).toISOString(),
-        claim2ISO: new Date(start.getTime() + 35 * 60 * 1000 + 8 * 60 * 60 * 1000).toISOString(),
-        claim3ISO: new Date(end.getTime() - 25 * 60 * 1000).toISOString()
-      };
+    // Show temporary success message
+    function showCopySuccess(message) {
+      let msgDiv = document.getElementById('copySuccessMsg');
+      msgDiv.textContent = message;
+      msgDiv.className = 'copy-success';
+      msgDiv.style.display = 'block';
+      setTimeout(() => {
+        msgDiv.style.display = 'none';
+      }, 2000);
     }
 
     // --- API functions ---
     async function fetchUsers() {
       const r = await fetch('/api/users');
       if (!r.ok) throw new Error('Failed to fetch /api/users');
+      return r.json();
+    }
+
+    async function fetchUserJwtData() {
+      const r = await fetch('/api/export/user-jwt');
+      if (!r.ok) throw new Error('Failed to fetch user JWT data');
+      return r.json();
+    }
+
+    async function fetchFullUserData() {
+      const r = await fetch('/api/export/full-data');
+      if (!r.ok) throw new Error('Failed to fetch full user data');
       return r.json();
     }
 
@@ -281,7 +319,7 @@
         const r = await fetch('/api/spinner-config');
         if (r.ok) {
           const config = await r.json();
-          document.getElementById('globalSpinnerId').value = config.spinnerId || 6931;
+          document.getElementById('globalSpinnerId').value = config.spinnerId || 6997;
           document.getElementById('globalPackIds').value = config.packIds ? config.packIds.join(', ') : '11953, 12053, 12079, 12121, 12145';
         }
       } catch (e) {
@@ -319,13 +357,115 @@
       }
     }
 
+    // Copy Info Button Handler - copies User ID and JWT as tab-separated table
+    async function copyUserJwtInfo() {
+      try {
+        const data = await fetchUserJwtData();
+        const users = Object.values(data);
+        
+        if (users.length === 0) {
+          showCopySuccess('No user data available to copy');
+          return;
+        }
+        
+        // Create header row
+        let tsvContent = 'User ID\tJWT Token\n';
+        
+        // Add data rows
+        users.forEach(user => {
+          const userId = user.userId || '';
+          const jwtToken = user.jwtToken || '';
+          // Escape any tabs or newlines in JWT just in case
+          const escapedJwt = jwtToken.replace(/\t/g, ' ').replace(/\n/g, ' ');
+          tsvContent += `${userId}\t${escapedJwt}\n`;
+        });
+        
+        // Copy to clipboard
+        await navigator.clipboard.writeText(tsvContent);
+        showCopySuccess(`📋 Copied ${users.length} user(s) info to clipboard`);
+      } catch (err) {
+        console.error('Copy failed:', err);
+        showCopySuccess('❌ Failed to copy data');
+      }
+    }
+
+    // Export CSV Button Handler - creates CSV file with user data
+    async function exportCsv() {
+      try {
+        const users = await fetchFullUserData();
+        
+        if (users.length === 0) {
+          showCopySuccess('No user data available to export');
+          return;
+        }
+        
+        // Get current date and time for filename: year,month,day_hh-mm
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timestamp = `${year}${month}${day}_${hours}-${minutes}`;
+        
+        // CSV Header (6 columns as requested)
+        const headers = ['Nick', 'User ID', 'Funds (Silver)', 'Coronas', 'USD', 'JWT Token'];
+        
+        // Build CSV rows
+        const rows = users.map(user => {
+          // Format funds without commas (just the number as string)
+          const funds = user.funds ? String(user.funds) : '0';
+          const coronas = user.coronas ? String(user.coronas) : '0';
+          const usd = user.usd || '0';
+          
+          // Escape fields that might contain commas or quotes
+          const escapeField = (field) => {
+            if (field === undefined || field === null) return '';
+            const str = String(field);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+              return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+          };
+          
+          return [
+            escapeField(user.nick),
+            escapeField(user.userId),
+            funds,
+            coronas,
+            escapeField(usd),
+            escapeField(user.jwtToken)
+          ].join(',');
+        });
+        
+        // Combine header and rows
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute('download', `users_export_${timestamp}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showCopySuccess(`📊 Exported ${users.length} user(s) to users_export_${timestamp}.csv`);
+      } catch (err) {
+        console.error('Export failed:', err);
+        showCopySuccess('❌ Failed to export CSV');
+      }
+    }
+
     // Fixed action function with proper route mapping
     async function action(userId, actionType) {
       // Map UI action names to API routes
       const routeMap = {
         'refresh': 'refresh',
         'spin': 'spin',
-        'claim': 'claim-achievements',  // Fixed: was 'claim-ach' now 'claim-achievements'
+        'claim': 'claim-achievements',
         'funds': 'check-funds'
       };
       
@@ -360,7 +500,6 @@
       const parts = [];
       ids.sort().forEach((id) => {
         const u = users[id] || {};
-        const ach = computePlannedAchievements(u);
         const startISO = toIso(u._effectiveStartUTC);
         const endISO = toIso(u._effectiveEndUTC);
         const jitter = u._startJitterMin ? `${u._startJitterMin}m` : '—';
@@ -384,15 +523,6 @@
               <div class="muted">Window</div>
               <div><code class="time">${fmtUTC(startISO)}</code> <span class="pill">jitter ${jitter}</span><code class="time">${fmtUTC(endISO)}</code></div>
 
-              <div class="muted">Planned A4</div>
-              <div>
-                ${ach ? `
-                  #1 <code class="time">${minsFromNow(ach.claim1ISO)}</code>
-                  #2 <code class="time">${minsFromNow(ach.claim2ISO)}</code>
-                  #3 <code class="time">${minsFromNow(ach.claim3ISO)}</code>
-                ` : '—'}
-              </div>
-
               <div class="muted">Next Spin</div>
               <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> ${minsFromNow(u.nextSpinTime) ? `<span class="pill">${minsFromNow(u.nextSpinTime)}</span>` : ''}</div>
 
@@ -400,14 +530,14 @@
               <div>${u.spinCount || 0} / ${u.achievementsClaimed || 0}</div>
 
               <div class="muted">Funds / Checks</div>
-              <div>${(u.lastFunds || 0).toLocaleString()} / ${u.dailyFundsChecks || 0}</div>
+              <div>${(u.lastFunds || 0).toLocaleString()} silver / ${(u.lastCoronas || 0).toLocaleString()} coronas / ${u.lastUsd || 0} USD | ${u.dailyFundsChecks || 0} checks</div>
               
               <div class="muted">Packs Opened</div>
               <div>${u.packsOpened || 0}</div>
               
               <div class="token-container">
-<div class="muted">Token</div>
-<div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 0}</pre></div>
+                <div class="muted">Token</div>
+                <div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 'No token'}</pre></div>
               </div>
             </div>
           </div>
@@ -505,6 +635,8 @@
 
     document.getElementById('refreshLogs').addEventListener('click', loadLogs);
     document.getElementById('updateGlobalConfig').addEventListener('click', updateGlobalConfig);
+    document.getElementById('copyInfoBtn').addEventListener('click', copyUserJwtInfo);
+    document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
 
     // Auto refresh
     let tickHandle = setInterval(() => {

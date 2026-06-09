@@ -90,7 +90,7 @@ let activityLogs = [];
 
 // GLOBAL configuration for all users (not per user)
 let globalSpinnerConfig = {
-    spinnerId: 6931,
+    spinnerId: 6997,
     packIds: [11953, 12053, 12079, 12121, 12145]
 };
 
@@ -107,7 +107,7 @@ async function initializeApp() {
             const savedConfig = await fs.readFile('spinner-config.json', 'utf8');
             const parsed = JSON.parse(savedConfig);
             globalSpinnerConfig = {
-                spinnerId: parsed.spinnerId || 6931,
+                spinnerId: parsed.spinnerId || 6997,
                 packIds: parsed.packIds || [11953, 12053, 12079, 12121, 12145]
             };
             console.log('✅ Loaded saved spinner config:', globalSpinnerConfig);
@@ -183,11 +183,13 @@ async function loadUserConfig() {
                 spinCount: 0,
                 achievementsClaimed: 0,
                 lastFunds: 0,
+                lastCoronas: 0,
+                lastUsd: 0,
                 logs: [],
                 isActive: false,
                 dailyAchievementsDone: false,
                 dailyFundsChecks: 0,
-                packsOpened: 0  // Added missing property
+                packsOpened: 0
             };
         }
         console.log(`✅ Loaded configuration for ${users.length} users`);
@@ -319,10 +321,14 @@ async function checkFunds(userId) {
     
     if (result.success && result.data.data) {
         const silvercoins = result.data.data.silvercoins || 0;
+        const coronas = result.data.data.coronas || 0;
+        const usd = result.data.data.usd || "0";
         user.lastFunds = silvercoins;
+        user.lastCoronas = coronas;
+        user.lastUsd = usd;
         user.dailyFundsChecks = (user.dailyFundsChecks || 0) + 1;
-        logActivity(userId, `💰 Funds: ${silvercoins.toLocaleString()} silvercoins`);
-        return silvercoins;
+        logActivity(userId, `💰 Silver: ${silvercoins.toLocaleString()} | Coronas: ${coronas.toLocaleString()} | USD: ${usd}`);
+        return { silvercoins, coronas, usd };
     } else {
         if (result.status === 401) {
             logActivity(userId, 'JWT expired during funds check, attempting refresh...');
@@ -894,7 +900,7 @@ app.post('/api/spinner-config', async (req, res) => {
     const { spinnerId, packIds } = req.body;
     
     if (spinnerId !== undefined) {
-        globalSpinnerConfig.spinnerId = parseInt(spinnerId) || 6931;
+        globalSpinnerConfig.spinnerId = parseInt(spinnerId) || 6997;
     }
     
     if (packIds !== undefined) {
@@ -917,6 +923,34 @@ app.post('/api/spinner-config', async (req, res) => {
     }
     
     res.json({ success: true, config: globalSpinnerConfig });
+});
+
+// NEW: Get users info for export (User ID + JWT)
+app.get('/api/export/user-jwt', (req, res) => {
+    const exportData = {};
+    for (const [userId, user] of Object.entries(userData)) {
+        exportData[userId] = {
+            userId: userId,
+            jwtToken: user.jwtToken || ''
+        };
+    }
+    res.json(exportData);
+});
+
+// NEW: Get full user data for CSV export
+app.get('/api/export/full-data', (req, res) => {
+    const exportData = [];
+    for (const [userId, user] of Object.entries(userData)) {
+        exportData.push({
+            nick: user.userNick || '',
+            userId: userId,
+            funds: user.lastFunds || 0,
+            coronas: user.lastCoronas || 0,
+            usd: user.lastUsd || '0',
+            jwtToken: user.jwtToken || ''
+        });
+    }
+    res.json(exportData);
 });
 
 // Manual trigger endpoints (for testing) - FIXED: Proper endpoints
