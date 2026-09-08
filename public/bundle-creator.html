@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bundle Creator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        /* Navigation styles - kept for fallback */
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .container {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .input-section {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        input, textarea, button, select {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            padding: 14px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .button-stop {
+            background-color: #e74c3c;
+        }
+        .button-stop:hover {
+            background-color: #c0392b;
+        }
+        .dual-panel {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .panel {
+            flex: 1;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-button {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 6px 6px 0 0;
+            width: auto;
+        }
+        .tab-button.active {
+            background: white;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .tab {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab.active {
+            display: block;
+        }
+        .progress-container {
+            margin: 20px 0;
+            width: 100%;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 24px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #2ecc71;
+            width: 0%;
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .log-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .log-success {
+            color: #27ae60;
+        }
+        .log-error {
+            color: #e74c3c;
+        }
+        .log-info {
+            color: #3498db;
+        }
+        .log-warning {
+            color: #f39c12;
+        }
+        .bundle-list {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+        }
+        .bundle-item {
+            padding: 10px;
+            margin: 8px 0;
+            background-color: white;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+        }
+        .status-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+        }
+        .bundle-id-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed #3498db;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .control-buttons button {
+            flex: 1;
+        }
+        .notification {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .notification-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #a3e4c3;
+        }
+        .notification-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #f5b7b1;
+        }
+        .textarea-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .count-badge {
+            background-color: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: normal;
+        }
+        .match-status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .match-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+        }
+        .match-warning {
+            background-color: #fef9e7;
+            color: #f39c12;
+        }
+        small {
+            display: block;
+            margin-top: 5px;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here by nav-loader.js -->
+    <!-- The old nav-bar div has been removed -->
+
+    <h1>Bundle Creator</h1>
+    
+    <div class="container">
+        <h2>Configuration</h2>
+        
+        <div class="input-section">
+            <label for="jwtToken">JWT Token:</label>
+            <input type="text" id="jwtToken" placeholder="Enter your JWT token here" />
+        </div>
+        
+        <div class="input-section">
+            <label>Input Method:</label>
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="switchTab('paste')">Paste Data</button>
+                <button class="tab-button" onclick="switchTab('file')">Upload File</button>
+            </div>
+            
+            <div id="paste-tab" class="tab active">
+                <div class="dual-panel">
+                    <div class="panel">
+                        <div class="textarea-label">
+                            <label for="cardIdsTextarea">Card IDs (one line per bundle, comma separated):</label>
+                            <span id="cardLinesCount" class="count-badge">0 lines</span>
+                        </div>
+                        <textarea id="cardIdsTextarea" rows="12" placeholder="Enter card IDs here, one line per bundle, comma separated. Example:
+10425282,10673788,10425602,10543210
+10987654,10876543,10765432
+..."></textarea>
+                        <small>Each line represents one bundle. Max 125 card IDs per line.</small>
+                    </div>
+                    
+                    <div class="panel">
+                        <div class="textarea-label">
+                            <label for="bundleNamesTextarea">Bundle Names (one per line, corresponding to card rows):</label>
+                            <span id="bundleNamesCount" class="count-badge">0 names</span>
+                        </div>
+                        <textarea id="bundleNamesTextarea" rows="12" placeholder="Enter bundle names here, one per line. Each name corresponds to the card IDs on the same line.
+Example:
+Core Supperior V1
+Core Supperior V2
+Core Supperior V3
+..."></textarea>
+                        <small>Each line should match with the corresponding card IDs line. If fewer names are provided, the last name will be repeated.</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="file-tab" class="tab">
+                <div class="dual-panel">
+                    <div class="panel">
+                        <label for="cardIdsFile">Upload Card IDs File:</label>
+                        <input type="file" id="cardIdsFile" accept=".txt,.csv" />
+                        <small>File should contain one line per bundle, with comma-separated card IDs</small>
+                    </div>
+                    
+                    <div class="panel">
+                        <label for="bundleNamesFile">Upload Bundle Names File:</label>
+                        <input type="file" id="bundleNamesFile" accept=".txt,.csv" />
+                        <small>File should contain one bundle name per line</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="matchStatus" class="match-status match-success" style="display: none;"></div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalBundles">0</div>
+                <div class="stat-label">Bundles to Create</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completedBundles">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="failedBundles">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalCards">0</div>
+                <div class="stat-label">Total Cards</div>
+            </div>
+        </div>
+        
+        <div class="control-buttons">
+            <button id="startButton">Start Creating Bundles</button>
+            <button id="pauseButton" style="display: none;">Pause</button>
+            <button id="getBundlesButton">Get All Bundles</button>
+        </div>
+        
+        <div class="progress-container" style="display: none;" id="progressContainer">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        
+        <div id="notification" class="notification"></div>
+    </div>
+    
+    <div class="container">
+        <h2>Progress Log</h2>
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">Ready to start. Configure your JWT token and data.</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h2>Created Bundles</h2>
+        <div id="bundlesList"></div>
+        
+        <div style="margin-top: 20px;">
+            <h3>Bundle IDs (one per line):</h3>
+            <div class="bundle-id-list" id="bundleIdList">No bundles created yet</div>
+        </div>
+    </div>
+
+<script src="/nav-loader.js"></script>
+<script>
+    // Configuration
+    const CREATE_DELAY = 2000; // 2 seconds delay between bundle creation
+    
+    // State variables
+    let jwtToken = "";
+    let cardLines = [];
+    let bundleNames = [];
+    let isProcessing = false;
+    let stopProcessing = false;
+    let isPaused = false;
+    let createdBundles = [];
+    let currentBundleIndex = 0;
+    let totalBundles = 0;
+    let completedBundles = 0;
+    let failedBundles = 0;
+    let totalCards = 0;
+    
+    // DOM Elements
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const getBundlesButton = document.getElementById('getBundlesButton');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const logContainer = document.getElementById('logContainer');
+    const bundlesList = document.getElementById('bundlesList');
+    const bundleIdList = document.getElementById('bundleIdList');
+    const notification = document.getElementById('notification');
+    const matchStatus = document.getElementById('matchStatus');
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Note: Server health check is now handled by nav-loader.js
+        
+        startButton.addEventListener('click', startProcessing);
+        pauseButton.addEventListener('click', togglePause);
+        getBundlesButton.addEventListener('click', getAllBundles);
+        
+        // Update stats when inputs change
+        document.getElementById('cardIdsTextarea').addEventListener('input', updateStats);
+        document.getElementById('bundleNamesTextarea').addEventListener('input', updateStats);
+        document.getElementById('cardIdsFile').addEventListener('change', handleCardFileUpload);
+        document.getElementById('bundleNamesFile').addEventListener('change', handleBundleNamesFileUpload);
+        document.getElementById('jwtToken').addEventListener('input', function() {
+            jwtToken = this.value.trim();
+        });
+        
+        // Initial JWT token value
+        jwtToken = document.getElementById('jwtToken').value.trim();
+        
+        updateStats();
+    });
+    
+    function switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        document.querySelector(`.tab-button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabName + '-tab').classList.add('active');
+        
+        // Update stats based on new input method
+        updateStats();
+    }
+    
+    async function handleCardFileUpload() {
+        const file = document.getElementById('cardIdsFile').files[0];
+        if (!file) return;
+        
+        try {
+            const text = await readFileAsText(file);
+            document.getElementById('cardIdsTextarea').value = text;
+            updateStats();
+            showNotification('Card IDs file loaded successfully!', 'success');
+        } catch (error) {
+            showNotification(`Error reading file: ${error.message}`, 'error');
+        }
+    }
+    
+    async function handleBundleNamesFileUpload() {
+        const file = document.getElementById('bundleNamesFile').files[0];
+        if (!file) return;
+        
+        try {
+            const text = await readFileAsText(file);
+            document.getElementById('bundleNamesTextarea').value = text;
+            updateStats();
+            showNotification('Bundle names file loaded successfully!', 'success');
+        } catch (error) {
+            showNotification(`Error reading file: ${error.message}`, 'error');
+        }
+    }
+    
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = event => resolve(event.target.result);
+            reader.onerror = error => reject(error);
+            reader.readAsText(file);
+        });
+    }
+    
+    function updateStats() {
+        // Get card IDs from textarea
+        const cardText = document.getElementById('cardIdsTextarea').value.trim();
+        
+        if (!cardText) {
+            cardLines = [];
+        } else {
+            cardLines = cardText.split('\n')
+                .filter(line => line.trim() !== '')
+                .map(line => line.split(',').map(id => id.trim()).filter(id => id !== ''));
+        }
+        
+        // Get bundle names from textarea
+        const namesText = document.getElementById('bundleNamesTextarea').value.trim();
+        
+        if (!namesText) {
+            bundleNames = [];
+        } else {
+            bundleNames = namesText.split('\n')
+                .filter(name => name.trim() !== '')
+                .map(name => name.trim());
+        }
+        
+        totalBundles = cardLines.length;
+        completedBundles = 0;
+        failedBundles = 0;
+        totalCards = cardLines.reduce((sum, line) => sum + line.length, 0);
+        
+        // Update UI
+        document.getElementById('totalBundles').textContent = totalBundles;
+        document.getElementById('completedBundles').textContent = completedBundles;
+        document.getElementById('failedBundles').textContent = failedBundles;
+        document.getElementById('totalCards').textContent = totalCards;
+        
+        // Update line counts
+        document.getElementById('cardLinesCount').textContent = `${cardLines.length} lines`;
+        document.getElementById('bundleNamesCount').textContent = `${bundleNames.length} names`;
+        
+        // Show match status
+        if (totalBundles > 0) {
+            if (bundleNames.length === 0) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = '⚠️ No bundle names provided. Please enter bundle names.';
+            } else if (bundleNames.length < totalBundles) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = `⚠️ Only ${bundleNames.length} bundle name(s) provided for ${totalBundles} bundle(s). The last name "${bundleNames[bundleNames.length-1] || 'N/A'}" will be repeated for remaining bundles.`;
+            } else if (bundleNames.length > totalBundles) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = `⚠️ ${bundleNames.length} bundle names provided but only ${totalBundles} bundle(s) to create. Extra names will be ignored.`;
+            } else {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-success';
+                matchStatus.innerHTML = '✅ Perfect match! Number of bundle names matches number of bundles.';
+            }
+        } else {
+            matchStatus.style.display = 'none';
+        }
+    }
+    
+    function getBundleNameForIndex(index) {
+        if (bundleNames.length === 0) {
+            return 'Unnamed Bundle';
+        } else if (index < bundleNames.length) {
+            return bundleNames[index];
+        } else {
+            return bundleNames[bundleNames.length - 1];
+        }
+    }
+    
+    // Helper function to send requests through proxy (updated for Render.com)
+    async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+        try {
+            const response = await fetch('/proxy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    endpoint: endpoint,
+                    method: method,
+                    headers: headers,
+                    data: data,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Proxy request failed:', error);
+            throw error;
+        }
+    }
+    
+    async function startProcessing() {
+        if (isProcessing) {
+            // Stop processing if already running
+            stopProcessing = true;
+            startButton.textContent = 'Start Creating Bundles';
+            pauseButton.style.display = 'none';
+            addLog('Processing stopped by user', 'info');
+            return;
+        }
+        
+        // Validate inputs
+        jwtToken = document.getElementById('jwtToken').value.trim();
+        if (!jwtToken) {
+            showNotification('Please enter a JWT token', 'error');
+            return;
+        }
+        
+        updateStats();
+        
+        if (totalBundles === 0) {
+            showNotification('No card IDs found. Please enter card IDs.', 'error');
+            return;
+        }
+        
+        if (bundleNames.length === 0) {
+            showNotification('Please enter at least one bundle name', 'error');
+            return;
+        }
+        
+        // Check for lines with more than 125 cards
+        const linesWithTooManyCards = cardLines.filter(line => line.length > 125);
+        if (linesWithTooManyCards.length > 0) {
+            addLog(`Warning: ${linesWithTooManyCards.length} line(s) have more than 125 card IDs. These will be truncated to 125 cards.`, 'warning');
+        }
+        
+        // Reset state
+        isProcessing = true;
+        stopProcessing = false;
+        isPaused = false;
+        currentBundleIndex = 0;
+        createdBundles = [];
+        completedBundles = 0;
+        failedBundles = 0;
+        
+        // Update UI
+        startButton.textContent = 'Stop Processing';
+        startButton.classList.add('button-stop');
+        pauseButton.style.display = 'inline-block';
+        pauseButton.textContent = 'Pause';
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        progressBar.textContent = '0%';
+        
+        bundlesList.innerHTML = '';
+        bundleIdList.textContent = 'Processing...';
+        addLog(`Starting to process ${totalBundles} bundles with ${totalCards} total cards`, 'info');
+        addLog(`Bundle names: ${bundleNames.length} name(s) provided`, 'info');
+        
+        if (bundleNames.length < totalBundles) {
+            addLog(`Note: Only ${bundleNames.length} name(s) provided. Last name "${bundleNames[bundleNames.length-1]}" will be repeated for remaining bundles.`, 'warning');
+        }
+        
+        // Process each bundle
+        for (let i = 0; i < totalBundles && !stopProcessing; i++) {
+            currentBundleIndex = i;
+            
+            // Check if paused
+            while (isPaused && !stopProcessing) {
+                await sleep(500);
+            }
+            
+            if (stopProcessing) break;
+            
+            // Get card IDs for this bundle (max 125)
+            const cardIds = cardLines[i].slice(0, 125);
+            const bundleNumber = i + 1;
+            const currentBundleName = getBundleNameForIndex(i);
+            
+            addLog(`Creating bundle ${bundleNumber}/${totalBundles}: "${currentBundleName}" with ${cardIds.length} cards...`, 'info');
+            
+            try {
+                // Create bundle with cards included directly
+                const bundleId = await createBundleWithCards(currentBundleName, cardIds);
+                
+                if (bundleId) {
+                    // Record successful bundle
+                    createdBundles.push({
+                        id: bundleId,
+                        name: currentBundleName,
+                        cardCount: cardIds.length,
+                        status: 'success'
+                    });
+                    
+                    completedBundles++;
+                    addLog(`✓ Bundle ${bundleNumber} "${currentBundleName}" created successfully (ID: ${bundleId}) with ${cardIds.length} cards`, 'success');
+                } else {
+                    failedBundles++;
+                    addLog(`✗ Failed to create bundle ${bundleNumber} "${currentBundleName}"`, 'error');
+                }
+            } catch (error) {
+                failedBundles++;
+                addLog(`✗ Error creating bundle ${bundleNumber} "${currentBundleName}": ${error.message}`, 'error');
+                console.error('Error details:', error);
+            }
+            
+            // Update progress
+            const progressPercent = ((i + 1) / totalBundles) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            progressBar.textContent = `${Math.round(progressPercent)}%`;
+            
+            document.getElementById('completedBundles').textContent = completedBundles;
+            document.getElementById('failedBundles').textContent = failedBundles;
+            
+            // Delay before next bundle (unless it's the last one or we're stopping)
+            if (i < totalBundles - 1 && !stopProcessing) {
+                addLog(`Waiting ${CREATE_DELAY/1000} seconds before next bundle...`, 'info');
+                await sleep(CREATE_DELAY);
+            }
+        }
+        
+        // Processing complete
+        isProcessing = false;
+        stopProcessing = false;
+        
+        // Update UI
+        startButton.textContent = 'Start Creating Bundles';
+        startButton.classList.remove('button-stop');
+        pauseButton.style.display = 'none';
+        
+        addLog(`Processing complete. Created ${completedBundles} bundles, ${failedBundles} failed`, 'info');
+        
+        // Update bundle list display
+        updateBundleList();
+        
+        // Get all bundles to verify
+        await getAllBundles();
+    }
+    
+    function togglePause() {
+        isPaused = !isPaused;
+        pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+        addLog(isPaused ? 'Processing paused' : 'Processing resumed', 'info');
+    }
+    
+    async function createBundleWithCards(bundleName, cardIds) {
+        const endpoint = '/bundles/create';
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': jwtToken
+        };
+        
+        // Convert cardIds to numbers and ensure they're valid
+        const numericCardIds = cardIds
+            .map(id => {
+                const num = parseInt(id, 10);
+                return isNaN(num) ? null : num;
+            })
+            .filter(id => id !== null);
+        
+        const body = {
+            name: bundleName,
+            description: "",
+            cardIds: numericCardIds
+        };
+        
+        console.log('Sending request to create bundle:', { endpoint, headers, body });
+        
+        try {
+            const response = await sendProxyRequest(endpoint, 'POST', headers, body);
+            console.log('Create bundle response:', response);
+            
+            // Check for nested response structure
+            if (response && response.success === true) {
+                // Check both possible response structures
+                if (response.data && response.data.id) {
+                    // Direct structure: response.data.id
+                    return response.data.id;
+                } else if (response.data && response.data.data && response.data.data.id) {
+                    // Nested structure: response.data.data.id
+                    return response.data.data.id;
+                } else {
+                    // Try to extract more detailed error info
+                    const errorMsg = response.data?.error || 
+                                    response.data?.message || 
+                                    'Failed to create bundle (no bundle ID in response)';
+                    throw new Error(errorMsg);
+                }
+            } else {
+                // Try to extract more detailed error info
+                const errorMsg = response?.error || 
+                                response?.details?.message || 
+                                response?.details?.error ||
+                                'Failed to create bundle';
+                throw new Error(errorMsg);
+            }
+        } catch (error) {
+            console.error('Error in createBundleWithCards:', error);
+            throw error;
+        }
+    }
+    
+    async function getAllBundles() {
+        if (!jwtToken) {
+            showNotification('Please enter a JWT token first', 'error');
+            return;
+        }
+        
+        const endpoint = '/bundles';
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': jwtToken
+        };
+        
+        addLog('Fetching all bundles...', 'info');
+        
+        try {
+            const response = await sendProxyRequest(endpoint, 'GET', headers);
+            
+            // Check for both response structures
+            if (response && response.success === true) {
+                let bundlesData;
+                
+                // Check both possible structures
+                if (response.data && response.data.bundles) {
+                    // Direct structure: response.data.bundles
+                    bundlesData = response.data.bundles;
+                } else if (response.data && response.data.data && response.data.data.bundles) {
+                    // Nested structure: response.data.data.bundles
+                    bundlesData = response.data.data.bundles;
+                } else {
+                    throw new Error('Invalid response format - no bundles found');
+                }
+                
+                addLog(`Found ${bundlesData.length} total bundles in account`, 'success');
+                
+                // Display all bundles
+                displayAllBundles(bundlesData);
+                
+                return bundlesData;
+            } else {
+                const errorMsg = response?.error || 
+                                response?.details?.message || 
+                                response?.details?.error ||
+                                'Failed to get bundles';
+                throw new Error(errorMsg);
+            }
+        } catch (error) {
+            addLog(`Error fetching bundles: ${error.message}`, 'error');
+            console.error('Error details:', error);
+            return [];
+        }
+    }
+    
+    function displayAllBundles(bundles) {
+        if (!bundles || bundles.length === 0) {
+            bundlesList.innerHTML = '<p>No bundles found in account.</p>';
+            return;
+        }
+        
+        // Sort by creation date (newest first)
+        bundles.sort((a, b) => new Date(b.created) - new Date(a.created));
+        
+        let html = '<h3>All Bundles in Account</h3>';
+        
+        bundles.forEach(bundle => {
+            const createdDate = new Date(bundle.created).toLocaleString();
+            const cardCount = bundle.entityCount || bundle.cards?.length || 0;
+            
+            html += `
+                <div class="bundle-item">
+                    <strong>${bundle.name}</strong> (ID: ${bundle.id})
+                    <span class="status-badge status-success">${cardCount} cards</span>
+                    <div><small>Created: ${createdDate}</small></div>
+                    <div><small>Status: ${bundle.status || 'available'}</small></div>
+                </div>
+            `;
+        });
+        
+        bundlesList.innerHTML = html;
+    }
+    
+    function updateBundleList() {
+        if (createdBundles.length === 0) {
+            bundleIdList.textContent = 'No bundles created yet';
+            return;
+        }
+        
+        // Create a list of bundle IDs - one per line
+        const bundleIds = createdBundles
+            .filter(bundle => bundle.status === 'success')
+            .map(bundle => bundle.id)
+            .join('\n');
+        
+        bundleIdList.textContent = bundleIds || 'No successful bundles';
+        
+        // Also create a more detailed display
+        let html = '<h3>Created Bundles</h3>';
+        
+        if (createdBundles.length === 0) {
+            html += '<p>No bundles created yet.</p>';
+        } else {
+            createdBundles.forEach(bundle => {
+                const statusClass = bundle.status === 'success' ? 'status-success' : 'status-error';
+                const statusText = bundle.status === 'success' ? 'Success' : 'Failed';
+                
+                html += `
+                    <div class="bundle-item">
+                        <strong>${bundle.name}</strong> (ID: ${bundle.id})
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <span class="status-badge">${bundle.cardCount} cards</span>
+                    </div>
+                `;
+            });
+        }
+        
+        // Update the display
+        const createdBundlesContainer = document.getElementById('bundlesList');
+        createdBundlesContainer.innerHTML = html;
+    }
+    
+    function addLog(message, type = 'info') {
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        
+        logContainer.appendChild(logEntry);
+        
+        // Auto-scroll to bottom
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    function showNotification(message, type = 'info') {
+        notification.textContent = message;
+        notification.className = `notification notification-${type}`;
+        notification.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+    
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+</script>
+</body>
+</html>

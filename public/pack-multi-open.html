@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Account Pack Opener</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        /* Navigation styles - kept for fallback */
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.secondary {
+            background-color: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        button.warning {
+            background-color: #ff9800;
+        }
+        
+        button.warning:hover {
+            background-color: #e68a00;
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        button.danger:hover {
+            background-color: #da190b;
+        }
+        
+        .button-group {
+            margin: 20px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .progress-container {
+            margin: 15px 0;
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .stats-summary {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        .stats-summary .stat-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .stats-summary .stat-box .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stats-summary .stat-box .label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .log-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .log-success {
+            color: #27ae60;
+        }
+        
+        .log-error {
+            color: #e74c3c;
+        }
+        
+        .log-info {
+            color: #3498db;
+        }
+        
+        .log-warning {
+            color: #f39c12;
+        }
+        
+        .notification {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .notification-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #a3e4c3;
+        }
+        
+        .notification-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #f5b7b1;
+        }
+        
+        .notification-info {
+            background-color: #d6eaf8;
+            color: #2980b9;
+            border: 1px solid #aed6f1;
+        }
+        
+        .results-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .result-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background-color: #f9f9f9;
+            border-left: 3px solid #4CAF50;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+        
+        .result-item.error {
+            border-left-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+        
+        .result-item .pack-id {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .result-item .mint-numbers {
+            color: #27ae60;
+        }
+        
+        .result-item .jwt-label {
+            color: #7f8c8d;
+            font-size: 11px;
+        }
+        
+        .match-status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        
+        .match-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+        }
+        
+        .match-warning {
+            background-color: #fef9e7;
+            color: #f39c12;
+        }
+        
+        .match-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+        }
+        
+        .small-note {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .delay-info {
+            background-color: #e8f4fd;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            text-align: center;
+            color: #2980b9;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here by nav-loader.js -->
+
+    <div class="container">
+        <h1>Multi-Account Pack Opener</h1>
+        
+        <!-- Delay Input -->
+        <div class="input-group">
+            <label for="delayInput">Delay Between Pack Openings (ms):</label>
+            <input type="number" id="delayInput" min="100" value="2000" />
+            <div class="small-note">Minimum recommended: 1500ms to avoid rate limiting</div>
+        </div>
+        
+        <!-- JWT Input -->
+        <div class="input-group">
+            <label for="jwtInput">JWT Tokens (one per line):</label>
+            <textarea id="jwtInput" rows="3" placeholder="Paste your JWT tokens here, one per line"></textarea>
+            <div class="small-note">Each JWT must have a corresponding line in the Pack IDs field below</div>
+        </div>
+        
+        <!-- Pack IDs Input -->
+        <div class="input-group">
+            <label for="packIdsInput">Pack IDs (comma-separated, one line per JWT):</label>
+            <textarea id="packIdsInput" rows="3" placeholder="Enter pack IDs, comma-separated, one line per JWT. Example:
+12345,12346,12347
+23456,23457
+34567,34568,34569,34570"></textarea>
+            <div class="small-note">Each line corresponds to the JWT on the same line. Number of IDs can vary per JWT.</div>
+        </div>
+        
+        <!-- Match Status -->
+        <div id="matchStatus" class="match-status match-success" style="display: none;"></div>
+        
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button id="openBtn" class="warning">Start Opening Packs</button>
+            <button id="stopBtn" class="danger" style="display: none;">Stop</button>
+            <button id="clearBtn" class="secondary">Clear Results</button>
+        </div>
+        
+        <!-- Progress -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <!-- Notification -->
+        <div id="notification" class="notification"></div>
+        
+        <!-- Stats Summary -->
+        <div id="statsSummary" class="stats-summary" style="display: none;">
+            <div class="stat-box">
+                <div class="number" id="totalAccounts">0</div>
+                <div class="label">Accounts</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalPacks">0</div>
+                <div class="label">Total Packs to Open</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="openedPacks">0</div>
+                <div class="label">Opened</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="failedPacks">0</div>
+                <div class="label">Failed</div>
+            </div>
+        </div>
+        
+        <!-- Results -->
+        <div id="resultsContainer" style="display: none;">
+            <h2>Opening Results</h2>
+            <div class="results-container" id="resultsBody"></div>
+        </div>
+        
+        <!-- Log -->
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">Ready. Enter JWT tokens, pack IDs, and click "Start Opening Packs".</div>
+        </div>
+    </div>
+
+    <script src="/nav-loader.js"></script>
+    <script>
+        // Configuration
+        let OPEN_DELAY = 2000; // Default 2 seconds
+        
+        // State
+        let isOpening = false;
+        let stopOpening = false;
+        let totalPacksToOpen = 0;
+        let openedPacks = 0;
+        let failedPacks = 0;
+        let results = [];
+        
+        // DOM Elements
+        const jwtInput = document.getElementById('jwtInput');
+        const packIdsInput = document.getElementById('packIdsInput');
+        const delayInput = document.getElementById('delayInput');
+        const openBtn = document.getElementById('openBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const notification = document.getElementById('notification');
+        const resultsBody = document.getElementById('resultsBody');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const logContainer = document.getElementById('logContainer');
+        const matchStatus = document.getElementById('matchStatus');
+        const totalAccounts = document.getElementById('totalAccounts');
+        const totalPacks = document.getElementById('totalPacks');
+        const openedPacksEl = document.getElementById('openedPacks');
+        const failedPacksEl = document.getElementById('failedPacks');
+        const statsSummary = document.getElementById('statsSummary');
+        
+        // Helper function to send requests through proxy
+        async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+            try {
+                const response = await fetch('/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        endpoint: endpoint,
+                        method: method,
+                        headers: headers,
+                        data: data,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Proxy request failed:', error);
+                throw error;
+            }
+        }
+        
+        // Open a single pack
+        async function openPack(authToken, packId) {
+            const endpoint = '/packs/open2';
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-user-jwt': authToken
+            };
+            
+            const data = {
+                categoryId: 1,
+                packId: packId
+            };
+            
+            return await sendProxyRequest(endpoint, 'POST', headers, data);
+        }
+        
+        // Format mint numbers from pack opening result
+        function formatMintNumbers(result) {
+            if (result.success && result.data && result.data.cards) {
+                const cards = result.data.cards;
+                return cards.map(card => `A${card.mintNumber}`).join(', ');
+            }
+            return 'No cards found';
+        }
+        
+        // Add log entry
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            notification.className = `notification notification-${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Update progress
+        function updateProgress() {
+            const total = totalPacksToOpen || 1;
+            const processed = openedPacks + failedPacks;
+            const percent = Math.min((processed / total) * 100, 100);
+            progressBar.style.width = `${percent}%`;
+            
+            openedPacksEl.textContent = openedPacks;
+            failedPacksEl.textContent = failedPacks;
+        }
+        
+        // Update stats
+        function updateStats() {
+            totalAccounts.textContent = results.length;
+            totalPacks.textContent = totalPacksToOpen;
+            openedPacksEl.textContent = openedPacks;
+            failedPacksEl.textContent = failedPacks;
+            
+            if (results.length > 0 || totalPacksToOpen > 0) {
+                statsSummary.style.display = 'flex';
+            } else {
+                statsSummary.style.display = 'none';
+            }
+        }
+        
+        // Add result to display
+        function addResult(packId, jwtIndex, success, mintNumbers, error) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result-item${success ? '' : ' error'}`;
+            
+            let html = `<span class="jwt-label">[JWT ${jwtIndex + 1}]</span> `;
+            html += `<span class="pack-id">Pack #${packId}</span>`;
+            
+            if (success) {
+                html += ` → <span class="mint-numbers">${mintNumbers}</span>`;
+            } else {
+                html += ` → ❌ Error: ${error}`;
+            }
+            
+            resultDiv.innerHTML = html;
+            resultsBody.appendChild(resultDiv);
+            resultsBody.scrollTop = resultsBody.scrollHeight;
+        }
+        
+        // Validate inputs
+        function validateInputs() {
+            const jwtText = jwtInput.value.trim();
+            const packText = packIdsInput.value.trim();
+            
+            if (!jwtText) {
+                showNotification('Please enter at least one JWT token', 'error');
+                return false;
+            }
+            
+            if (!packText) {
+                showNotification('Please enter pack IDs', 'error');
+                return false;
+            }
+            
+            const jwtList = jwtText.split('\n').filter(line => line.trim() !== '');
+            const packList = packText.split('\n').filter(line => line.trim() !== '');
+            
+            if (jwtList.length !== packList.length) {
+                showNotification(`Number of JWT tokens (${jwtList.length}) must match number of pack ID lines (${packList.length})`, 'error');
+                return false;
+            }
+            
+            // Check each line for valid pack IDs
+            for (let i = 0; i < packList.length; i++) {
+                const ids = packList[i].split(',').map(id => id.trim()).filter(id => id !== '');
+                if (ids.length === 0) {
+                    showNotification(`Line ${i + 1} has no valid pack IDs`, 'error');
+                    return false;
+                }
+                // Check if all IDs are numbers
+                for (const id of ids) {
+                    if (isNaN(parseInt(id))) {
+                        showNotification(`Invalid pack ID "${id}" on line ${i + 1}`, 'error');
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+        
+        // Main open function
+        async function startOpening() {
+            if (isOpening) {
+                // Stop if already running
+                stopOpening = true;
+                openBtn.textContent = 'Stopping...';
+                openBtn.disabled = true;
+                return;
+            }
+            
+            // Validate inputs
+            if (!validateInputs()) {
+                return;
+            }
+            
+            // Get delay
+            OPEN_DELAY = parseInt(delayInput.value) || 2000;
+            if (OPEN_DELAY < 500) {
+                showNotification('Delay too low. Using minimum 500ms.', 'warning');
+                OPEN_DELAY = 500;
+            }
+            
+            // Parse inputs
+            const jwtList = jwtInput.value.trim().split('\n').filter(line => line.trim() !== '');
+            const packList = packIdsInput.value.trim().split('\n').filter(line => line.trim() !== '');
+            
+            // Parse pack IDs
+            const allPackIds = packList.map(line => {
+                return line.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            });
+            
+            // Calculate total packs
+            totalPacksToOpen = allPackIds.reduce((sum, ids) => sum + ids.length, 0);
+            
+            // Reset state
+            isOpening = true;
+            stopOpening = false;
+            openedPacks = 0;
+            failedPacks = 0;
+            results = [];
+            
+            // Update UI
+            openBtn.textContent = 'Stop';
+            openBtn.classList.remove('warning');
+            openBtn.classList.add('danger');
+            stopBtn.style.display = 'inline-block';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            resultsBody.innerHTML = '';
+            resultsContainer.style.display = 'block';
+            matchStatus.style.display = 'none';
+            
+            updateStats();
+            
+            addLog(`Starting pack opening for ${jwtList.length} account(s), ${totalPacksToOpen} total packs`, 'info');
+            addLog(`Delay between openings: ${OPEN_DELAY}ms`, 'info');
+            
+            let processedCount = 0;
+            
+            // Process each JWT
+            for (let jwtIndex = 0; jwtIndex < jwtList.length && !stopOpening; jwtIndex++) {
+                const jwt = jwtList[jwtIndex];
+                const packIds = allPackIds[jwtIndex] || [];
+                
+                if (packIds.length === 0) {
+                    addLog(`JWT ${jwtIndex + 1}: No pack IDs to open`, 'warning');
+                    continue;
+                }
+                
+                const displayJwt = jwt.length > 30 ? jwt.substring(0, 27) + '...' : jwt;
+                addLog(`Processing JWT ${jwtIndex + 1}/${jwtList.length}: ${displayJwt} (${packIds.length} packs)`, 'info');
+                
+                // Open each pack for this JWT
+                for (let i = 0; i < packIds.length && !stopOpening; i++) {
+                    const packId = packIds[i];
+                    const packNumber = i + 1;
+                    const totalForJwt = packIds.length;
+                    
+                    addLog(`  Opening pack ${packNumber}/${totalForJwt} (ID: ${packId}) for JWT ${jwtIndex + 1}...`, 'info');
+                    
+                    try {
+                        const result = await openPack(jwt, packId);
+                        
+                        if (result.success) {
+                            const mintNumbers = formatMintNumbers(result);
+                            openedPacks++;
+                            addLog(`  ✓ Pack ${packId} opened successfully: ${mintNumbers}`, 'success');
+                            addResult(packId, jwtIndex, true, mintNumbers);
+                        } else {
+                            const errorMsg = result.error || 'Unknown error';
+                            failedPacks++;
+                            addLog(`  ✗ Pack ${packId} failed: ${errorMsg}`, 'error');
+                            addResult(packId, jwtIndex, false, null, errorMsg);
+                        }
+                    } catch (error) {
+                        failedPacks++;
+                        addLog(`  ✗ Pack ${packId} error: ${error.message}`, 'error');
+                        addResult(packId, jwtIndex, false, null, error.message);
+                    }
+                    
+                    processedCount++;
+                    updateProgress();
+                    updateStats();
+                    
+                    // Delay between packs (unless it's the last one or we're stopping)
+                    if (i < packIds.length - 1 && !stopOpening) {
+                        await sleep(OPEN_DELAY);
+                    }
+                }
+                
+                // Add a small delay between JWTs
+                if (jwtIndex < jwtList.length - 1 && !stopOpening) {
+                    addLog(`Waiting 1 second before next account...`, 'info');
+                    await sleep(1000);
+                }
+            }
+            
+            // Complete
+            isOpening = false;
+            openBtn.textContent = 'Start Opening Packs';
+            openBtn.classList.remove('danger');
+            openBtn.classList.add('warning');
+            openBtn.disabled = false;
+            stopBtn.style.display = 'none';
+            
+            if (stopOpening) {
+                addLog(`Stopped by user. Opened ${openedPacks} packs, ${failedPacks} failed.`, 'warning');
+                showNotification(`Stopped. ${openedPacks} opened, ${failedPacks} failed.`, 'info');
+            } else {
+                addLog(`Complete! Opened ${openedPacks} packs, ${failedPacks} failed.`, 'success');
+                showNotification(`Complete! ${openedPacks} opened, ${failedPacks} failed.`, 'success');
+            }
+            
+            progressContainer.style.display = 'none';
+            updateStats();
+            
+            // Show match status summary
+            if (failedPacks === 0 && totalPacksToOpen > 0) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-success';
+                matchStatus.innerHTML = `✅ All ${totalPacksToOpen} packs opened successfully!`;
+            } else if (failedPacks > 0) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = `⚠️ ${failedPacks} pack(s) failed out of ${totalPacksToOpen}. Check logs for details.`;
+            }
+        }
+        
+        // Stop opening
+        function stopOpeningPacks() {
+            if (isOpening) {
+                stopOpening = true;
+                stopBtn.textContent = 'Stopping...';
+                stopBtn.disabled = true;
+            }
+        }
+        
+        // Clear results
+        function clearResults() {
+            if (isOpening) {
+                showNotification('Cannot clear while opening packs', 'error');
+                return;
+            }
+            
+            resultsBody.innerHTML = '';
+            resultsContainer.style.display = 'none';
+            statsSummary.style.display = 'none';
+            matchStatus.style.display = 'none';
+            openedPacks = 0;
+            failedPacks = 0;
+            totalPacksToOpen = 0;
+            logContainer.innerHTML = '';
+            addLog('Results cleared', 'info');
+            showNotification('Results cleared', 'info');
+        }
+        
+        // Sleep helper
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            openBtn.addEventListener('click', startOpening);
+            stopBtn.addEventListener('click', stopOpeningPacks);
+            clearBtn.addEventListener('click', clearResults);
+            
+            // Validate match when inputs change
+            jwtInput.addEventListener('input', checkMatch);
+            packIdsInput.addEventListener('input', checkMatch);
+        });
+        
+        // Check if JWT count matches pack ID line count
+        function checkMatch() {
+            const jwtText = jwtInput.value.trim();
+            const packText = packIdsInput.value.trim();
+            
+            if (!jwtText || !packText) {
+                matchStatus.style.display = 'none';
+                return;
+            }
+            
+            const jwtList = jwtText.split('\n').filter(line => line.trim() !== '');
+            const packList = packText.split('\n').filter(line => line.trim() !== '');
+            
+            if (jwtList.length === 0 || packList.length === 0) {
+                matchStatus.style.display = 'none';
+                return;
+            }
+            
+            if (jwtList.length !== packList.length) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-error';
+                matchStatus.innerHTML = `❌ Mismatch: ${jwtList.length} JWT(s) but ${packList.length} pack ID line(s)`;
+            } else {
+                // Check each line for valid IDs
+                let hasError = false;
+                let totalIds = 0;
+                for (let i = 0; i < packList.length; i++) {
+                    const ids = packList[i].split(',').map(id => id.trim()).filter(id => id !== '');
+                    totalIds += ids.length;
+                    if (ids.length === 0) {
+                        hasError = true;
+                        break;
+                    }
+                    for (const id of ids) {
+                        if (isNaN(parseInt(id))) {
+                            hasError = true;
+                            break;
+                        }
+                    }
+                    if (hasError) break;
+                }
+                
+                if (hasError) {
+                    matchStatus.style.display = 'block';
+                    matchStatus.className = 'match-status match-error';
+                    matchStatus.innerHTML = `❌ Invalid pack IDs found. Check each line for valid numbers.`;
+                } else {
+                    matchStatus.style.display = 'block';
+                    matchStatus.className = 'match-status match-success';
+                    matchStatus.innerHTML = `✅ ${jwtList.length} JWT(s), ${totalIds} total pack(s) to open`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

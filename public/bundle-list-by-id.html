@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bundle Market Lister</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        /* Navigation styles - kept for fallback */
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .config-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 150px;
+            font-family: monospace;
+        }
+        .dual-panel {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .panel {
+            flex: 1;
+        }
+        .textarea-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .count-badge {
+            background-color: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: normal;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .button-stop {
+            background-color: #e74c3c;
+        }
+        .button-stop:hover {
+            background-color: #c0392b;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .log-container {
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        .log-success {
+            color: #27ae60;
+        }
+        .log-error {
+            color: #e74c3c;
+        }
+        .log-info {
+            color: #3498db;
+        }
+        .log-warning {
+            color: #f39c12;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #2ecc71;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .notification {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        .notification-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #a3e4c3;
+        }
+        .notification-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #f5b7b1;
+        }
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab-button.active {
+            background: white;
+            border-bottom: none;
+            font-weight: bold;
+        }
+        .tab {
+            display: none;
+        }
+        .tab.active {
+            display: block;
+        }
+        .match-status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .match-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+        }
+        .match-warning {
+            background-color: #fef9e7;
+            color: #f39c12;
+        }
+        .small-note {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .bundle-id-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed #27ae60;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here by nav-loader.js -->
+    <!-- The old nav-bar div has been removed -->
+
+    <h1>Bundle Market Lister</h1>
+    
+    <div class="config-section">
+        <h2>Configuration</h2>
+        
+        <label for="jwtToken">JWT Token:</label>
+        <input type="text" id="jwtToken" placeholder="Enter your JWT token here" />
+        
+        <label>Input Method:</label>
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="switchTab('paste')">Paste Data</button>
+            <button class="tab-button" onclick="switchTab('file')">Upload Files</button>
+        </div>
+        
+        <div id="paste-tab" class="tab active">
+            <div class="dual-panel">
+                <div class="panel">
+                    <div class="textarea-label">
+                        <label for="bundleIdsTextarea">Bundle IDs (one per line):</label>
+                        <span id="bundleIdsCount" class="count-badge">0 IDs</span>
+                    </div>
+                    <textarea id="bundleIdsTextarea" placeholder="Enter bundle IDs here, one per line. Example:
+24718
+24719
+24720
+..."></textarea>
+                </div>
+                
+                <div class="panel">
+                    <div class="textarea-label">
+                        <label for="pricesTextarea">Prices (one per line, corresponding to bundle IDs):</label>
+                        <span id="pricesCount" class="count-badge">0 prices</span>
+                    </div>
+                    <textarea id="pricesTextarea" placeholder="Enter prices here, one per line. Each price corresponds to the bundle ID on the same line.
+Example:
+2.05
+3.50
+1.75
+..."></textarea>
+                    <div class="small-note">Each line should match with the corresponding bundle ID. If fewer prices are provided, the last price will be repeated.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="file-tab" class="tab">
+            <div class="dual-panel">
+                <div class="panel">
+                    <label for="bundleIdsFile">Upload Bundle IDs File:</label>
+                    <input type="file" id="bundleIdsFile" accept=".txt,.csv" />
+                    <div class="small-note">Text file with one bundle ID per line</div>
+                </div>
+                
+                <div class="panel">
+                    <label for="pricesFile">Upload Prices File:</label>
+                    <input type="file" id="pricesFile" accept=".txt,.csv" />
+                    <div class="small-note">Text file with one price per line</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="matchStatus" class="match-status match-success" style="display: none;"></div>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="totalBundles">0</div>
+            <div class="stat-label">Total Bundles</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="processedBundles">0</div>
+            <div class="stat-label">Processed</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="successfulListings">0</div>
+            <div class="stat-label">Successful</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="failedListings">0</div>
+            <div class="stat-label">Failed</div>
+        </div>
+    </div>
+    
+    <div class="progress-container" style="display: none;" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    
+    <div class="button-group">
+        <button id="startButton">Start Listing Bundles</button>
+        <button id="pauseButton" style="display: none;">Pause</button>
+        <button id="resumeButton" style="display: none;">Resume</button>
+        <button id="downloadButton">Download Results</button>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <div class="log-container" id="logContainer">
+        <div class="log-entry log-info">Ready to start. Configure your settings, bundle IDs, and prices.</div>
+    </div>
+    
+    <!-- Market IDs Container -->
+    <div class="config-section" id="marketIdsContainer" style="display: none;">
+        <h2>Created Market Listings</h2>
+        <div class="stats" style="margin-top: 0;">
+            <div class="stat-item">
+                <div class="stat-value" id="totalMarketIds">0</div>
+                <div class="stat-label">Total Market IDs</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3>Market IDs (one per line, corresponds to bundle order):</h3>
+            <div class="bundle-id-list" id="marketIdList">
+                No market IDs created yet
+            </div>
+            <div class="small-note" style="margin-top: 10px;">
+                ⚡ These Market IDs are from successful listings, in the same order as your input bundles.
+            </div>
+        </div>
+    </div>
+
+<script src="/nav-loader.js"></script>
+<script>
+    // Configuration
+    const DELAY_BETWEEN_REQUESTS = 4000; // 4 seconds delay
+    
+    // State variables
+    let isProcessing = false;
+    let isPaused = false;
+    let bundleIds = [];
+    let prices = [];
+    let currentIndex = 0;
+    let totalBundles = 0;
+    let processedBundles = 0;
+    let successfulListings = 0;
+    let failedListings = 0;
+    
+    // Store market IDs from successful listings
+    let marketIds = [];
+    
+    // DOM Elements
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+    const resumeButton = document.getElementById('resumeButton');
+    const downloadButton = document.getElementById('downloadButton');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const logContainer = document.getElementById('logContainer');
+    const notification = document.getElementById('notification');
+    const matchStatus = document.getElementById('matchStatus');
+    
+    // Market IDs DOM elements
+    const marketIdsContainer = document.getElementById('marketIdsContainer');
+    const marketIdList = document.getElementById('marketIdList');
+    const totalMarketIds = document.getElementById('totalMarketIds');
+    
+    // Results storage
+    let results = [];
+    
+    // Helper function to send requests through proxy (updated for Render.com)
+    async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+        try {
+            const response = await fetch('/proxy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    endpoint: endpoint,
+                    method: method,
+                    headers: headers,
+                    data: data,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Proxy request failed:', error);
+            throw error;
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Note: Server health check is now handled by nav-loader.js
+        
+        startButton.addEventListener('click', startProcessing);
+        pauseButton.addEventListener('click', pauseProcessing);
+        resumeButton.addEventListener('click', resumeProcessing);
+        downloadButton.addEventListener('click', downloadResults);
+        
+        // Update stats when inputs change
+        document.getElementById('bundleIdsTextarea').addEventListener('input', updateStats);
+        document.getElementById('pricesTextarea').addEventListener('input', updateStats);
+        document.getElementById('bundleIdsFile').addEventListener('change', handleBundleIdsFileUpload);
+        document.getElementById('pricesFile').addEventListener('change', handlePricesFileUpload);
+        
+        updateStats();
+    });
+    
+    function switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        document.querySelector(`.tab-button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabName + '-tab').classList.add('active');
+        
+        // Update stats
+        updateStats();
+    }
+    
+    async function handleBundleIdsFileUpload() {
+        const file = document.getElementById('bundleIdsFile').files[0];
+        if (!file) return;
+        
+        try {
+            const text = await readFileAsText(file);
+            document.getElementById('bundleIdsTextarea').value = text;
+            updateStats();
+            showNotification('Bundle IDs file loaded successfully!', 'success');
+        } catch (error) {
+            showNotification(`Error reading file: ${error.message}`, 'error');
+        }
+    }
+    
+    async function handlePricesFileUpload() {
+        const file = document.getElementById('pricesFile').files[0];
+        if (!file) return;
+        
+        try {
+            const text = await readFileAsText(file);
+            document.getElementById('pricesTextarea').value = text;
+            updateStats();
+            showNotification('Prices file loaded successfully!', 'success');
+        } catch (error) {
+            showNotification(`Error reading file: ${error.message}`, 'error');
+        }
+    }
+    
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = event => resolve(event.target.result);
+            reader.onerror = error => reject(error);
+            reader.readAsText(file);
+        });
+    }
+    
+    function updateStats() {
+        // Get bundle IDs from textarea
+        const bundleText = document.getElementById('bundleIdsTextarea').value.trim();
+        
+        if (!bundleText) {
+            bundleIds = [];
+        } else {
+            bundleIds = bundleText.split('\n')
+                .filter(line => line.trim() !== '')
+                .map(line => line.trim());
+        }
+        
+        // Get prices from textarea
+        const pricesText = document.getElementById('pricesTextarea').value.trim();
+        
+        if (!pricesText) {
+            prices = [];
+        } else {
+            prices = pricesText.split('\n')
+                .filter(line => line.trim() !== '')
+                .map(line => line.trim());
+        }
+        
+        totalBundles = bundleIds.length;
+        processedBundles = 0;
+        successfulListings = 0;
+        failedListings = 0;
+        
+        // Update UI
+        document.getElementById('totalBundles').textContent = totalBundles;
+        document.getElementById('processedBundles').textContent = processedBundles;
+        document.getElementById('successfulListings').textContent = successfulListings;
+        document.getElementById('failedListings').textContent = failedListings;
+        
+        // Update counts
+        document.getElementById('bundleIdsCount').textContent = `${bundleIds.length} IDs`;
+        document.getElementById('pricesCount').textContent = `${prices.length} prices`;
+        
+        // Show match status
+        if (totalBundles > 0) {
+            if (prices.length === 0) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = '⚠️ No prices provided. Please enter listing prices.';
+            } else if (prices.length < totalBundles) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = `⚠️ Only ${prices.length} price(s) provided for ${totalBundles} bundle(s). The last price "${prices[prices.length-1] || 'N/A'}" will be repeated for remaining bundles.`;
+            } else if (prices.length > totalBundles) {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-warning';
+                matchStatus.innerHTML = `⚠️ ${prices.length} prices provided but only ${totalBundles} bundle(s) to list. Extra prices will be ignored.`;
+            } else {
+                matchStatus.style.display = 'block';
+                matchStatus.className = 'match-status match-success';
+                matchStatus.innerHTML = '✅ Perfect match! Number of prices matches number of bundles.';
+            }
+        } else {
+            matchStatus.style.display = 'none';
+        }
+    }
+    
+    function getPriceForIndex(index) {
+        if (prices.length === 0) {
+            return '0'; // Default if no prices provided
+        } else if (index < prices.length) {
+            return prices[index];
+        } else {
+            // Repeat the last price if we have fewer prices than bundles
+            return prices[prices.length - 1];
+        }
+    }
+    
+    async function startProcessing() {
+        if (isProcessing) {
+            // Stop processing if already running
+            stopProcessing();
+            return;
+        }
+        
+        // Validate inputs
+        const jwtToken = document.getElementById('jwtToken').value.trim();
+        if (!jwtToken) {
+            showNotification('Please enter a JWT token', 'error');
+            return;
+        }
+        
+        updateStats();
+        
+        if (totalBundles === 0) {
+            showNotification('No bundle IDs found. Please enter bundle IDs.', 'error');
+            return;
+        }
+        
+        if (prices.length === 0) {
+            showNotification('Please enter at least one price', 'error');
+            return;
+        }
+        
+        // Reset state
+        isProcessing = true;
+        isPaused = false;
+        currentIndex = 0;
+        results = [];
+        marketIds = [];
+        processedBundles = 0;
+        successfulListings = 0;
+        failedListings = 0;
+        
+        // Update UI
+        startButton.textContent = 'Stop Processing';
+        startButton.classList.add('button-stop');
+        pauseButton.style.display = 'inline-block';
+        resumeButton.style.display = 'none';
+        progressContainer.style.display = 'block';
+        progressBar.style.width = '0%';
+        
+        // Hide market IDs container at start
+        marketIdsContainer.style.display = 'none';
+        
+        logContainer.innerHTML = '';
+        addLog('Starting to list bundles on market...', 'info');
+        addLog(`Total bundles: ${totalBundles}, Total prices: ${prices.length}`, 'info');
+        addLog(`Delay between requests: ${DELAY_BETWEEN_REQUESTS}ms`, 'info');
+        
+        if (prices.length < totalBundles) {
+            addLog(`Note: Only ${prices.length} price(s) provided. Last price "${prices[prices.length-1]}" will be repeated for remaining bundles.`, 'warning');
+        }
+        
+        // Process bundles
+        await processBundles(jwtToken);
+    }
+    
+    function stopProcessing() {
+        isProcessing = false;
+        startButton.textContent = 'Start Listing Bundles';
+        startButton.classList.remove('button-stop');
+        pauseButton.style.display = 'none';
+        resumeButton.style.display = 'none';
+        addLog('Processing stopped by user', 'info');
+    }
+    
+    function pauseProcessing() {
+        isPaused = true;
+        pauseButton.style.display = 'none';
+        resumeButton.style.display = 'inline-block';
+        addLog('Processing paused', 'info');
+    }
+    
+    function resumeProcessing() {
+        isPaused = false;
+        resumeButton.style.display = 'none';
+        pauseButton.style.display = 'inline-block';
+        addLog('Processing resumed', 'info');
+    }
+    
+    // Process bundles function
+    async function processBundles(jwtToken) {
+        for (let i = currentIndex; i < totalBundles && isProcessing; i++) {
+            // Check if paused
+            while (isPaused && isProcessing) {
+                await sleep(1000);
+                continue;
+            }
+            
+            if (!isProcessing) break;
+            
+            currentIndex = i;
+            const bundleId = bundleIds[i];
+            const price = getPriceForIndex(i);
+            
+            addLog(`Listing bundle ${i + 1}/${totalBundles} (ID: ${bundleId}) for price: ${price}...`, 'info');
+            
+            try {
+                const success = await listBundleOnMarket(bundleId, jwtToken, price);
+                
+                if (success) {
+                    successfulListings++;
+                    addLog(`✓ Bundle ${bundleId} listed successfully for ${price}`, 'success');
+                } else {
+                    failedListings++;
+                    addLog(`✗ Failed to list bundle ${bundleId}`, 'error');
+                }
+                
+                processedBundles++;
+                results.push({
+                    bundleId: bundleId,
+                    price: price,
+                    success: success,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                failedListings++;
+                processedBundles++;
+                addLog(`✗ Error listing bundle ${bundleId}: ${error.message}`, 'error');
+                results.push({
+                    bundleId: bundleId,
+                    price: price,
+                    success: false,
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
+            // Update UI
+            document.getElementById('processedBundles').textContent = processedBundles;
+            document.getElementById('successfulListings').textContent = successfulListings;
+            document.getElementById('failedListings').textContent = failedListings;
+            
+            const progressPercent = ((i + 1) / totalBundles) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            // Delay before next request (unless it's the last one or we're stopping)
+            if (i < totalBundles - 1 && isProcessing) {
+                addLog(`Waiting ${DELAY_BETWEEN_REQUESTS/1000} seconds before next listing...`, 'info');
+                await sleep(DELAY_BETWEEN_REQUESTS);
+            }
+        }
+        
+        // Processing complete
+        if (isProcessing) {
+            isProcessing = false;
+            startButton.textContent = 'Start Listing Bundles';
+            startButton.classList.remove('button-stop');
+            pauseButton.style.display = 'none';
+            resumeButton.style.display = 'none';
+            
+            // Display market IDs when processing is complete
+            displayMarketIds();
+            
+            addLog(`Processing complete. Successfully listed ${successfulListings} bundles, ${failedListings} failed.`, 'info');
+            showNotification(`Listing complete! ${successfulListings} successful, ${failedListings} failed.`, 'success');
+        }
+    }
+    
+    // Function to display market IDs
+    function displayMarketIds() {
+        if (marketIds.length > 0) {
+            // Show the container
+            marketIdsContainer.style.display = 'block';
+            
+            // Update total count
+            totalMarketIds.textContent = marketIds.length;
+            
+            // Create formatted list of market IDs
+            let marketIdText = '';
+            marketIds.forEach((item) => {
+                marketIdText += `${item.marketId}\n`;
+            });
+            
+            // Create detailed table view
+            let detailedHtml = '<div style="margin-bottom: 15px;">';
+            detailedHtml += '<table style="width: 100%; border-collapse: collapse;">';
+            detailedHtml += '<thead><tr style="background-color: #f2f2f2;"><th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">#</th><th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Bundle ID</th><th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Market ID</th><th style="padding: 8px; text-align: left; border-bottom: 2px solid #ddd;">Price</th></tr></thead>';
+            detailedHtml += '<tbody>';
+            
+            marketIds.forEach((item, index) => {
+                detailedHtml += `<tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px;">${index + 1}</td>
+                    <td style="padding: 8px; font-family: monospace;">${item.bundleId}</td>
+                    <td style="padding: 8px; font-family: monospace; color: #27ae60; font-weight: bold;">${item.marketId}</td>
+                    <td style="padding: 8px;">${item.price}</td>
+                </tr>`;
+            });
+            
+            detailedHtml += '</tbody></table></div>';
+            
+            // Show both simple list and detailed table
+            marketIdList.innerHTML = `<div style="margin-bottom: 10px;"><strong>Simple list (one per line):</strong></div>
+<pre style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #ddd; overflow-x: auto;">${marketIdText}</pre>
+<div style="margin-top: 20px;"><strong>Detailed view with Bundle IDs:</strong></div>
+${detailedHtml}`;
+            
+            addLog(`✅ Generated ${marketIds.length} Market IDs from successful listings`, 'success');
+        } else {
+            marketIdsContainer.style.display = 'none';
+        }
+    }
+    
+    async function listBundleOnMarket(bundleId, jwtToken, price) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': jwtToken
+        };
+        
+        const body = {
+            id: parseInt(bundleId),
+            type: "bundle",
+            price: price
+        };
+        
+        const endpoint = '/market/list';
+        
+        try {
+            const response = await sendProxyRequest(endpoint, 'POST', headers, body);
+            
+            // Check various response structures
+            if (response && response.success === true) {
+                if (response.data && response.data.marketId) {
+                    marketIds.push({
+                        bundleId: bundleId,
+                        marketId: response.data.marketId,
+                        price: price
+                    });
+                    addLog(`  ├─ Market ID: ${response.data.marketId}`, 'success');
+                }
+                return true;
+            } else if (response && response.data && response.data.success === true) {
+                if (response.data.data && response.data.data.marketId) {
+                    marketIds.push({
+                        bundleId: bundleId,
+                        marketId: response.data.data.marketId,
+                        price: price
+                    });
+                    addLog(`  ├─ Market ID: ${response.data.data.marketId}`, 'success');
+                }
+                return true;
+            } else if (response && response.data && response.data.data && response.data.data.success === true) {
+                if (response.data.data.data && response.data.data.data.marketId) {
+                    marketIds.push({
+                        bundleId: bundleId,
+                        marketId: response.data.data.data.marketId,
+                        price: price
+                    });
+                    addLog(`  ├─ Market ID: ${response.data.data.data.marketId}`, 'success');
+                }
+                return true;
+            } else {
+                const errorMsg = response?.error || 
+                                response?.details?.message || 
+                                response?.data?.error ||
+                                'Failed to list bundle';
+                throw new Error(errorMsg);
+            }
+        } catch (error) {
+            throw new Error(`Request failed: ${error.message}`);
+        }
+    }
+    
+    function addLog(message, type = 'info') {
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        
+        logContainer.appendChild(logEntry);
+        
+        // Auto-scroll to bottom
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+    
+    function showNotification(message, type = 'info') {
+        notification.textContent = message;
+        notification.className = `notification notification-${type}`;
+        notification.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 5000);
+    }
+    
+    function downloadResults() {
+        if (results.length === 0) {
+            showNotification('No results to download', 'error');
+            return;
+        }
+        
+        let text = 'Bundle Market Listing Results\n';
+        text += '==============================\n\n';
+        text += `Total Bundles: ${totalBundles}\n`;
+        text += `Successfully Listed: ${successfulListings}\n`;
+        text += `Failed: ${failedListings}\n`;
+        text += `Processed: ${processedBundles}\n\n`;
+        
+        if (marketIds.length > 0) {
+            text += 'Market IDs Generated:\n';
+            text += '--------------------\n';
+            marketIds.forEach((item, index) => {
+                text += `${index + 1}. Bundle: ${item.bundleId} → Market ID: ${item.marketId} (Price: ${item.price})\n`;
+            });
+            text += '\n';
+        }
+        
+        text += 'Detailed Results:\n';
+        text += '-----------------\n';
+        
+        results.forEach((result, index) => {
+            text += `${index + 1}. Bundle ID: ${result.bundleId}\n`;
+            text += `   Price: ${result.price}\n`;
+            text += `   Status: ${result.success ? 'SUCCESS' : 'FAILED'}\n`;
+            
+            if (result.success) {
+                const marketIdItem = marketIds.find(m => m.bundleId === result.bundleId);
+                if (marketIdItem) {
+                    text += `   Market ID: ${marketIdItem.marketId}\n`;
+                }
+            }
+            
+            text += `   Timestamp: ${result.timestamp}\n`;
+            if (result.error) {
+                text += `   Error: ${result.error}\n`;
+            }
+            text += '\n';
+        });
+        
+        const currentDate = new Date();
+        const formattedDate = `${currentDate.getFullYear()}.${(currentDate.getMonth()+1).toString().padStart(2, '0')}.${currentDate.getDate().toString().padStart(2, '0')}_${currentDate.getHours().toString().padStart(2, '0')}h${currentDate.getMinutes().toString().padStart(2, '0')}`;
+        
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `bundle_listing_results_${formattedDate}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showNotification('Results downloaded successfully!', 'success');
+    }
+    
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+</script>
+</body>
+</html>

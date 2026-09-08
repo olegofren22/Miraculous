@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Brewer - Multi-Account Brewing Tool - T2 Celsius & Fahrenheit</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #8B4513;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .input-section, .results-section, .control-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .results-section {
+            grid-column: 1 / -1;
+        }
+        .control-section {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #8B4513;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h3 {
+            color: #8B4513;
+            margin-top: 0;
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        textarea, input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            min-width: 120px;
+        }
+        #scanButton {
+            background-color: #2196F3;
+            color: white;
+        }
+        #scanButton:hover:not(:disabled) {
+            background-color: #1976D2;
+        }
+        #startButton {
+            background-color: #8B4513;
+            color: white;
+        }
+        #startButton:hover:not(:disabled) {
+            background-color: #6b3410;
+        }
+        #pauseButton {
+            background-color: #FFA500;
+            color: white;
+        }
+        #pauseButton:hover:not(:disabled) {
+            background-color: #cc8400;
+        }
+        #resumeButton {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #resumeButton:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        #stopButton {
+            background-color: #f44336;
+            color: white;
+        }
+        #stopButton:hover:not(:disabled) {
+            background-color: #d32f2f;
+        }
+        #proceedButton {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #proceedButton:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        #downloadButton {
+            background-color: #9C27B0;
+            color: white;
+        }
+        #downloadButton:hover {
+            background-color: #7B1FA2;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .progress-container {
+            margin: 20px 0;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #8B4513;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid #8B4513;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        #resultContainer {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+            border-bottom: 1px solid #eee;
+            white-space: pre-wrap;
+        }
+        .log-success {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .log-error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .log-warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .log-info {
+            color: #3498db;
+        }
+        .log-account {
+            color: #8B4513;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: #f0e6dd;
+            padding: 5px;
+            margin: 10px 0 5px 0;
+        }
+        .log-brew-header {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .log-highlight {
+            color: #8B4513;
+            font-weight: bold;
+            background-color: #fff3e0;
+            padding: 5px;
+            border-left: 4px solid #8B4513;
+        }
+        .log-summary-header {
+            color: #8B4513;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .log-small-font {
+            font-size: 11px;
+            color: #666;
+            margin-left: 20px;
+        }
+        .collection-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .collection-item {
+            background: #f0e6dd;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            border-left: 4px solid #8B4513;
+        }
+        .scan-results-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .warning-box {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid #f39c12;
+        }
+        .filter-group {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .card-item {
+            background: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 11px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .card-item.low-mint {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        .card-item.high-mint {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .control-section {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div class="nav-links">
+            <a href="/crafter.html" class="nav-link">Card Crafter</a>
+            <a href="/scanner.html" class="nav-link">Collection Scanner</a>
+            <a href="/brewer.html" class="nav-link active">Card Brewer</a>
+        </div>
+        <div class="server-info" id="serverInfo">Loading server info...</div>
+    </div>
+    
+    <h1>🍺 Multi-Requirement Card Brewer</h1>
+    
+    <div class="container">
+        <div class="input-section">
+            <h2>Account Configuration</h2>
+            
+            <div class="input-group">
+                <label for="authTokensTextarea">JWT Tokens (one per line):</label>
+                <textarea id="authTokensTextarea" placeholder="Paste JWT tokens here, one per line"></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="senderIDsTextarea">Sender IDs (one per line):</label>
+                <textarea id="senderIDsTextarea" placeholder="Paste sender IDs here, one per line"></textarea>
+            </div>
+            
+            <div class="filter-group">
+                <h3>Card Filters</h3>
+                <div class="input-group">
+                    <label for="minMintNumber">Minimum Mint Number:</label>
+                    <input type="number" id="minMintNumber" value="30" min="1" placeholder="Only use cards with mint >= this value">
+                    <small>Cards with mint number below this will be ignored</small>
+                </div>
+                <div class="input-group">
+                    <label>Status Filter:</label>
+                    <div style="color: #666; font-size: 12px; margin-top: 5px;">
+                        ✅ Only cards with status "available" will be used<br>
+                        ✅ Cards on market or locked will be ignored
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Sorting:</label>
+                    <div style="color: #666; font-size: 12px; margin-top: 5px;">
+                        📊 Cards are sorted by mint number (highest to lowest)<br>
+                        🔝 Highest mints are used first
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalCards">0</div>
+                    <div class="stat-label">Total Cards</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="totalBrews">0</div>
+                    <div class="stat-label">Total Brews</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="completedBrews">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <h2>Brewing Configuration</h2>
+            
+            <div class="input-group">
+                <label>Brewing Plan Requirements:</label>
+                <div class="collection-info">
+                    <div class="collection-item">
+                        <strong>Requirement 3268 (16 cards):</strong><br>
+                        Collections: 17920, 17921, 17922
+                    </div>
+                    <div class="collection-item">
+                        <strong>Requirement 3269 (8 cards):</strong><br>
+                        Collections: 17923, 17924, 17925
+                    </div>
+                    <div class="collection-item">
+                        <strong>Requirement 3270 (4 cards):</strong><br>
+                        Collections: 17953, 17986, 17987
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="maxBrews">Max Brews per Account:</label>
+                <input type="number" id="maxBrews" value="10" min="1" max="100">
+            </div>
+            
+            <div class="input-group">
+                <label for="operationDelay">Operation Delay (ms):</label>
+                <input type="number" id="operationDelay" value="5100" min="1000" max="30000">
+            </div>
+            
+            <div class="input-group">
+                <label for="craftingPlanId">Brewing Plan ID:</label>
+                <input type="text" id="craftingPlanId" value="3235">
+            </div>
+            
+            <div class="input-group">
+                <label for="silvercoins">Silver Coins per Brew:</label>
+                <input type="number" id="silvercoins" value="5000" min="0">
+            </div>
+        </div>
+    </div>
+    
+    <div class="control-section">
+        <div class="session-info" style="background:#f9f9f9; padding:15px; border-radius:6px;">
+            <h3>Scan & Control</h3>
+            <div class="button-group">
+                <button id="scanButton">🔍 Scan Collections</button>
+                <button id="startButton" disabled>▶ Start Brewing</button>
+                <button id="pauseButton" disabled>⏸ Pause</button>
+                <button id="resumeButton" disabled>▶ Resume</button>
+                <button id="stopButton" disabled>⏹ Stop</button>
+                <button id="downloadButton">📥 Download Logs</button>
+            </div>
+        </div>
+        
+        <div class="session-info" style="background:#f9f9f9; padding:15px; border-radius:6px;">
+            <h3>Scan Results</h3>
+            <div id="scanResults" class="scan-results-box">
+                <p>No scan results yet. Click "Scan Collections" to start.</p>
+            </div>
+            <button id="proceedButton" disabled>✅ Proceed to Brew</button>
+        </div>
+        
+        <div class="session-info" style="background:#f9f9f9; padding:15px; border-radius:6px;">
+            <h3>Progress</h3>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="stats" style="margin-top: 10px;">
+                <div class="stat-box">
+                    <div class="stat-value" id="accountsProcessed">0</div>
+                    <div class="stat-label">Accounts</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="brewsCompleted">0</div>
+                    <div class="stat-label">Brews Done</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="results-section">
+        <h2>Results & Logs</h2>
+        <div id="resultContainer"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const DEFAULT_OPERATION_DELAY = 5100;
+        
+        // Collections mapping for each requirement
+        const REQUIREMENTS_CONFIG = {
+            3268: {
+                collectionIds: [18613],
+                cardsPerBrew: 32
+            },
+            3269: {
+                collectionIds: [18614],
+                cardsPerBrew: 16
+            },
+            3270: {
+                collectionIds: [18615],
+                cardsPerBrew: 4
+            }
+        };
+        
+        // State variables
+        let stopProcess = false;
+        let isPaused = false;
+        let scanComplete = false;
+        let proceedAfterScan = false;
+        let accountPairs = [];
+        let currentAccountIndex = 0;
+        let totalBrews = 0;
+        let completedBrews = 0;
+        let successfulBrews = 0;
+        let totalCardsCollected = 0;
+        
+        // Scan results storage
+        let scanResults = {
+            cardsByRequirement: {},
+            cardsWithDetails: {},
+            cardBasedBatches: 0,
+            fundBasedBatches: 0,
+            lowestMintUsed: 'N/A',
+            silverBalance: 0,
+            accountNumber: 0,
+            senderID: '',
+            totalCards: 0
+        };
+        
+        // Store brewed cards for summary (handling duplicate slots)
+        let brewedCards = new Map(); // Key: mintBatch-mintNumber, Value: card details
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('scanButton').addEventListener('click', scanCollections);
+            document.getElementById('startButton').addEventListener('click', startBrewing);
+            document.getElementById('pauseButton').addEventListener('click', pauseBrewing);
+            document.getElementById('resumeButton').addEventListener('click', resumeBrewing);
+            document.getElementById('stopButton').addEventListener('click', stopScript);
+            document.getElementById('proceedButton').addEventListener('click', proceedToBrew);
+            document.getElementById('downloadButton').addEventListener('click', downloadResults);
+            
+            // Check server health
+            checkServerHealth();
+        });
+        
+        // Check server health
+        async function checkServerHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                document.getElementById('serverInfo').textContent = 
+                    `Server: Healthy | API: ${data.apiConfigured ? 'Configured' : 'Not Configured'}`;
+            } catch (error) {
+                document.getElementById('serverInfo').textContent = 'Server: Error connecting';
+            }
+        }
+        
+        // Function to add result message with timestamp and type
+        function addToResultContainer(message, type = 'info') {
+            const container = document.getElementById('resultContainer');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+            return logEntry;
+        }
+        
+        // Function to create account section
+        function createAccountSection(accountNumber, senderID) {
+            const container = document.getElementById('resultContainer');
+            const section = document.createElement('div');
+            section.className = 'log-entry log-account';
+            section.id = `account-${accountNumber}`;
+            section.textContent = `=== Account ${accountNumber} (Sender: ${senderID}) ===`;
+            container.appendChild(section);
+            return section;
+        }
+        
+        // Function to update stats
+        function updateStats() {
+            document.getElementById('totalCards').textContent = totalCardsCollected;
+            document.getElementById('totalBrews').textContent = totalBrews;
+            document.getElementById('completedBrews').textContent = completedBrews;
+            const successRate = totalBrews > 0 ? Math.round((successfulBrews / totalBrews) * 100) : 0;
+            document.getElementById('successRate').textContent = `${successRate}%`;
+            document.getElementById('accountsProcessed').textContent = currentAccountIndex;
+            document.getElementById('brewsCompleted').textContent = completedBrews;
+        }
+        
+        // Function to download results
+        function downloadResults() {
+            const container = document.getElementById('resultContainer');
+            const text = container.innerText;
+            
+            const currentDate = new Date();
+            const formattedDate = `${currentDate.getFullYear()}.${(currentDate.getMonth()+1).toString().padStart(2, '0')}.${currentDate.getDate().toString().padStart(2, '0')}_${currentDate.getHours().toString().padStart(2, '0')}h${currentDate.getMinutes().toString().padStart(2, '0')}`;
+            
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `brewing_results_${formattedDate}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Proxy request function - ONLY sends endpoint, not full URL
+        async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+            try {
+                const response = await fetch('/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        endpoint: endpoint,
+                        method: method,
+                        headers: headers,
+                        data: data,
+                    }),
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Proxy request failed:', error);
+                throw error;
+            }
+        }
+        
+        // Helper function for delays
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Function to check user funds
+        async function checkUserFunds(authToken) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-user-jwt': authToken
+            };
+            
+            const endpoint = '/user/funds';
+            
+            try {
+                const response = await sendProxyRequest(endpoint, 'GET', headers);
+                
+                if (response?.success && response?.data?.silvercoins !== undefined) {
+                    return response.data.silvercoins;
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                console.error('Error checking user funds:', error);
+                throw error;
+            }
+        }
+        
+        // Get collection cards with details (enhanced version)
+        async function getCollectionCardsWithDetails(authToken, senderID, collectionId, minMintNumber) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-user-jwt': authToken
+            };
+            
+            const endpoint = `/collections/${collectionId}/users/${senderID}/owned2`;
+            
+            try {
+                const response = await sendProxyRequest(endpoint, 'GET', headers);
+                
+                let cards = [];
+                if (response?.data?.cards) {
+                    cards = response.data.cards;
+                } else if (Array.isArray(response?.data)) {
+                    cards = response.data;
+                } else if (Array.isArray(response)) {
+                    cards = response;
+                }
+                
+                // Filter and enhance cards with details
+                return cards
+                    .filter(card => {
+                        // Apply mint number filter
+                        if (minMintNumber && card.mintNumber) {
+                            return parseInt(card.mintNumber) >= minMintNumber;
+                        }
+                        return true;
+                    })
+                    .filter(card => {
+                        // Only use available cards (not on market, not locked)
+                        return card.status === 'available';
+                    })
+                    .map(card => ({
+                        id: card.id,
+                        mintBatch: card.mintBatch || '',
+                        mintNumber: parseInt(card.mintNumber) || 0,
+                        status: card.status || 'available',
+                        isMarketList: card.isMarketList || false,
+                        ethStatus: card.ethStatus || 'none',
+                        bundleId: card.bundleId || null,
+                        rating: card.rating || 'N/A',
+                        collectionId: collectionId
+                    }));
+            } catch (error) {
+                console.error(`Error fetching cards for collection ${collectionId}:`, error);
+                return [];
+            }
+        }
+        
+        // Sort cards by mint number descending (highest first)
+        function sortCardsByMintDesc(cardsByRequirement, cardsWithDetails) {
+            const sorted = {};
+            
+            for (const [requirementId, cardIds] of Object.entries(cardsByRequirement)) {
+                const cardsWithMints = cardIds
+                    .map(id => ({ id, details: cardsWithDetails[id] }))
+                    .filter(item => item.details && item.details.mintNumber)
+                    .sort((a, b) => b.details.mintNumber - a.details.mintNumber);
+                
+                sorted[requirementId] = cardsWithMints.map(item => item.id);
+            }
+            
+            return sorted;
+        }
+        
+        // Calculate how many brews we can perform based on cards
+        function calculateBrewableBatches(cardsByRequirement, maxBrews) {
+            let maxPossibleBrews = maxBrews;
+            
+            for (const [requirementId, cards] of Object.entries(cardsByRequirement)) {
+                const cardsNeededPerBrew = REQUIREMENTS_CONFIG[requirementId].cardsPerBrew;
+                const possibleBrewsForRequirement = Math.floor(cards.length / cardsNeededPerBrew);
+                
+                if (possibleBrewsForRequirement < maxPossibleBrews) {
+                    maxPossibleBrews = possibleBrewsForRequirement;
+                }
+            }
+            
+            return maxPossibleBrews;
+        }
+        
+        // Find lowest mint that will be used
+        function findLowestMintToBeUsed(cardsByRequirement, cardsWithDetails, batches) {
+            const usedMints = [];
+            
+            for (const [requirementId, cardIds] of Object.entries(cardsByRequirement)) {
+                const cardsNeeded = REQUIREMENTS_CONFIG[requirementId].cardsPerBrew * batches;
+                
+                const cardsWithMints = cardIds
+                    .map(id => cardsWithDetails[id])
+                    .filter(card => card && card.mintNumber)
+                    .sort((a, b) => b.mintNumber - a.mintNumber);
+                
+                // Take the lowest mints (last ones in sorted array)
+                const usedForRequirement = cardsWithMints.slice(-cardsNeeded);
+                usedMints.push(...usedForRequirement.map(card => card.mintNumber));
+            }
+            
+            if (usedMints.length === 0) return 'N/A';
+            
+            const lowestMint = Math.min(...usedMints);
+            return lowestMint;
+        }
+        
+        // Scan collections for all accounts
+        async function scanCollections() {
+            stopProcess = false;
+            isPaused = false;
+            scanComplete = false;
+            proceedAfterScan = false;
+            
+            // Clear previous results
+            document.getElementById('resultContainer').innerHTML = '';
+            document.getElementById('scanResults').innerHTML = '<p>Scanning collections...</p>';
+            brewedCards.clear();
+            
+            // Get inputs
+            const authTokensText = document.getElementById('authTokensTextarea').value.trim();
+            const senderIDsText = document.getElementById('senderIDsTextarea').value.trim();
+            const minMintNumber = parseInt(document.getElementById('minMintNumber').value) || 30;
+            
+            if (!authTokensText || !senderIDsText) {
+                alert('Please enter both JWT tokens and sender IDs');
+                return;
+            }
+            
+            const authTokens = authTokensText.split('\n').filter(line => line.trim() !== '');
+            const senderIDs = senderIDsText.split('\n').filter(line => line.trim() !== '');
+            
+            if (authTokens.length !== senderIDs.length) {
+                alert('Number of JWT tokens must match number of sender IDs');
+                return;
+            }
+            
+            accountPairs = authTokens.map((token, index) => ({
+                token: token.trim(),
+                senderID: senderIDs[index].trim()
+            }));
+            
+            if (accountPairs.length === 0) {
+                alert('No valid account pairs found');
+                return;
+            }
+            
+            addToResultContainer(`🔍 Starting scan for ${accountPairs.length} account(s)...`, 'info');
+            addToResultContainer(`Minimum mint filter: ${minMintNumber}`, 'info');
+            
+            // Reset stats
+            totalCardsCollected = 0;
+            updateStats();
+            
+            // Disable/enable buttons
+            document.getElementById('scanButton').disabled = true;
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('proceedButton').disabled = true;
+            
+            // Scan each account
+            for (let i = 0; i < accountPairs.length; i++) {
+                if (stopProcess) break;
+                
+                const pair = accountPairs[i];
+                await scanAccount(pair.token, pair.senderID, i + 1, minMintNumber);
+                
+                // Update progress
+                const progress = ((i + 1) / accountPairs.length) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+            }
+            
+            if (!stopProcess) {
+                addToResultContainer('✅ Scan completed for all accounts!', 'success');
+                addToResultContainer('Review scan results and click "Proceed to Brew" to start brewing', 'highlight');
+            }
+            
+            document.getElementById('scanButton').disabled = false;
+        }
+        
+        // Scan a single account
+        async function scanAccount(authToken, senderID, accountNumber, minMintNumber) {
+            const accountSection = createAccountSection(accountNumber, senderID);
+            
+            try {
+                addToResultContainer(`Checking funds for account ${accountNumber}...`, 'info');
+                
+                let silverBalance = 0;
+                try {
+                    silverBalance = await checkUserFunds(authToken);
+                    addToResultContainer(`💰 Silver balance: ${silverBalance.toLocaleString()}`, 'success');
+                } catch (fundsError) {
+                    addToResultContainer(`Failed to check funds: ${fundsError.message}`, 'error');
+                    return;
+                }
+                
+                addToResultContainer(`Scanning collections for available cards...`, 'info');
+                
+                const cardsByRequirement = {};
+                const cardsWithDetails = {};
+                
+                for (const [requirementId, config] of Object.entries(REQUIREMENTS_CONFIG)) {
+                    if (stopProcess) return;
+                    
+                    addToResultContainer(`Collecting cards for requirement ${requirementId} (${config.cardsPerBrew} cards per brew)...`, 'info');
+                    
+                    const cards = [];
+                    for (const collectionId of config.collectionIds) {
+                        if (stopProcess) return;
+                        
+                        const collectionCards = await getCollectionCardsWithDetails(authToken, senderID, collectionId, minMintNumber);
+                        
+                        addToResultContainer(`  📁 Collection ${collectionId}: ${collectionCards.length} available cards (min mint: ${minMintNumber})`, 'small-font');
+                        
+                        collectionCards.forEach(card => {
+                            cardsWithDetails[card.id] = card;
+                        });
+                        
+                        cards.push(...collectionCards.map(card => card.id));
+                        
+                        await delay(1000);
+                    }
+                    
+                    cardsByRequirement[requirementId] = cards;
+                    totalCardsCollected += cards.length;
+                    
+                    // Show some sample cards
+                    const sampleCards = cards
+                        .map(id => cardsWithDetails[id])
+                        .filter(c => c)
+                        .sort((a, b) => b.mintNumber - a.mintNumber)
+                        .slice(0, 3);
+                    
+                    if (sampleCards.length > 0) {
+                        addToResultContainer(`  📊 Top mints for req ${requirementId}: ${sampleCards.map(c => `${c.mintBatch}${c.mintNumber}`).join(', ')}`, 'small-font');
+                    }
+                }
+                
+                updateStats();
+                
+                const maxBrews = parseInt(document.getElementById('maxBrews').value) || 10;
+                const cardBasedBatches = calculateBrewableBatches(cardsByRequirement, maxBrews);
+                
+                if (cardBasedBatches === 0) {
+                    addToResultContainer(`❌ Not enough cards for any brewing operations`, 'error');
+                    return;
+                }
+                
+                const silverPerBrew = parseInt(document.getElementById('silvercoins').value) || 5000;
+                const fundBasedBatches = Math.floor(silverBalance / silverPerBrew);
+                
+                const lowestMintUsed = findLowestMintToBeUsed(cardsByRequirement, cardsWithDetails, cardBasedBatches);
+                
+                // Store scan results
+                scanResults = {
+                    cardsByRequirement,
+                    cardsWithDetails,
+                    cardBasedBatches,
+                    fundBasedBatches,
+                    lowestMintUsed,
+                    silverBalance,
+                    accountNumber,
+                    senderID,
+                    totalCards: totalCardsCollected
+                };
+                
+                // Display scan results
+                const scanDiv = document.getElementById('scanResults');
+                scanDiv.innerHTML = `
+                    <p><strong>✅ Account ${accountNumber}</strong> (Sender: ${senderID})</p>
+                    <p>📊 Based on cards: <strong>${cardBasedBatches}</strong> brews possible</p>
+                    <p>💰 Based on funds: <strong>${fundBasedBatches}</strong> brews possible</p>
+                    <p>💎 Balance: ${silverBalance.toLocaleString()} silver</p>
+                    <div class="warning-box" style="margin:10px 0; padding:10px;">
+                        ⚠️ Lowest mint that will be used: <strong>${lowestMintUsed}</strong>
+                    </div>
+                    <p>Total available cards: ${totalCardsCollected}</p>
+                `;
+                
+                addToResultContainer(`=== SCAN COMPLETE for Account ${accountNumber} ===`, 'highlight');
+                addToResultContainer(`Based on cards: ${cardBasedBatches} brewing operation(s)`, 'info');
+                addToResultContainer(`Based on funds: ${fundBasedBatches} brewing operation(s)`, 'info');
+                addToResultContainer(`Lowest mint that will be used: ${lowestMintUsed}`, 'warning');
+                
+                scanComplete = true;
+                document.getElementById('proceedButton').disabled = false;
+                document.getElementById('startButton').disabled = false;
+                
+            } catch (error) {
+                addToResultContainer(`Error scanning account: ${error.message}`, 'error');
+            }
+        }
+        
+        // Proceed to brewing after scan
+        function proceedToBrew() {
+            proceedAfterScan = true;
+            document.getElementById('proceedButton').disabled = true;
+            addToResultContainer('✅ Proceeding to brewing...', 'success');
+            startBrewing();
+        }
+        
+        // Start brewing process
+        async function startBrewing() {
+            if (!proceedAfterScan && !scanComplete) {
+                addToResultContainer('Please scan collections first or click "Proceed to Brew"', 'warning');
+                return;
+            }
+            
+            if (stopProcess) return;
+            
+            // Reset brewing state
+            stopProcess = false;
+            isPaused = false;
+            currentAccountIndex = 0;
+            totalBrews = 0;
+            completedBrews = 0;
+            successfulBrews = 0;
+            brewedCards.clear();
+            
+            document.getElementById('stopButton').disabled = false;
+            document.getElementById('pauseButton').disabled = false;
+            document.getElementById('startButton').disabled = true;
+            document.getElementById('scanButton').disabled = true;
+            document.getElementById('proceedButton').disabled = true;
+            
+            const maxBrews = parseInt(document.getElementById('maxBrews').value) || 10;
+            
+            addToResultContainer('=== STARTING BREWING PROCESS ===', 'highlight');
+            
+            // Process each account
+            for (currentAccountIndex = 0; currentAccountIndex < accountPairs.length; currentAccountIndex++) {
+                if (stopProcess) break;
+                
+                while (isPaused && !stopProcess) {
+                    await delay(1000);
+                }
+                
+                if (stopProcess) break;
+                
+                const pair = accountPairs[currentAccountIndex];
+                await processAccount(pair.token, pair.senderID, maxBrews);
+                
+                // Update progress
+                const progress = ((currentAccountIndex + 1) / accountPairs.length) * 100;
+                document.getElementById('progressBar').style.width = `${progress}%`;
+                updateStats();
+                
+                // Delay between accounts
+                if (currentAccountIndex < accountPairs.length - 1 && !stopProcess) {
+                    const delayTime = parseInt(document.getElementById('operationDelay').value) || DEFAULT_OPERATION_DELAY;
+                    await delay(delayTime);
+                }
+            }
+            
+            // Generate final summary
+            if (!stopProcess) {
+                generateFinalSummary();
+                addToResultContainer('🎉 All accounts processed successfully!', 'success');
+            }
+            
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('pauseButton').disabled = true;
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('scanButton').disabled = false;
+        }
+        
+        // Process a single account
+        async function processAccount(authToken, senderID, maxCrafts) {
+            const accountNumber = currentAccountIndex + 1;
+            
+            try {
+                addToResultContainer(`=== Processing Account ${accountNumber} (Sender: ${senderID}) ===`, 'account');
+                
+                // Check funds
+                addToResultContainer(`Checking funds...`, 'info');
+                let silverBalance = 0;
+                try {
+                    silverBalance = await checkUserFunds(authToken);
+                    addToResultContainer(`💰 Silver balance: ${silverBalance.toLocaleString()}`, 'success');
+                } catch (fundsError) {
+                    addToResultContainer(`Failed to check funds: ${fundsError.message}`, 'error');
+                    return;
+                }
+                
+                // Get cards for this account (using scan results if available, otherwise scan again)
+                let cardsByRequirement, cardsWithDetails;
+                
+                if (scanResults.accountNumber === accountNumber) {
+                    cardsByRequirement = scanResults.cardsByRequirement;
+                    cardsWithDetails = scanResults.cardsWithDetails;
+                    addToResultContainer(`Using pre-scanned cards for account ${accountNumber}`, 'info');
+                } else {
+                    addToResultContainer(`Scanning collections for account ${accountNumber}...`, 'info');
+                    cardsByRequirement = {};
+                    cardsWithDetails = {};
+                    
+                    const minMintNumber = parseInt(document.getElementById('minMintNumber').value) || 30;
+                    
+                    for (const [requirementId, config] of Object.entries(REQUIREMENTS_CONFIG)) {
+                        if (stopProcess) return;
+                        
+                        const cards = [];
+                        for (const collectionId of config.collectionIds) {
+                            if (stopProcess) return;
+                            
+                            const collectionCards = await getCollectionCardsWithDetails(authToken, senderID, collectionId, minMintNumber);
+                            
+                            collectionCards.forEach(card => {
+                                cardsWithDetails[card.id] = card;
+                            });
+                            
+                            cards.push(...collectionCards.map(card => card.id));
+                            
+                            await delay(1000);
+                        }
+                        
+                        cardsByRequirement[requirementId] = cards;
+                    }
+                }
+                
+                const silverPerBrew = parseInt(document.getElementById('silvercoins').value) || 5000;
+                const cardBasedBatches = calculateBrewableBatches(cardsByRequirement, maxCrafts);
+                const fundBasedBatches = Math.floor(silverBalance / silverPerBrew);
+                
+                let actualBatches = Math.min(cardBasedBatches, fundBasedBatches, maxCrafts);
+                
+                if (actualBatches === 0) {
+                    addToResultContainer(`❌ Cannot perform any brews for account ${accountNumber}`, 'error');
+                    return;
+                }
+                
+                addToResultContainer(`Will perform ${actualBatches} brewing operation(s)`, 'success');
+                
+                // Sort cards by mint number (highest first)
+                const sortedCardsByRequirement = sortCardsByMintDesc(cardsByRequirement, cardsWithDetails);
+                const usedCardIds = new Set();
+                const initialSilver = silverBalance;
+                
+                for (let batchNum = 1; batchNum <= actualBatches; batchNum++) {
+                    if (stopProcess) break;
+                    
+                    while (isPaused && !stopProcess) {
+                        await delay(1000);
+                    }
+                    
+                    if (stopProcess) break;
+                    
+                    addToResultContainer(`🍺 Processing brew ${batchNum}/${actualBatches}...`, 'brew-header');
+                    
+                    // Check funds before each brew
+                    try {
+                        const currentSilver = await checkUserFunds(authToken);
+                        if (currentSilver < silverPerBrew) {
+                            addToResultContainer(`Insufficient funds for next brew (balance: ${currentSilver.toLocaleString()})`, 'error');
+                            break;
+                        }
+                    } catch (fundsError) {
+                        addToResultContainer(`Could not verify funds before brew ${batchNum}`, 'warning');
+                    }
+                    
+                    const brewResult = await processBrew(authToken, senderID, sortedCardsByRequirement, cardsWithDetails, usedCardIds, batchNum);
+                    
+                    if (brewResult && brewResult.success) {
+                        successfulBrews++;
+                        if (brewResult.cardsReceived && brewResult.cardsReceived.length > 0) {
+                            // Handle duplicate slots (slots 1 and 2 give same card)
+                            brewResult.cardsReceived.forEach(card => {
+                                const key = `${card.mintBatch}-${card.mintNumber}`;
+                                if (!brewedCards.has(key)) {
+                                    brewedCards.set(key, card);
+                                    addToResultContainer(`  ✨ New unique card: ${card.mintBatch}${card.mintNumber} (Rating: ${card.rating})`, 'small-font');
+                                } else {
+                                    addToResultContainer(`  ⚠️ Duplicate card detected: ${card.mintBatch}${card.mintNumber} (already recorded)`, 'warning');
+                                }
+                            });
+                        }
+                    }
+                    
+                    completedBrews++;
+                    totalBrews++;
+                    updateStats();
+                    
+                    // Update progress
+                    const accountProgress = (batchNum / actualBatches) * 100;
+                    const totalProgress = ((currentAccountIndex * 100) + accountProgress) / accountPairs.length;
+                    document.getElementById('progressBar').style.width = `${totalProgress}%`;
+                    
+                    // Delay between brews
+                    if (batchNum < actualBatches && !stopProcess) {
+                        const delayTime = parseInt(document.getElementById('operationDelay').value) || DEFAULT_OPERATION_DELAY;
+                        await delay(delayTime);
+                    }
+                }
+                
+                // Check final funds
+                try {
+                    const finalSilver = await checkUserFunds(authToken);
+                    const silverSpent = initialSilver - finalSilver;
+                    addToResultContainer(`Account ${accountNumber} final silver balance: ${finalSilver.toLocaleString()}`, 'info');
+                    addToResultContainer(`Total silver spent: ${silverSpent.toLocaleString()}`, 'info');
+                } catch (fundsError) {
+                    addToResultContainer(`Could not check final funds`, 'warning');
+                }
+                
+                addToResultContainer(`✅ Account ${accountNumber} processing completed!`, 'success');
+                
+            } catch (error) {
+                addToResultContainer(`Error processing account: ${error.message}`, 'error');
+            }
+        }
+        
+        // Process a single brew
+        async function processBrew(authToken, senderID, sortedCardsByRequirement, cardsWithDetails, usedCardIds, batchNumber) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-user-jwt': authToken
+            };
+            
+            const craftingPlanId = document.getElementById('craftingPlanId').value || '3235';
+            const silvercoins = parseInt(document.getElementById('silvercoins').value) || 5000;
+            
+            const endpoint = `/crafting/plans/${craftingPlanId}`;
+            
+            // Build requirements with sorted cards
+            const requirements = [];
+            const cardsUsedInThisBrew = [];
+            const cardsUsedDetails = [];
+            
+            for (const [requirementId, config] of Object.entries(REQUIREMENTS_CONFIG)) {
+                const cardsNeeded = config.cardsPerBrew;
+                
+                const availableCards = (sortedCardsByRequirement[requirementId] || [])
+                    .filter(cardId => !usedCardIds.has(cardId));
+                
+                if (availableCards.length < cardsNeeded) {
+                    throw new Error(`Not enough unused cards for requirement ${requirementId}`);
+                }
+                
+                const selectedCardIds = availableCards.slice(0, cardsNeeded);
+                
+                selectedCardIds.forEach(cardId => {
+                    usedCardIds.add(cardId);
+                    const cardDetails = cardsWithDetails[cardId];
+                    cardsUsedInThisBrew.push(cardId);
+                    cardsUsedDetails.push({
+                        id: cardId,
+                        requirementId,
+                        mintBatch: cardDetails?.mintBatch || '',
+                        mintNumber: cardDetails?.mintNumber || 'N/A'
+                    });
+                });
+                
+                requirements.push({
+                    requirementId: parseInt(requirementId),
+                    entityIds: selectedCardIds
+                });
+            }
+            
+            // Log cards being used
+            addToResultContainer(`Using cards: ${cardsUsedDetails.map(c => `${c.mintBatch}${c.mintNumber}`).join(', ')}`, 'small-font');
+            
+            // Crafting request body
+            const craftingBody = {
+                requirements: requirements,
+                silvercoins: silvercoins
+            };
+            
+            try {
+                // Send crafting request
+                const responseCraft = await sendProxyRequest(endpoint, 'POST', headers, craftingBody);
+                
+                if (!responseCraft.success) {
+                    cardsUsedInThisBrew.forEach(cardId => usedCardIds.delete(cardId));
+                    throw new Error(`Crafting failed: ${JSON.stringify(responseCraft.error || responseCraft)}`);
+                }
+                
+                addToResultContainer(`✅ Brewing request successful!`, 'success');
+                
+                // Process slots
+                const slots = responseCraft.data?.slots || [];
+                if (!slots || slots.length === 0) {
+                    addToResultContainer(`No slots found in response`, 'warning');
+                    return { success: true, cardsReceived: [] };
+                }
+                
+                addToResultContainer(`Found ${slots.length} slots to open`, 'info');
+                
+                const cardsReceived = [];
+                
+                for (let i = 0; i < slots.length; i++) {
+                    if (stopProcess) break;
+                    
+                    const slotId = slots[i].id;
+                    addToResultContainer(`Opening slot ${i + 1}...`, 'info');
+                    
+                    try {
+                        const slotResult = await openSlot(authToken, slotId);
+                        
+                        if (slotResult && slotResult.success) {
+                            if (slotResult.data?.cards?.length > 0) {
+                                const card = slotResult.data.cards[0];
+                                const cardInfo = `${card.mintBatch || ''}${card.mintNumber || ''}`.trim();
+                                const rating = card.rating || 'N/A';
+                                
+                                addToResultContainer(`  Slot ${i + 1}: Got ${cardInfo} with rating ${rating}`, 'success');
+                                
+                                cardsReceived.push({
+                                    mintBatch: card.mintBatch || '',
+                                    mintNumber: card.mintNumber || 'N/A',
+                                    rating: rating
+                                });
+                            } else {
+                                addToResultContainer(`  Slot ${i + 1} opened successfully (no card data)`, 'success');
+                            }
+                        } else {
+                            throw new Error(`Slot open failed: ${JSON.stringify(slotResult)}`);
+                        }
+                        
+                        // Delay between slot openings
+                        if (i < slots.length - 1) {
+                            await delay(2000);
+                        }
+                        
+                    } catch (error) {
+                        addToResultContainer(`Error opening slot ${i + 1}: ${error.message}`, 'error');
+                    }
+                }
+                
+                addToResultContainer(`✅ Brew ${batchNumber} completed successfully!`, 'success');
+                return { success: true, cardsReceived };
+                
+            } catch (error) {
+                addToResultContainer(`Error in brew ${batchNumber}: ${error.message}`, 'error');
+                return { success: false, cardsReceived: [] };
+            }
+        }
+        
+        // Open a slot
+        async function openSlot(authToken, slotId) {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-user-jwt': authToken
+            };
+            
+            const endpoint = `/crafting/slots/${slotId}/open-instant`;
+            
+            try {
+                const response = await sendProxyRequest(endpoint, 'POST', headers);
+                return response;
+            } catch (error) {
+                throw error;
+            }
+        }
+        
+        // Generate final summary
+        function generateFinalSummary() {
+            if (brewedCards.size === 0) {
+                addToResultContainer('No cards were brewed in this session', 'warning');
+                return;
+            }
+            
+            addToResultContainer('=== FINAL BREWING RESULTS SUMMARY ===', 'highlight');
+            
+            const sortedCards = Array.from(brewedCards.values())
+                .sort((a, b) => {
+                    const numA = parseInt(a.mintNumber) || 0;
+                    const numB = parseInt(b.mintNumber) || 0;
+                    return numA - numB;
+                });
+            
+            const mintNumbers = sortedCards.map(c => parseInt(c.mintNumber) || 0).filter(n => n > 0);
+            const lowestMint = mintNumbers.length > 0 ? Math.min(...mintNumbers) : 'N/A';
+            const highestMint = mintNumbers.length > 0 ? Math.max(...mintNumbers) : 'N/A';
+            
+            addToResultContainer(`📊 Total unique cards brewed: ${sortedCards.length}`, 'success');
+            addToResultContainer(`📉 Lowest mint brewed: ${lowestMint}`, 'info');
+            addToResultContainer(`📈 Highest mint brewed: ${highestMint}`, 'info');
+            
+            addToResultContainer('All brewed cards (sorted by mint number):', 'summary-header');
+            
+            // Create card grid in results
+            const cardGrid = document.createElement('div');
+            cardGrid.className = 'summary-cards';
+            
+            sortedCards.forEach(card => {
+                const mintNum = parseInt(card.mintNumber) || 0;
+                const isLowMint = mintNum < 50;
+                const isHighMint = mintNum > 100;
+                
+                let cardClass = 'card-item';
+                if (isLowMint) cardClass += ' low-mint';
+                if (isHighMint) cardClass += ' high-mint';
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = cardClass;
+                cardDiv.innerHTML = `
+                    <strong>${card.mintBatch || ''}${card.mintNumber}</strong><br>
+                    <small>⭐ ${card.rating || 'N/A'}</small>
+                `;
+                cardGrid.appendChild(cardDiv);
+                
+                // Also add to log
+                addToResultContainer(`  ${card.mintBatch || ''}${card.mintNumber} (Rating: ${card.rating || 'N/A'})`, 'small-font');
+            });
+            
+            // Add card grid to results
+            document.getElementById('resultContainer').appendChild(cardGrid);
+        }
+        
+        // Pause brewing
+        function pauseBrewing() {
+            isPaused = true;
+            document.getElementById('pauseButton').disabled = true;
+            document.getElementById('resumeButton').disabled = false;
+            addToResultContainer('⏸ Process paused by user', 'warning');
+        }
+        
+        // Resume brewing
+        function resumeBrewing() {
+            isPaused = false;
+            document.getElementById('pauseButton').disabled = false;
+            document.getElementById('resumeButton').disabled = true;
+            addToResultContainer('▶ Process resumed', 'success');
+        }
+        
+        // Stop the script
+        function stopScript() {
+            stopProcess = true;
+            isPaused = false;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('pauseButton').disabled = true;
+            document.getElementById('resumeButton').disabled = true;
+            document.getElementById('startButton').disabled = false;
+            document.getElementById('scanButton').disabled = false;
+            addToResultContainer('⏹ Process stopped by user', 'warning');
+        }
+    </script>
+</body>
+</html>

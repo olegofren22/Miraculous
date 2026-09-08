@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kolex Pack Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        /* Navigation styles - kept for fallback */
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.secondary {
+            background-color: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        button.warning {
+            background-color: #ff9800;
+        }
+        
+        button.warning:hover {
+            background-color: #e68a00;
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        button.danger:hover {
+            background-color: #da190b;
+        }
+        
+        .button-group {
+            margin: 20px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stats-container {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .pack-group {
+            margin-bottom: 15px;
+            border-left: 3px solid #4CAF50;
+            padding-left: 15px;
+        }
+        
+        .pack-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        .pack-group-header:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .pack-count {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .ids-container {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .ids-container.show {
+            display: block;
+        }
+        
+        .ids-row {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 2px 5px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+        }
+        
+        .open-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        .open-controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .open-control-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .open-results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .open-result-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f9f9f9;
+            border-left: 3px solid #4CAF50;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .open-result-item.error {
+            border-left-color: #f44336;
+        }
+        
+        .progress-container {
+            margin: 15px 0;
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .select-group {
+            margin: 10px 0;
+        }
+        
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            width: 100%;
+        }
+        
+        .copy-button {
+            background-color: #607d8b;
+            margin-left: 10px;
+        }
+        
+        .copy-button:hover {
+            background-color: #455a64;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here by nav-loader.js -->
+    <!-- The old nav-bar div has been removed -->
+
+    <div class="container">
+        <h1>Kolex Pack Manager</h1>
+        
+        <!-- JWT Input -->
+        <div class="input-group">
+            <label for="jwtInput">Authorization Token (JWT):</label>
+            <input type="text" id="jwtInput" placeholder="Paste your JWT token here" value="">
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button id="checkPacksBtn" class="secondary">Check All Packs</button>
+            <button id="displayIdsBtn">Display Pack IDs</button>
+        </div>
+        
+        <!-- Stats Container -->
+        <div id="statsContainer" class="stats-container" style="display: none;">
+            <h2>Pack Statistics</h2>
+            <div id="totalPacks"></div>
+            <div id="packGroups"></div>
+        </div>
+        
+        <!-- Open Packs Section -->
+        <div id="openSection" class="open-section" style="display: none;">
+            <h3>Open Packs</h3>
+            
+            <div class="open-controls">
+                <div class="open-control-item">
+                    <label for="packGroupSelect">Select Pack Group:</label>
+                    <select id="packGroupSelect">
+                        <option value="">-- Select a pack type --</option>
+                    </select>
+                </div>
+                
+                <div class="open-control-item">
+                    <label for="packsToOpen">Number of packs to open:</label>
+                    <input type="number" id="packsToOpen" min="1" value="1">
+                </div>
+                
+                <div class="open-control-item checkbox-group">
+                    <input type="checkbox" id="openOldestFirst" checked>
+                    <label for="openOldestFirst">Open oldest packs first (smallest IDs)</label>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="openPacksBtn" class="warning">Start Opening Packs</button>
+                <button id="stopOpenBtn" class="danger" style="display: none;">Stop Opening</button>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div id="openResults" class="open-results">
+                <h4>Opening Results:</h4>
+            </div>
+        </div>
+    </div>
+
+    <script src="/nav-loader.js"></script>
+    <script>
+        // Configuration
+        const PACK_DELAY = 2700; // 2700ms delay between pack openings
+        
+        // State variables
+        let allPacks = [];
+        let packGroups = {};
+        let selectedGroupPacks = [];
+        let isOpening = false;
+        let stopOpening = false;
+        
+        // DOM Elements
+        const jwtInput = document.getElementById('jwtInput');
+        const checkPacksBtn = document.getElementById('checkPacksBtn');
+        const displayIdsBtn = document.getElementById('displayIdsBtn');
+        const statsContainer = document.getElementById('statsContainer');
+        const totalPacksDiv = document.getElementById('totalPacks');
+        const packGroupsDiv = document.getElementById('packGroups');
+        const openSection = document.getElementById('openSection');
+        const packGroupSelect = document.getElementById('packGroupSelect');
+        const packsToOpenInput = document.getElementById('packsToOpen');
+        const openOldestFirstCheck = document.getElementById('openOldestFirst');
+        const openPacksBtn = document.getElementById('openPacksBtn');
+        const stopOpenBtn = document.getElementById('stopOpenBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const openResults = document.getElementById('openResults');
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Note: Server health check is now handled by nav-loader.js
+            
+            checkPacksBtn.addEventListener('click', checkAllPacks);
+            displayIdsBtn.addEventListener('click', displayAllPackIds);
+            openPacksBtn.addEventListener('click', startOpeningPacks);
+            stopOpenBtn.addEventListener('click', stopOpeningPacks);
+            packGroupSelect.addEventListener('change', updateSelectedGroup);
+            openOldestFirstCheck.addEventListener('change', updateSelectedGroup);
+        });
+        
+        // Helper function to send requests through proxy (updated for Render.com)
+        async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+            try {
+                const response = await fetch('/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        endpoint: endpoint,
+                        method: method,
+                        headers: headers,
+                        data: data,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Proxy request failed:', error);
+                throw error;
+            }
+        }
+        
+        // Fetch all packs with pagination
+        async function fetchAllPacks(authToken) {
+            let allPacks = [];
+            let page = 1;
+            let hasMore = true;
+            
+            while (hasMore) {
+                //const endpoint = `/packs/user?page=${page}&categoryIds=1`;
+                const endpoint = `/packs/user?page=${page}`;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'x-user-jwt': authToken
+                };
+                
+                const response = await sendProxyRequest(endpoint, 'GET', headers);
+                
+                if (!response.data) {
+                    throw new Error('Invalid response format from API');
+                }
+                
+                allPacks = allPacks.concat(response.data.packs);
+                
+                if (response.data.packs.length === 0 || 
+                    (response.data.count * page) >= response.data.total) {
+                    hasMore = false;
+                } else {
+                    page++;
+                }
+            }
+            
+            return allPacks;
+        }
+        
+        // Group packs by name
+        function groupPacksByName(packs) {
+            const groups = {};
+            
+            packs.forEach(pack => {
+                const packName = pack.packTemplate ? pack.packTemplate.name : 'Unknown Pack';
+                if (!groups[packName]) {
+                    groups[packName] = [];
+                }
+                groups[packName].push(pack);
+            });
+            
+            // Sort packs within each group by ID
+            Object.keys(groups).forEach(key => {
+                groups[key].sort((a, b) => a.id - b.id);
+            });
+            
+            return groups;
+        }
+        
+        // Check all packs (main function)
+        async function checkAllPacks() {
+            const authToken = jwtInput.value.trim();
+            
+            if (!authToken) {
+                alert('Please enter your authorization token');
+                return;
+            }
+            
+            checkPacksBtn.disabled = true;
+            checkPacksBtn.textContent = 'Checking...';
+            
+            try {
+                allPacks = await fetchAllPacks(authToken);
+                packGroups = groupPacksByName(allPacks);
+                
+                // Display statistics
+                displayStatistics();
+                
+                // Populate pack group select
+                populatePackGroupSelect();
+                
+                // Show open section
+                openSection.style.display = 'block';
+                statsContainer.style.display = 'block';
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+                console.error(error);
+            } finally {
+                checkPacksBtn.disabled = false;
+                checkPacksBtn.textContent = 'Check All Packs';
+            }
+        }
+        
+        // Display statistics
+        function displayStatistics() {
+            const totalCount = allPacks.length;
+            totalPacksDiv.innerHTML = `<h3>Total Packs: <span class="pack-count">${totalCount}</span></h3>`;
+            
+            let groupsHtml = '<h3>Packs by Type:</h3>';
+            
+            Object.keys(packGroups).sort().forEach(packName => {
+                const packs = packGroups[packName];
+                groupsHtml += `
+                    <div class="pack-group">
+                        <div class="pack-group-header" onclick="toggleIds('${packName.replace(/'/g, "\\'")}')">
+                            <span>${packName}</span>
+                            <span class="pack-count">${packs.length} packs</span>
+                        </div>
+                        <div id="ids-${packName.replace(/[^a-zA-Z0-9]/g, '-')}" class="ids-container">
+                            ${packs.map(p => `<span class="ids-row">${p.id}</span>`).join('; ')}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            packGroupsDiv.innerHTML = groupsHtml;
+        }
+        
+        // Toggle IDs display (global function for onclick)
+        window.toggleIds = function(packName) {
+            const safeName = packName.replace(/[^a-zA-Z0-9]/g, '-');
+            const idsContainer = document.getElementById(`ids-${safeName}`);
+            if (idsContainer) {
+                idsContainer.classList.toggle('show');
+            }
+        };
+        
+        // Display all pack IDs (expands all groups)
+        function displayAllPackIds() {
+            Object.keys(packGroups).forEach(packName => {
+                const safeName = packName.replace(/[^a-zA-Z0-9]/g, '-');
+                const idsContainer = document.getElementById(`ids-${safeName}`);
+                if (idsContainer) {
+                    idsContainer.classList.add('show');
+                }
+            });
+        }
+        
+        // Populate pack group select dropdown
+        function populatePackGroupSelect() {
+            packGroupSelect.innerHTML = '<option value="">-- Select a pack type --</option>';
+            
+            Object.keys(packGroups).sort().forEach(packName => {
+                const option = document.createElement('option');
+                option.value = packName;
+                option.textContent = `${packName} (${packGroups[packName].length} packs)`;
+                packGroupSelect.appendChild(option);
+            });
+        }
+        
+        // Update selected group when dropdown changes
+        function updateSelectedGroup() {
+            const selectedPackName = packGroupSelect.value;
+            if (selectedPackName && packGroups[selectedPackName]) {
+                selectedGroupPacks = [...packGroups[selectedPackName]];
+                
+                // Sort based on checkbox
+                if (openOldestFirstCheck.checked) {
+                    selectedGroupPacks.sort((a, b) => a.id - b.id);
+                } else {
+                    selectedGroupPacks.sort((a, b) => b.id - a.id);
+                }
+                
+                // Update max value for number input
+                packsToOpenInput.max = selectedGroupPacks.length;
+                if (parseInt(packsToOpenInput.value) > selectedGroupPacks.length) {
+                    packsToOpenInput.value = selectedGroupPacks.length;
+                }
+            } else {
+                selectedGroupPacks = [];
+            }
+        }
+        
+        // Open a single pack
+        async function openPack(authToken, packId) {
+            const endpoint = '/packs/open2';
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-user-jwt': authToken
+            };
+            
+            const data = {
+                categoryId: 1,
+                packId: packId
+            };
+            
+            return await sendProxyRequest(endpoint, 'POST', headers, data);
+        }
+        
+        // Format mint numbers from pack opening result
+        function formatMintNumbers(result) {
+            if (result.success && result.data && result.data.cards) {
+                const cards = result.data.cards;
+                return cards.map(card => `A${card.mintNumber}`).join(', ');
+            }
+            return 'No cards found';
+        }
+        
+        // Start opening packs
+        async function startOpeningPacks() {
+            const authToken = jwtInput.value.trim();
+            
+            if (!authToken) {
+                alert('Please enter your authorization token');
+                return;
+            }
+            
+            if (selectedGroupPacks.length === 0) {
+                alert('Please select a pack group first');
+                return;
+            }
+            
+            const packsToOpen = parseInt(packsToOpenInput.value);
+            
+            if (isNaN(packsToOpen) || packsToOpen < 1) {
+                alert('Please enter a valid number of packs to open');
+                return;
+            }
+            
+            if (packsToOpen > selectedGroupPacks.length) {
+                alert(`You only have ${selectedGroupPacks.length} packs in this group`);
+                return;
+            }
+            
+            // Update UI for opening
+            isOpening = true;
+            stopOpening = false;
+            openPacksBtn.style.display = 'none';
+            stopOpenBtn.style.display = 'inline-block';
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            
+            // Clear previous results
+            openResults.innerHTML = '<h4>Opening Results:</h4>';
+            
+            // Get the packs to open (first N from sorted list)
+            const packsToOpenList = selectedGroupPacks.slice(0, packsToOpen);
+            
+            // Open packs one by one
+            for (let i = 0; i < packsToOpenList.length && !stopOpening; i++) {
+                const pack = packsToOpenList[i];
+                
+                try {
+                    const result = await openPack(authToken, pack.id);
+                    
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'open-result-item';
+                    
+                    if (result.success) {
+                        const mintNumbers = formatMintNumbers(result);
+                        resultDiv.innerHTML = `<strong>Pack #${pack.id}:</strong> ${mintNumbers}`;
+                    } else {
+                        resultDiv.className += ' error';
+                        resultDiv.innerHTML = `<strong>Pack #${pack.id}:</strong> Error - ${result.error || 'Unknown error'}`;
+                    }
+                    
+                    openResults.appendChild(resultDiv);
+                    openResults.scrollTop = openResults.scrollHeight;
+                    
+                } catch (error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'open-result-item error';
+                    errorDiv.innerHTML = `<strong>Pack #${pack.id}:</strong> Error - ${error.message}`;
+                    openResults.appendChild(errorDiv);
+                }
+                
+                // Update progress
+                const progress = ((i + 1) / packsToOpenList.length) * 100;
+                progressBar.style.width = `${progress}%`;
+                
+                // Delay between requests
+                await new Promise(resolve => setTimeout(resolve, PACK_DELAY));
+            }
+            
+            // Update UI after opening
+            if (!stopOpening) {
+                // Remove opened packs from the group
+                const remainingPacks = selectedGroupPacks.slice(packsToOpenList.length);
+                packGroups[packGroupSelect.value] = remainingPacks;
+                selectedGroupPacks = remainingPacks;
+                
+                // Update statistics display
+                displayStatistics();
+                
+                // Update dropdown
+                populatePackGroupSelect();
+                
+                // Clear selection
+                packGroupSelect.value = '';
+                selectedGroupPacks = [];
+                
+                openResults.innerHTML += '<div class="open-result-item"><strong>Completed!</strong></div>';
+            }
+            
+            // Reset UI
+            openPacksBtn.style.display = 'inline-block';
+            stopOpenBtn.style.display = 'none';
+            progressContainer.style.display = 'none';
+            isOpening = false;
+        }
+        
+        // Stop opening packs
+        function stopOpeningPacks() {
+            stopOpening = true;
+            stopOpenBtn.textContent = 'Stopping...';
+        }
+    </script>
+</body>
+</html>

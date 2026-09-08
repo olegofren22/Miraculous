@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinner Pro · Auto Spin + Stats</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f4f6fa;
+            color: #1e293b;
+        }
+        h1 { display: flex; align-items: center; gap: 12px; font-weight: 600; letter-spacing: -0.02em; }
+        .badge { background: #2563eb; color: white; font-size: 0.8rem; padding: 2px 12px; border-radius: 40px; }
+        .card {
+            background: white; border-radius: 20px; padding: 20px 24px;
+            margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            border: 1px solid #eef2f6;
+        }
+        .input-group { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin: 8px 0; }
+        label { font-weight: 500; min-width: 130px; }
+        input, textarea, select {
+            padding: 8px 14px; border: 1px solid #d1d9e6; border-radius: 12px;
+            font-size: 0.9rem; background: white; transition: 0.2s;
+        }
+        input:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        input[type="number"] { width: 120px; }
+        input[type="text"] { width: 260px; }
+        button {
+            padding: 8px 22px; border: none; border-radius: 40px; font-weight: 600;
+            background: #e2e8f0; color: #1e293b; cursor: pointer; transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #startBtn { background: #2563eb; color: white; }
+        #startBtn:hover:not(:disabled) { background: #1d4ed8; }
+        #pauseBtn { background: #f59e0b; color: white; }
+        #pauseBtn:hover:not(:disabled) { background: #d97706; }
+        #stopBtn { background: #ef4444; color: white; }
+        #stopBtn:hover:not(:disabled) { background: #dc2626; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; }
+        .stat-box { background: #f8fafc; padding: 12px; border-radius: 14px; text-align: center; border-left: 4px solid #2563eb; }
+        .stat-value { font-size: 24px; font-weight: 700; }
+        .stat-label { font-size: 0.7rem; text-transform: uppercase; color: #64748b; }
+
+        .prize-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 10px; }
+        .prize-table th { background: #f1f5f9; padding: 8px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+        .prize-table td { padding: 6px 8px; border-bottom: 1px solid #f1f5f9; }
+        .prize-table .chance-bar { display: inline-block; height: 6px; border-radius: 20px; background: #2563eb; margin-left: 6px; }
+
+        .log-container {
+            max-height: 280px; overflow-y: auto; background: #f8fafc;
+            border-radius: 14px; padding: 8px 12px; border: 1px solid #e2e8f0;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+        }
+        .log-container p { margin: 4px 0; padding: 2px 0; border-bottom: 1px solid #f1f5f9; }
+        .log-error { color: #dc2626; }
+        .log-success { color: #16a34a; }
+        .log-info { color: #2563eb; }
+
+        .flex-row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+        .spinner-id-display { font-weight: 600; color: #2563eb; background: #eff6ff; padding: 4px 12px; border-radius: 40px; }
+
+        @media (max-width: 700px) { input[type="text"] { width: 100%; } }
+    </style>
+</head>
+<body>
+
+<!-- Navigation will be injected here by nav-loader.js -->
+<!-- The old nav-bar div has been removed -->
+
+<h1>🎡 Spinner Pro <span class="badge">v2</span></h1>
+
+<div class="card">
+    <div class="input-group">
+        <label>JWT Token</label>
+        <input type="text" id="jwtInput" placeholder="eyJhbGciOiJIUzI1NiIs..." style="width: 400px;">
+    </div>
+    <div class="input-group">
+        <label>Iterations</label>
+        <input type="number" id="iterationsInput" value="10" min="1">
+        <label>Delay (ms)</label>
+        <input type="number" id="delayInput" value="2717" min="500">
+    </div>
+    <div class="flex-row" style="margin-top: 12px;">
+        <button id="startBtn">▶ Start</button>
+        <button id="pauseBtn" disabled>⏸ Pause</button>
+        <button id="stopBtn" disabled>⏹ Stop</button>
+        <span style="margin-left: auto; font-size:0.9rem; color:#64748b;">Spinner: <span id="spinnerIdDisplay" class="spinner-id-display">—</span></span>
+    </div>
+</div>
+
+<div class="card">
+    <div class="stats-grid">
+        <div class="stat-box"><div class="stat-value" id="totalSpins">0</div><div class="stat-label">Total spins</div></div>
+        <div class="stat-box"><div class="stat-value" id="silverSpent">0</div><div class="stat-label">Silver spent</div></div>
+        <div class="stat-box"><div class="stat-value" id="silverReturned">0</div><div class="stat-label">Silver returned</div></div>
+        <div class="stat-box"><div class="stat-value" id="silverNet">0</div><div class="stat-label">Net silver</div></div>
+        <div class="stat-box"><div class="stat-value" id="roiPercent">0%</div><div class="stat-label">ROI</div></div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">🏆 Prize pool <span style="font-weight:400;font-size:0.8rem;color:#64748b;">(from server)</span></h3>
+    <div style="overflow-x:auto;">
+        <table class="prize-table" id="prizeTable">
+            <thead><tr><th>Prize</th><th>Chance</th><th>Count</th><th>% hit</th></tr></thead>
+            <tbody id="prizeBody"><tr><td colspan="4" style="text-align:center;color:#94a3b8;">Load spinner info first</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">📋 Log</h3>
+    <div class="log-container" id="logContainer"></div>
+</div>
+
+<script src="/nav-loader.js"></script>
+<script>
+    // ----- CONFIG -----
+    const PROXY_URL = '/proxy';
+    const API_BASE = 'https://api.kolex.gg/api/v1';
+
+    // ----- STATE -----
+    let isPaused = false;
+    let stopRequested = false;
+    let running = false;
+    let currentIteration = 0;
+    let totalIterations = 0;
+    let delayMs = 2717;
+    let authToken = '';
+    let spinnerId = null;
+    let prizeMap = {};          // id -> { name, chance, count, silverValue }
+    let prizeOrder = [];
+    let totalSpins = 0;
+    let silverSpent = 0;
+    let silverReturned = 0;
+    let initialSilver = 0;
+    let finalSilver = 0;
+
+    // DOM refs
+    const $ = id => document.getElementById(id);
+    const jwtInput = $('jwtInput');
+    const iterInput = $('iterationsInput');
+    const delayInput = $('delayInput');
+    const startBtn = $('startBtn');
+    const pauseBtn = $('pauseBtn');
+    const stopBtn = $('stopBtn');
+    const spinnerIdDisplay = $('spinnerIdDisplay');
+    const prizeBody = $('prizeBody');
+    const logContainer = $('logContainer');
+    const totalSpinsEl = $('totalSpins');
+    const silverSpentEl = $('silverSpent');
+    const silverReturnedEl = $('silverReturned');
+    const silverNetEl = $('silverNet');
+    const roiPercentEl = $('roiPercent');
+
+    // ----- LOGGING -----
+    function addLog(msg, type = 'info') {
+        const p = document.createElement('p');
+        p.textContent = msg;
+        p.className = type === 'error' ? 'log-error' : type === 'success' ? 'log-success' : 'log-info';
+        logContainer.appendChild(p);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // ----- UPDATE STATS UI -----
+    function updateStatsUI() {
+        totalSpinsEl.textContent = totalSpins;
+        silverSpentEl.textContent = silverSpent.toLocaleString();
+        silverReturnedEl.textContent = silverReturned.toLocaleString();
+        const net = silverReturned - silverSpent;
+        silverNetEl.textContent = net.toLocaleString();
+        const roi = silverSpent > 0 ? (net / silverSpent) * 100 : 0;
+        roiPercentEl.textContent = roi.toFixed(2) + '%';
+        // update prize counts
+        const rows = prizeBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const id = row.dataset.prizeId;
+            if (id && prizeMap[id]) {
+                const countCell = row.querySelector('.prize-count');
+                if (countCell) countCell.textContent = prizeMap[id].count || 0;
+                const pctCell = row.querySelector('.prize-pct');
+                if (pctCell) {
+                    const pct = totalSpins > 0 ? ((prizeMap[id].count || 0) / totalSpins * 100) : 0;
+                    pctCell.textContent = pct.toFixed(2) + '%';
+                }
+            }
+        });
+    }
+
+    // ----- FETCH SPINNER INFO (GET /spinner) -----
+    async function fetchSpinnerInfo(token) {
+        try {
+            const headers = { 'Content-Type': 'application/json', 'x-user-jwt': token };
+            const resp = await proxyRequest('/spinner?categoryId=1', 'GET', headers);
+            if (!resp.success || !resp.data) throw new Error('Invalid spinner response');
+            const data = resp.data;
+            spinnerId = data.id;
+            spinnerIdDisplay.textContent = spinnerId;
+
+            // build prize map
+            prizeMap = {};
+            prizeOrder = [];
+            const items = data.items || [];
+            for (const item of items) {
+                const id = item.id;
+                let silverValue = 0;
+                if (item.properties) {
+                    silverValue = item.properties.silvercoins || 0;
+                }
+                prizeMap[id] = {
+                    name: item.name || `Prize ${id}`,
+                    chance: item.chance || 0,
+                    count: 0,
+                    silverValue: silverValue
+                };
+                prizeOrder.push(id);
+            }
+
+            // render prize table
+            renderPrizeTable();
+            addLog(`✅ Loaded spinner #${spinnerId} with ${items.length} prizes`, 'success');
+            return true;
+        } catch (e) {
+            addLog(`❌ Failed to fetch spinner info: ${e.message}`, 'error');
+            return false;
+        }
+    }
+
+    function renderPrizeTable() {
+        if (prizeOrder.length === 0) {
+            prizeBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;">No prizes loaded</td></tr>`;
+            return;
+        }
+        let html = '';
+        for (const id of prizeOrder) {
+            const p = prizeMap[id];
+            const chance = p.chance || 0;
+            const barWidth = Math.min(chance * 0.8, 100);
+            html += `<tr data-prize-id="${id}">
+                <td><strong>${p.name}</strong> ${p.silverValue > 0 ? `🪙 ${p.silverValue.toLocaleString()}` : ''}</td>
+                <td>${chance}% <span class="chance-bar" style="width:${barWidth}px;"></span></td>
+                <td class="prize-count">${p.count || 0}</td>
+                <td class="prize-pct">${totalSpins > 0 ? ((p.count || 0) / totalSpins * 100).toFixed(2) + '%' : '0%'}</td>
+            </tr>`;
+        }
+        prizeBody.innerHTML = html;
+    }
+
+    // ----- PROXY -----
+    async function proxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+        const res = await fetch(PROXY_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint, method, headers, data })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        return json;
+    }
+
+    // ----- GET USER FUNDS -----
+    async function getUserFunds(token) {
+        try {
+            const headers = { 'Content-Type': 'application/json', 'x-user-jwt': token };
+            const resp = await proxyRequest('/user/funds', 'GET', headers);
+            if (resp.success && resp.data) {
+                return resp.data.silvercoins || 0;
+            }
+            return null;
+        } catch (e) {
+            addLog(`⚠️ Could not fetch funds: ${e.message}`, 'error');
+            return null;
+        }
+    }
+
+    // ----- SINGLE SPIN CYCLE (check + buy if needed + spin) -----
+    async function performSpin(token, iterationNum) {
+        try {
+            const headers = { 'Content-Type': 'application/json', 'x-user-jwt': token };
+
+            // 1. Check spinner/user status
+            const userResp = await proxyRequest('/spinner/user', 'GET', headers);
+            if (!userResp.success) throw new Error('Spinner/user check failed');
+            const totalLeft = userResp.data?.totalLeft ?? 0;
+
+            // 2. Buy spin if needed (totalLeft === 0)
+            if (totalLeft === 0) {
+                const buyResp = await proxyRequest('/spinner/buy-spin?categoryId=1', 'POST', headers, {
+                    categoryId: 1,
+                    amount: 1
+                });
+                if (!buyResp.success) throw new Error(`Buy spin failed: ${buyResp.error || 'unknown'}`);
+                // cost 1000 silver
+                silverSpent += 1000;
+            } else {
+                // free spin
+                addLog(`🔄 Spin ${iterationNum}: FREE spin (${totalLeft} left)`, 'info');
+            }
+
+            // 3. Perform spin
+            const spinResp = await proxyRequest('/spinner/spin?categoryId=1', 'POST', headers, {
+                spinnerId: spinnerId
+            });
+            if (!spinResp.success) throw new Error(`Spin failed: ${spinResp.error || 'unknown'}`);
+
+            const resultId = spinResp.data?.id;
+            if (!resultId) throw new Error('No prize id in response');
+
+            // 4. Update stats
+            totalSpins++;
+            if (prizeMap[resultId]) {
+                prizeMap[resultId].count = (prizeMap[resultId].count || 0) + 1;
+                const silverVal = prizeMap[resultId].silverValue || 0;
+                silverReturned += silverVal;
+                const prizeName = prizeMap[resultId].name;
+                addLog(`🎯 Spin ${iterationNum}: ${prizeName} ${silverVal > 0 ? `(+${silverVal.toLocaleString()}🪙)` : ''}`, 'success');
+            } else {
+                addLog(`🎯 Spin ${iterationNum}: unknown prize ID ${resultId}`, 'error');
+            }
+
+            // update UI stats
+            updateStatsUI();
+
+            return true;
+
+        } catch (e) {
+            addLog(`❌ Spin ${iterationNum} error: ${e.message}`, 'error');
+            return false;
+        }
+    }
+
+    // ----- MAIN LOOP -----
+    async function runSpins() {
+        if (running) return;
+        running = true;
+        stopRequested = false;
+        isPaused = false;
+        startBtn.disabled = true;
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+
+        // reset stats for new session
+        totalSpins = 0;
+        silverSpent = 0;
+        silverReturned = 0;
+        for (const id of prizeOrder) {
+            if (prizeMap[id]) prizeMap[id].count = 0;
+        }
+        updateStatsUI();
+        renderPrizeTable();
+
+        // get initial silver
+        const init = await getUserFunds(authToken);
+        if (init !== null) {
+            initialSilver = init;
+            silverSpent = 0;
+            silverReturned = 0;
+            addLog(`💰 Initial silver: ${initialSilver.toLocaleString()}`, 'info');
+        } else {
+            addLog(`⚠️ Could not read initial silver`, 'error');
+        }
+
+        const token = authToken;
+        const total = totalIterations;
+
+        for (let i = 0; i < total; i++) {
+            if (stopRequested) {
+                addLog(`⏹ Stopped by user at iteration ${i+1}`, 'error');
+                break;
+            }
+            while (isPaused) {
+                await new Promise(r => setTimeout(r, 200));
+                if (stopRequested) break;
+            }
+            if (stopRequested) break;
+
+            const ok = await performSpin(token, i+1);
+            if (!ok) {
+                // if error, maybe continue? we'll continue but log
+            }
+
+            // delay between spins (except last)
+            if (i < total - 1 && !stopRequested) {
+                await new Promise(r => setTimeout(r, delayMs));
+            }
+        }
+
+        // final silver
+        const final = await getUserFunds(authToken);
+        if (final !== null) {
+            finalSilver = final;
+            const net = finalSilver - initialSilver;
+            const spent = silverSpent;
+            const returned = silverReturned;
+            addLog(`💰 Final silver: ${finalSilver.toLocaleString()} (net: ${net >= 0 ? '+' : ''}${net.toLocaleString()})`, 'success');
+            addLog(`📊 Spent: ${spent.toLocaleString()} | Returned: ${returned.toLocaleString()} | ROI: ${spent > 0 ? ((returned - spent) / spent * 100).toFixed(2) : 0}%`, 'info');
+        }
+
+        running = false;
+        startBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
+        addLog(`🏁 Session finished (${totalSpins} spins)`, 'success');
+    }
+
+    // ----- START -----
+    startBtn.addEventListener('click', async function() {
+        // parse JWT
+        let raw = jwtInput.value.trim();
+        let token = raw;
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed.jwt) token = parsed.jwt;
+        } catch (e) {
+            // raw token
+        }
+        if (!token || token.length < 20) {
+            alert('Please enter a valid JWT token');
+            return;
+        }
+        authToken = token;
+
+        const iterVal = parseInt(iterInput.value);
+        if (isNaN(iterVal) || iterVal < 1) {
+            alert('Enter a positive number of iterations');
+            return;
+        }
+        totalIterations = iterVal;
+        delayMs = parseInt(delayInput.value) || 2717;
+
+        // fetch spinner info first
+        const ok = await fetchSpinnerInfo(authToken);
+        if (!ok) {
+            alert('Failed to load spinner info. Check token and network.');
+            return;
+        }
+
+        // clear old log
+        logContainer.innerHTML = '';
+        addLog(`🚀 Starting ${totalIterations} spins with delay ${delayMs}ms`, 'info');
+
+        // run
+        await runSpins();
+    });
+
+    // ----- PAUSE / STOP -----
+    pauseBtn.addEventListener('click', function() {
+        if (running) {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
+            addLog(isPaused ? '⏸ Paused' : '▶ Resumed', 'info');
+        }
+    });
+
+    stopBtn.addEventListener('click', function() {
+        if (running) {
+            stopRequested = true;
+            isPaused = false;
+            pauseBtn.textContent = '⏸ Pause';
+            addLog('⏹ Stop requested...', 'error');
+        }
+    });
+
+    // initial prize table placeholder
+    renderPrizeTable();
+</script>
+</body>
+</html>

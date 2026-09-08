@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi-Account Pack Scanner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        /* Navigation styles - kept for fallback */
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button.secondary {
+            background-color: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background-color: #0b7dda;
+        }
+        
+        button.warning {
+            background-color: #ff9800;
+        }
+        
+        button.warning:hover {
+            background-color: #e68a00;
+        }
+        
+        button.danger {
+            background-color: #f44336;
+        }
+        
+        button.danger:hover {
+            background-color: #da190b;
+        }
+        
+        .button-group {
+            margin: 20px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stats-container {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .progress-container {
+            margin: 15px 0;
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        
+        .results-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+        
+        .results-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: top;
+        }
+        
+        .results-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .results-table .jwt-cell {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            max-width: 200px;
+        }
+        
+        .pack-name-cell {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .pack-ids-cell {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+        
+        .pack-ids-cell .pack-id {
+            display: inline-block;
+            background-color: #e8f4fd;
+            padding: 2px 6px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        .log-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .log-success {
+            color: #27ae60;
+        }
+        
+        .log-error {
+            color: #e74c3c;
+        }
+        
+        .log-info {
+            color: #3498db;
+        }
+        
+        .log-warning {
+            color: #f39c12;
+        }
+        
+        .notification {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .notification-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #a3e4c3;
+        }
+        
+        .notification-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #f5b7b1;
+        }
+        
+        .notification-info {
+            background-color: #d6eaf8;
+            color: #2980b9;
+            border: 1px solid #aed6f1;
+        }
+        
+        .stats-summary {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        
+        .stats-summary .stat-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .stats-summary .stat-box .number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stats-summary .stat-box .label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .download-btn {
+            background-color: #27ae60;
+        }
+        
+        .download-btn:hover {
+            background-color: #219a52;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here by nav-loader.js -->
+
+    <div class="container">
+        <h1>Multi-Account Pack Scanner</h1>
+        
+        <!-- JWT Input -->
+        <div class="input-group">
+            <label for="jwtInput">JWT Tokens (one per line):</label>
+            <textarea id="jwtInput" rows="5" placeholder="Paste your JWT tokens here, one per line"></textarea>
+            <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
+                Enter multiple JWT tokens, one per line. Each will be scanned for packs.
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button id="scanBtn" class="secondary">Scan All Accounts</button>
+            <button id="downloadBtn" class="download-btn" disabled>Download Excel (CSV)</button>
+            <button id="clearBtn" class="danger">Clear Results</button>
+        </div>
+        
+        <!-- Progress -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <!-- Notification -->
+        <div id="notification" class="notification"></div>
+        
+        <!-- Stats Summary -->
+        <div id="statsSummary" class="stats-summary" style="display: none;">
+            <div class="stat-box">
+                <div class="number" id="totalAccounts">0</div>
+                <div class="label">Accounts Scanned</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalPacks">0</div>
+                <div class="label">Total Packs</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalPackTypes">0</div>
+                <div class="label">Pack Types</div>
+            </div>
+        </div>
+        
+        <!-- Results Table -->
+        <div id="resultsContainer" style="display: none;">
+            <h2>Scan Results</h2>
+            <div class="table-container">
+                <table class="results-table" id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th style="min-width: 200px;">JWT Token</th>
+                            <th style="min-width: 150px;">Pack Name</th>
+                            <th>Pack IDs</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Log -->
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">Ready to scan. Enter JWT tokens and click "Scan All Accounts".</div>
+        </div>
+    </div>
+
+    <script src="/nav-loader.js"></script>
+    <script>
+        // Configuration
+        const PACK_DELAY = 500; // 500ms delay between API calls
+        
+        // State
+        let scanResults = {}; // { jwt: { packName: [packIds] } }
+        let isScanning = false;
+        let stopScanning = false;
+        let packTypesSet = new Set();
+        
+        // DOM Elements
+        const jwtInput = document.getElementById('jwtInput');
+        const scanBtn = document.getElementById('scanBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const notification = document.getElementById('notification');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsBody = document.getElementById('resultsBody');
+        const logContainer = document.getElementById('logContainer');
+        const totalAccounts = document.getElementById('totalAccounts');
+        const totalPacks = document.getElementById('totalPacks');
+        const totalPackTypesEl = document.getElementById('totalPackTypes');
+        const statsSummary = document.getElementById('statsSummary');
+        
+        // Helper function to send requests through proxy
+        async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+            try {
+                const response = await fetch('/proxy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        endpoint: endpoint,
+                        method: method,
+                        headers: headers,
+                        data: data,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Proxy request failed:', error);
+                throw error;
+            }
+        }
+        
+        // Fetch all packs for a single JWT
+        async function fetchAllPacks(authToken) {
+            let allPacks = [];
+            let page = 1;
+            let hasMore = true;
+            
+            while (hasMore) {
+                const endpoint = `/packs/user?page=${page}&categoryIds=1`;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'x-user-jwt': authToken
+                };
+                
+                const response = await sendProxyRequest(endpoint, 'GET', headers);
+                
+                if (!response.data) {
+                    throw new Error('Invalid response format from API');
+                }
+                
+                allPacks = allPacks.concat(response.data.packs);
+                
+                if (response.data.packs.length === 0 || 
+                    (response.data.count * page) >= response.data.total) {
+                    hasMore = false;
+                } else {
+                    page++;
+                }
+            }
+            
+            return allPacks;
+        }
+        
+        // Group packs by name
+        function groupPacksByName(packs) {
+            const groups = {};
+            
+            packs.forEach(pack => {
+                const packName = pack.packTemplate ? pack.packTemplate.name : 'Unknown Pack';
+                if (!groups[packName]) {
+                    groups[packName] = [];
+                }
+                groups[packName].push(pack.id);
+            });
+            
+            // Sort IDs within each group
+            Object.keys(groups).forEach(key => {
+                groups[key].sort((a, b) => a - b);
+            });
+            
+            return groups;
+        }
+        
+        // Add log entry
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            notification.textContent = message;
+            notification.className = `notification notification-${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Update progress
+        function updateProgress(percent) {
+            progressBar.style.width = `${percent}%`;
+        }
+        
+        // Update stats
+        function updateStats() {
+            const accounts = Object.keys(scanResults).length;
+            let totalPackCount = 0;
+            const allPackTypes = new Set();
+            
+            for (const jwt in scanResults) {
+                const packs = scanResults[jwt];
+                for (const packName in packs) {
+                    allPackTypes.add(packName);
+                    totalPackCount += packs[packName].length;
+                }
+            }
+            
+            totalAccounts.textContent = accounts;
+            totalPacks.textContent = totalPackCount;
+            totalPackTypesEl.textContent = allPackTypes.size;
+            
+            if (accounts > 0) {
+                statsSummary.style.display = 'flex';
+            } else {
+                statsSummary.style.display = 'none';
+            }
+        }
+        
+        // Render results table
+        function renderResults() {
+            resultsBody.innerHTML = '';
+            
+            // Get all unique pack names across all JWTs
+            const allPackNames = new Set();
+            for (const jwt in scanResults) {
+                for (const packName in scanResults[jwt]) {
+                    allPackNames.add(packName);
+                }
+            }
+            const sortedPackNames = Array.from(allPackNames).sort();
+            
+            // For each JWT, show rows for each pack type
+            for (const jwt in scanResults) {
+                const packs = scanResults[jwt];
+                let isFirstRow = true;
+                
+                for (const packName of sortedPackNames) {
+                    const row = document.createElement('tr');
+                    
+                    // JWT cell - only show on first row for this JWT
+                    const jwtCell = document.createElement('td');
+                    jwtCell.className = 'jwt-cell';
+                    if (isFirstRow) {
+                        // Truncate JWT for display
+                        const displayJwt = jwt.length > 40 ? jwt.substring(0, 37) + '...' : jwt;
+                        jwtCell.textContent = displayJwt;
+                        jwtCell.title = jwt; // Full JWT on hover
+                        isFirstRow = false;
+                    }
+                    row.appendChild(jwtCell);
+                    
+                    // Pack Name cell
+                    const nameCell = document.createElement('td');
+                    nameCell.className = 'pack-name-cell';
+                    nameCell.textContent = packName;
+                    row.appendChild(nameCell);
+                    
+                    // Pack IDs cell
+                    const idsCell = document.createElement('td');
+                    idsCell.className = 'pack-ids-cell';
+                    
+                    const packIds = packs[packName] || [];
+if (packIds.length > 0) {
+    const idsText = packIds.join(', ');
+    idsCell.textContent = idsText;
+} else {
+    idsCell.textContent = '—';
+    idsCell.style.color = '#999';
+}
+                    
+                    row.appendChild(idsCell);
+                    resultsBody.appendChild(row);
+                }
+            }
+            
+            if (resultsBody.children.length > 0) {
+                resultsContainer.style.display = 'block';
+                downloadBtn.disabled = false;
+            } else {
+                resultsContainer.style.display = 'none';
+                downloadBtn.disabled = true;
+            }
+            
+            updateStats();
+        }
+        
+        // Main scan function
+        async function scanAllAccounts() {
+            if (isScanning) {
+                // Stop scanning
+                stopScanning = true;
+                scanBtn.textContent = 'Stopping...';
+                scanBtn.disabled = true;
+                return;
+            }
+            
+            const jwtText = jwtInput.value.trim();
+            if (!jwtText) {
+                showNotification('Please enter at least one JWT token', 'error');
+                return;
+            }
+            
+            const jwtList = jwtText.split('\n')
+                .map(line => line.trim())
+                .filter(line => line !== '');
+            
+            if (jwtList.length === 0) {
+                showNotification('No valid JWT tokens found', 'error');
+                return;
+            }
+            
+            // Reset state
+            scanResults = {};
+            stopScanning = false;
+            isScanning = true;
+            packTypesSet = new Set();
+            
+            // Update UI
+            scanBtn.textContent = 'Stop Scanning';
+            scanBtn.classList.add('danger');
+            scanBtn.classList.remove('secondary');
+            downloadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            resultsContainer.style.display = 'none';
+            resultsBody.innerHTML = '';
+            statsSummary.style.display = 'none';
+            
+            addLog(`Starting scan for ${jwtList.length} account(s)...`, 'info');
+            
+            let processed = 0;
+            let totalPacksFound = 0;
+            
+            for (let i = 0; i < jwtList.length && !stopScanning; i++) {
+                const jwt = jwtList[i];
+                const displayJwt = jwt.length > 30 ? jwt.substring(0, 27) + '...' : jwt;
+                
+                addLog(`Scanning account ${i + 1}/${jwtList.length}: ${displayJwt}`, 'info');
+                
+                try {
+                    const packs = await fetchAllPacks(jwt);
+                    const grouped = groupPacksByName(packs);
+                    
+                    // Store results
+                    scanResults[jwt] = grouped;
+                    
+                    const packCount = packs.length;
+                    totalPacksFound += packCount;
+                    
+                    // Track pack types
+                    for (const packName in grouped) {
+                        packTypesSet.add(packName);
+                    }
+                    
+                    addLog(`✓ Account ${i + 1}: Found ${packCount} packs (${Object.keys(grouped).length} types)`, 'success');
+                    
+                } catch (error) {
+                    addLog(`✗ Account ${i + 1} failed: ${error.message}`, 'error');
+                    scanResults[jwt] = {}; // Empty result for this JWT
+                }
+                
+                processed++;
+                updateProgress((processed / jwtList.length) * 100);
+                
+                // Delay between accounts
+                if (i < jwtList.length - 1 && !stopScanning) {
+                    await sleep(PACK_DELAY);
+                }
+            }
+            
+            // Complete
+            isScanning = false;
+            scanBtn.textContent = 'Scan All Accounts';
+            scanBtn.classList.remove('danger');
+            scanBtn.classList.add('secondary');
+            scanBtn.disabled = false;
+            
+            if (stopScanning) {
+                addLog('Scanning stopped by user', 'warning');
+                showNotification('Scanning stopped', 'info');
+            } else {
+                addLog(`Scan complete! Processed ${processed} account(s), found ${totalPacksFound} total packs`, 'success');
+                showNotification(`Scan complete! Found ${totalPacksFound} packs across ${processed} accounts`, 'success');
+            }
+            
+            progressContainer.style.display = 'none';
+            
+            // Render results
+            renderResults();
+            
+            // If there are results, show the total pack types
+            if (Object.keys(scanResults).length > 0) {
+                const accountCount = Object.keys(scanResults).filter(jwt => {
+                    const packs = scanResults[jwt];
+                    return Object.keys(packs).length > 0;
+                }).length;
+                
+                if (accountCount === 0) {
+                    addLog('No packs found in any account', 'warning');
+                }
+            }
+        }
+        
+        // Download CSV
+        function downloadCSV() {
+            if (Object.keys(scanResults).length === 0) {
+                showNotification('No results to download', 'error');
+                return;
+            }
+            
+            // Get all unique pack names
+            const allPackNames = new Set();
+            for (const jwt in scanResults) {
+                for (const packName in scanResults[jwt]) {
+                    allPackNames.add(packName);
+                }
+            }
+            const sortedPackNames = Array.from(allPackNames).sort();
+            
+            // Build CSV
+            let csv = 'JWT Token';
+            sortedPackNames.forEach(name => {
+                csv += `,${name}`;
+            });
+            csv += '\n';
+            
+            for (const jwt in scanResults) {
+                // Escape JWT for CSV (wrap in quotes if contains comma)
+                let escapedJwt = jwt;
+                if (jwt.includes(',') || jwt.includes('"') || jwt.includes('\n')) {
+                    escapedJwt = `"${jwt.replace(/"/g, '""')}"`;
+                }
+                csv += escapedJwt;
+                
+                for (const packName of sortedPackNames) {
+                    const packIds = scanResults[jwt][packName] || [];
+                    let idsString = packIds.join(',');
+                    // Escape if contains comma or quote
+                    if (idsString.includes(',') || idsString.includes('"')) {
+                        idsString = `"${idsString}"`;
+                    }
+                    csv += `,${idsString}`;
+                }
+                csv += '\n';
+            }
+            
+            // Create download
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const date = new Date().toISOString().split('T')[0];
+            link.download = `pack_scan_results_${date}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('CSV downloaded successfully!', 'success');
+            addLog('CSV file downloaded', 'info');
+        }
+        
+        // Clear results
+        function clearResults() {
+            if (isScanning) {
+                showNotification('Cannot clear while scanning', 'error');
+                return;
+            }
+            
+            scanResults = {};
+            resultsBody.innerHTML = '';
+            resultsContainer.style.display = 'none';
+            statsSummary.style.display = 'none';
+            downloadBtn.disabled = true;
+            logContainer.innerHTML = '';
+            addLog('Results cleared', 'info');
+            showNotification('Results cleared', 'info');
+        }
+        
+        // Sleep helper
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            scanBtn.addEventListener('click', scanAllAccounts);
+            downloadBtn.addEventListener('click', downloadCSV);
+            clearBtn.addEventListener('click', clearResults);
+        });
+    </script>
+</body>
+</html>

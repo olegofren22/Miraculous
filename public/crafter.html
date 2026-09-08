@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Crafter - Multi-Account Crafting Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        /* Navigation styles - kept for fallback */
+        .nav-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        .nav-link {
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .nav-link.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .nav-link:not(.active) {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .nav-link:not(.active):hover {
+            background-color: #d0d0d0;
+        }
+        .server-info {
+            color: #666;
+            font-size: 12px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .input-section, .results-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .results-section {
+            grid-column: 1 / -1;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h3 {
+            color: #555;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .input-group {
+            margin: 12px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 13px;
+        }
+        textarea, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        .requirement-group {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .requirement-group .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .requirement-group .row label {
+            min-width: 80px;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+        .requirement-group .row input {
+            flex: 1;
+            padding: 6px;
+            font-size: 12px;
+        }
+        .requirement-group .row input[type="text"] {
+            flex: 2;
+        }
+        .requirement-group .requirement-number {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-right: 10px;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            font-size: 13px;
+        }
+        #startButton {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #startButton:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        #stopButton {
+            background-color: #f44336;
+            color: white;
+        }
+        #stopButton:hover:not(:disabled) {
+            background-color: #d32f2f;
+        }
+        #downloadButton {
+            background-color: #2196F3;
+            color: white;
+        }
+        #downloadButton:hover {
+            background-color: #1976D2;
+        }
+        #saveConfigButton {
+            background-color: #9b59b6;
+            color: white;
+        }
+        #saveConfigButton:hover {
+            background-color: #8e44ad;
+        }
+        #loadDefaultButton {
+            background-color: #95a5a6;
+            color: white;
+        }
+        #loadDefaultButton:hover {
+            background-color: #7f8c8d;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .progress-container {
+            margin: 15px 0;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stat-box {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid #4CAF50;
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        #resultContainer {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 500px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .account-section {
+            margin-bottom: 15px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #f0f8ff;
+        }
+        .account-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+        .account-section p {
+            margin: 4px 0;
+            padding: 3px;
+            line-height: 1.3;
+            font-size: 12px;
+        }
+        .success { color: #2ecc71; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .info { color: #3498db; }
+        .collection-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .collection-item {
+            background: #e8f4f8;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .funds-info {
+            background: #e8f8f0;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 4px solid #27ae60;
+        }
+        .funds-info p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .config-status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 12px;
+            display: none;
+        }
+        .config-success {
+            background-color: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #a3e4c3;
+            display: block;
+        }
+        .config-error {
+            background-color: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #f5b7b1;
+            display: block;
+        }
+        .config-info {
+            background-color: #d6eaf8;
+            color: #2980b9;
+            border: 1px solid #aed6f1;
+            display: block;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .requirement-group .row {
+                flex-wrap: wrap;
+            }
+            .requirement-group .row label {
+                min-width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here by nav-loader.js -->
+    <!-- The old nav-bar div has been removed -->
+
+    <h1>Multi-Requirement Card Crafter</h1>
+    
+    <div id="configStatus" class="config-status"></div>
+    
+    <div class="container">
+        <div class="input-section">
+            <h2>Account Configuration</h2>
+            
+            <div class="input-group">
+                <label for="authTokensTextarea">JWT Tokens (one per line):</label>
+                <textarea id="authTokensTextarea" placeholder="Paste JWT tokens here, one per line"></textarea>
+            </div>
+            
+            <div class="input-group">
+                <label for="senderIDsTextarea">Sender IDs (one per line):</label>
+                <textarea id="senderIDsTextarea" placeholder="Paste sender IDs here, one per line"></textarea>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalCards">0</div>
+                    <div class="stat-label">Total Cards</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="totalCrafts">0</div>
+                    <div class="stat-label">Total Crafts</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="completedCrafts">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="successRate">0%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="startButton">Start Crafting</button>
+                <button id="stopButton" disabled>Stop</button>
+                <button id="downloadButton">Download Results</button>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <h2>Crafting Configuration</h2>
+            
+            <div class="input-group">
+                <label for="craftingPlanId">Crafting Plan ID:</label>
+                <input type="text" id="craftingPlanId">
+            </div>
+            
+            <div class="input-group">
+                <label for="silvercoins">Silver Coins per Craft:</label>
+                <input type="number" id="silvercoins" min="0">
+            </div>
+            
+            <div class="input-group">
+                <label for="maxCrafts">Max Crafts per Account:</label>
+                <input type="number" id="maxCrafts" min="1" max="100">
+            </div>
+            
+            <div class="input-group">
+                <label for="operationDelay">Operation Delay (ms):</label>
+                <input type="number" id="operationDelay" min="1000" max="30000">
+            </div>
+            
+            <div class="input-group">
+                <label><strong>Crafting Requirements:</strong></label>
+                <div id="requirementsContainer">
+                    <!-- Requirements will be generated here -->
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button id="saveConfigButton">Save Configuration</button>
+                <button id="loadDefaultButton">Load Defaults</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="results-section">
+        <h2>Results & Logs</h2>
+        <div id="resultContainer"></div>
+    </div>
+
+<script src="/nav-loader.js"></script>
+<script>
+    // Configuration
+    const DEFAULT_OPERATION_DELAY = 3400;
+    
+    // Collections mapping for each requirement
+    const REQUIREMENTS_CONFIG = {
+        3235: {
+            collectionIds: [17920, 17921, 17922],
+            cardsPerCraft: 16
+        },
+        3236: {
+            collectionIds: [17923, 17924, 17925],
+            cardsPerCraft: 8
+        },
+        3237: {
+            collectionIds: [17953, 17986, 17987],
+            cardsPerCraft: 4
+        }
+    };
+    
+    // State variables
+    let stopProcess = false;
+    let accountPairs = [];
+    let currentAccountIndex = 0;
+    let totalCrafts = 0;
+    let completedCrafts = 0;
+    let successfulCrafts = 0;
+    let totalCardsCollected = 0;
+    
+    // DOM Elements
+    const authTokensTextarea = document.getElementById('authTokensTextarea');
+    const senderIDsTextarea = document.getElementById('senderIDsTextarea');
+    const craftingPlanIdInput = document.getElementById('craftingPlanId');
+    const silvercoinsInput = document.getElementById('silvercoins');
+    const maxCraftsInput = document.getElementById('maxCrafts');
+    const operationDelayInput = document.getElementById('operationDelay');
+    const requirementsContainer = document.getElementById('requirementsContainer');
+    const configStatus = document.getElementById('configStatus');
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Note: Server health check is now handled by nav-loader.js
+        
+        document.getElementById('startButton').addEventListener('click', startProcessing);
+        document.getElementById('stopButton').addEventListener('click', stopScript);
+        document.getElementById('downloadButton').addEventListener('click', downloadResults);
+        document.getElementById('saveConfigButton').addEventListener('click', saveConfiguration);
+        document.getElementById('loadDefaultButton').addEventListener('click', loadDefaultConfiguration);
+        
+        // Load configuration from server
+        loadConfiguration();
+    });
+    
+    // Load configuration from server
+    async function loadConfiguration() {
+        try {
+            const response = await fetch('/api/config');
+            if (!response.ok) throw new Error('Failed to load config');
+            
+            const config = await response.json();
+            
+            // Populate fields
+            craftingPlanIdInput.value = config.craftingPlanId || '3202';
+            silvercoinsInput.value = config.silvercoins || 5000;
+            maxCraftsInput.value = config.maxCrafts || 10;
+            operationDelayInput.value = config.operationDelay || 3400;
+            
+            // Populate requirements
+            if (config.requirements && Array.isArray(config.requirements)) {
+                renderRequirements(config.requirements);
+            }
+            
+            showConfigStatus('Configuration loaded successfully', 'success');
+        } catch (error) {
+            console.error('Error loading config:', error);
+            // Use default requirements if loading fails
+            renderRequirements([
+                { requirementId: 3235, cardsPerCraft: 16, collectionIds: [17920, 17921, 17922] },
+                { requirementId: 3236, cardsPerCraft: 8, collectionIds: [17923, 17924, 17925] },
+                { requirementId: 3237, cardsPerCraft: 4, collectionIds: [17953, 17986, 17987] }
+            ]);
+            showConfigStatus('Using default configuration', 'info');
+        }
+    }
+    
+    // Render requirement inputs
+    function renderRequirements(requirements) {
+        requirementsContainer.innerHTML = '';
+        
+        requirements.forEach((req, index) => {
+            const group = document.createElement('div');
+            group.className = 'requirement-group';
+            
+            const numberDisplay = document.createElement('div');
+            numberDisplay.className = 'requirement-number';
+            numberDisplay.textContent = `Requirement ${index + 1}`;
+            group.appendChild(numberDisplay);
+            
+            // Requirement ID
+            const row1 = document.createElement('div');
+            row1.className = 'row';
+            const label1 = document.createElement('label');
+            label1.textContent = 'Req ID:';
+            const input1 = document.createElement('input');
+            input1.type = 'number';
+            input1.className = 'req-id';
+            input1.value = req.requirementId;
+            row1.appendChild(label1);
+            row1.appendChild(input1);
+            group.appendChild(row1);
+            
+            // Cards per craft
+            const row2 = document.createElement('div');
+            row2.className = 'row';
+            const label2 = document.createElement('label');
+            label2.textContent = 'Cards:';
+            const input2 = document.createElement('input');
+            input2.type = 'number';
+            input2.className = 'cards-per-craft';
+            input2.value = req.cardsPerCraft;
+            row2.appendChild(label2);
+            row2.appendChild(input2);
+            group.appendChild(row2);
+            
+            // Collection IDs
+            const row3 = document.createElement('div');
+            row3.className = 'row';
+            const label3 = document.createElement('label');
+            label3.textContent = 'Collections:';
+            const input3 = document.createElement('input');
+            input3.type = 'text';
+            input3.className = 'collection-ids';
+            input3.placeholder = 'Comma-separated collection IDs';
+            input3.value = req.collectionIds.join(', ');
+            row3.appendChild(label3);
+            row3.appendChild(input3);
+            group.appendChild(row3);
+            
+            requirementsContainer.appendChild(group);
+        });
+    }
+    
+    // Get requirements from inputs
+    function getRequirementsFromInputs() {
+        const groups = requirementsContainer.querySelectorAll('.requirement-group');
+        const requirements = [];
+        
+        groups.forEach(group => {
+            const reqId = parseInt(group.querySelector('.req-id').value);
+            const cardsPerCraft = parseInt(group.querySelector('.cards-per-craft').value);
+            const collectionIdsText = group.querySelector('.collection-ids').value;
+            const collectionIds = collectionIdsText.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            
+            if (!isNaN(reqId) && !isNaN(cardsPerCraft) && collectionIds.length > 0) {
+                requirements.push({
+                    requirementId: reqId,
+                    cardsPerCraft: cardsPerCraft,
+                    collectionIds: collectionIds
+                });
+            }
+        });
+        
+        return requirements;
+    }
+    
+    // Save configuration to server
+    async function saveConfiguration() {
+        const config = {
+            requirements: getRequirementsFromInputs(),
+            craftingPlanId: craftingPlanIdInput.value.trim(),
+            silvercoins: parseInt(silvercoinsInput.value) || 5000,
+            maxCrafts: parseInt(maxCraftsInput.value) || 10,
+            operationDelay: parseInt(operationDelayInput.value) || 3400
+        };
+        
+        if (config.requirements.length === 0) {
+            showConfigStatus('Error: At least one requirement is needed', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            });
+            
+            if (!response.ok) throw new Error('Failed to save config');
+            
+            const result = await response.json();
+            showConfigStatus('Configuration saved successfully!', 'success');
+        } catch (error) {
+            console.error('Error saving config:', error);
+            showConfigStatus('Error saving configuration: ' + error.message, 'error');
+        }
+    }
+    
+    // Load default configuration
+    async function loadDefaultConfiguration() {
+        const defaultConfig = {
+            requirements: [
+                { requirementId: 3235, cardsPerCraft: 16, collectionIds: [17920, 17921, 17922] },
+                { requirementId: 3236, cardsPerCraft: 8, collectionIds: [17923, 17924, 17925] },
+                { requirementId: 3237, cardsPerCraft: 4, collectionIds: [17953, 17986, 17987] }
+            ],
+            craftingPlanId: "3202",
+            silvercoins: 5000,
+            maxCrafts: 10,
+            operationDelay: 3400
+        };
+        
+        try {
+            const response = await fetch('/api/config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(defaultConfig)
+            });
+            
+            if (!response.ok) throw new Error('Failed to load defaults');
+            
+            // Reload the configuration
+            await loadConfiguration();
+            showConfigStatus('Default configuration loaded', 'success');
+        } catch (error) {
+            console.error('Error loading defaults:', error);
+            showConfigStatus('Error loading defaults: ' + error.message, 'error');
+        }
+    }
+    
+    // Show config status
+    function showConfigStatus(message, type = 'info') {
+        configStatus.textContent = message;
+        configStatus.className = `config-status config-${type}`;
+        configStatus.style.display = 'block';
+        
+        setTimeout(() => {
+            configStatus.style.display = 'none';
+        }, 5000);
+    }
+    
+    // Function to add result message
+    function addToResultContainer(message, className = '') {
+        const container = document.getElementById('resultContainer');
+        const paragraph = document.createElement('p');
+        paragraph.textContent = message;
+        if (className) {
+            paragraph.className = className;
+        }
+        container.appendChild(paragraph);
+        container.scrollTop = container.scrollHeight;
+        return paragraph;
+    }
+    
+    // Function to create account section
+    function createAccountSection(accountNumber, senderID) {
+        const container = document.getElementById('resultContainer');
+        const section = document.createElement('div');
+        section.className = 'account-section';
+        section.id = `account-${accountNumber}`;
+        section.innerHTML = `<h3>Account ${accountNumber} (Sender: ${senderID})</h3>`;
+        container.appendChild(section);
+        return section;
+    }
+    
+    // Function to update stats
+    function updateStats() {
+        document.getElementById('totalCards').textContent = totalCardsCollected;
+        document.getElementById('totalCrafts').textContent = totalCrafts;
+        document.getElementById('completedCrafts').textContent = completedCrafts;
+        const successRate = totalCrafts > 0 ? Math.round((successfulCrafts / totalCrafts) * 100) : 0;
+        document.getElementById('successRate').textContent = `${successRate}%`;
+    }
+    
+    // Function to download results
+    function downloadResults() {
+        const container = document.getElementById('resultContainer');
+        const text = container.innerText;
+        
+        const currentDate = new Date();
+        const formattedDate = `${currentDate.getFullYear()}.${(currentDate.getMonth()+1).toString().padStart(2, '0')}.${currentDate.getDate().toString().padStart(2, '0')}_${currentDate.getHours().toString().padStart(2, '0')}h${currentDate.getMinutes().toString().padStart(2, '0')}`;
+        
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `crafting_results_${formattedDate}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    // Proxy request function
+    async function sendProxyRequest(endpoint, method = 'GET', headers = {}, data = null) {
+        try {
+            const response = await fetch('/proxy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    endpoint: endpoint,
+                    method: method,
+                    headers: headers,
+                    data: data,
+                }),
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Proxy request failed:', error);
+            throw error;
+        }
+    }
+    
+    // Helper function for delays
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    // Function to check user funds
+    async function checkUserFunds(authToken) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': authToken
+        };
+        
+        const endpoint = '/user/funds';
+        
+        try {
+            const response = await sendProxyRequest(endpoint, 'GET', headers);
+            
+            if (response?.success && response?.data?.silvercoins !== undefined) {
+                return response.data.silvercoins;
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (error) {
+            console.error('Error checking user funds:', error);
+            throw error;
+        }
+    }
+    
+    // Main processing function
+    async function startProcessing() {
+        if (stopProcess) return;
+        
+        // Reset state
+        stopProcess = false;
+        currentAccountIndex = 0;
+        totalCrafts = 0;
+        completedCrafts = 0;
+        successfulCrafts = 0;
+        totalCardsCollected = 0;
+        
+        document.getElementById('resultContainer').innerHTML = '';
+        document.getElementById('stopButton').disabled = false;
+        document.getElementById('startButton').disabled = true;
+        document.getElementById('progressBar').style.width = '0%';
+        
+        // Get inputs
+        const authTokensText = authTokensTextarea.value.trim();
+        const senderIDsText = senderIDsTextarea.value.trim();
+        const maxCrafts = parseInt(maxCraftsInput.value) || 10;
+        
+        if (!authTokensText || !senderIDsText) {
+            alert('Please enter both JWT tokens and sender IDs');
+            return;
+        }
+        
+        const authTokens = authTokensText.split('\n').filter(line => line.trim() !== '');
+        const senderIDs = senderIDsText.split('\n').filter(line => line.trim() !== '');
+        
+        if (authTokens.length !== senderIDs.length) {
+            alert('Number of JWT tokens must match number of sender IDs');
+            return;
+        }
+        
+        accountPairs = authTokens.map((token, index) => ({
+            token: token.trim(),
+            senderID: senderIDs[index].trim()
+        }));
+        
+        if (accountPairs.length === 0) {
+            alert('No valid account pairs found');
+            return;
+        }
+        
+        // Get requirements from inputs
+        const requirements = getRequirementsFromInputs();
+        if (requirements.length === 0) {
+            alert('No valid requirements configured. Please add at least one requirement.');
+            return;
+        }
+        
+        addToResultContainer(`Found ${accountPairs.length} account(s) to process`);
+        addToResultContainer(`Maximum crafts per account: ${maxCrafts}`);
+        addToResultContainer(`Using ${requirements.length} requirement(s)`);
+        updateStats();
+        
+        // Process each account
+        for (currentAccountIndex = 0; currentAccountIndex < accountPairs.length; currentAccountIndex++) {
+            if (stopProcess) break;
+            
+            const pair = accountPairs[currentAccountIndex];
+            await processAccount(pair.token, pair.senderID, maxCrafts, requirements);
+            
+            // Update progress
+            const progress = ((currentAccountIndex + 1) / accountPairs.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            
+            // Delay between accounts
+            if (currentAccountIndex < accountPairs.length - 1) {
+                const delayTime = parseInt(operationDelayInput.value) || DEFAULT_OPERATION_DELAY;
+                await delay(delayTime);
+            }
+        }
+        
+        if (!stopProcess) {
+            addToResultContainer('All accounts processed!', 'success');
+        }
+        
+        document.getElementById('stopButton').disabled = true;
+        document.getElementById('startButton').disabled = false;
+    }
+    
+    // Process a single account
+    async function processAccount(authToken, senderID, maxCrafts, requirements) {
+        const accountNumber = currentAccountIndex + 1;
+        const accountSection = createAccountSection(accountNumber, senderID);
+        
+        try {
+            accountSection.innerHTML += `<p class="info">Starting processing for account ${accountNumber}</p>`;
+            
+            // Step 1: Collect cards for each requirement
+            accountSection.innerHTML += `<p class="info">Collecting cards from required collections...</p>`;
+            
+            // Store cards by requirement - we'll use these as our pool
+            const cardsByRequirement = {};
+            
+            for (const req of requirements) {
+                if (stopProcess) return;
+                
+                accountSection.innerHTML += `<p>Collecting cards for requirement ${req.requirementId} (${req.cardsPerCraft} cards per craft)...</p>`;
+                
+                const cards = [];
+                for (const collectionId of req.collectionIds) {
+                    if (stopProcess) return;
+                    
+                    const collectionCards = await getCollectionCards(authToken, senderID, collectionId);
+                    
+                    if (collectionCards.length > 0) {
+                        console.log(`Sample card from collection ${collectionId}:`, collectionCards[0]);
+                    }
+                    
+                    cards.push(...collectionCards);
+                    
+                    accountSection.innerHTML += `<p>  - Collection ${collectionId}: ${collectionCards.length} cards</p>`;
+                    
+                    // Small delay between collection requests
+                    await delay(1000);
+                }
+                
+                cardsByRequirement[req.requirementId] = cards;
+                totalCardsCollected += cards.length;
+                
+                accountSection.innerHTML += `<p class="success">Total for requirement ${req.requirementId}: ${cards.length} cards</p>`;
+            }
+            
+            updateStats();
+            
+            // Step 2: Check if we have enough cards for crafting
+            const cardBasedBatches = calculateCraftableBatches(cardsByRequirement, requirements, maxCrafts);
+            
+            if (cardBasedBatches === 0) {
+                accountSection.innerHTML += `<p class="error">Not enough cards for any crafting operations</p>`;
+                return;
+            }
+            
+            accountSection.innerHTML += `<p class="success">Based on cards: Can perform ${cardBasedBatches} crafting operation(s)</p>`;
+            
+            // Step 3: Check user funds
+            accountSection.innerHTML += `<p class="info">Checking account funds...</p>`;
+            
+            let silverBalance = 0;
+            try {
+                silverBalance = await checkUserFunds(authToken);
+                const formattedSilver = silverBalance.toLocaleString();
+                accountSection.innerHTML += `<p class="success">Current silver balance: ${formattedSilver}</p>`;
+                
+                const silverPerCraft = parseInt(silvercoinsInput.value) || 5000;
+                const fundBasedBatches = Math.floor(silverBalance / silverPerCraft);
+                
+                accountSection.innerHTML += `<p>Crafting costs ${silverPerCraft.toLocaleString()} silver per operation</p>`;
+                accountSection.innerHTML += `<p>Based on funds: Can afford ${fundBasedBatches} crafting operation(s)</p>`;
+                
+                const fundsInfo = document.createElement('div');
+                fundsInfo.className = 'funds-info';
+                fundsInfo.innerHTML = `
+                    <p><strong>Funds Summary:</strong></p>
+                    <p>Silver Balance: ${formattedSilver}</p>
+                    <p>Cost per Craft: ${silverPerCraft.toLocaleString()}</p>
+                    <p>Affordable Crafts: ${fundBasedBatches}</p>
+                `;
+                accountSection.appendChild(fundsInfo);
+                
+                let actualBatches = Math.min(cardBasedBatches, fundBasedBatches);
+                
+                if (actualBatches === 0) {
+                    if (fundBasedBatches === 0) {
+                        accountSection.innerHTML += `<p class="error">Insufficient funds for any crafting operations</p>`;
+                    } else {
+                        accountSection.innerHTML += `<p class="error">No crafts possible due to card/fund limitations</p>`;
+                    }
+                    return;
+                }
+                
+                actualBatches = Math.min(actualBatches, maxCrafts);
+                
+                accountSection.innerHTML += `<p class="success"><strong>Will perform ${actualBatches} crafting operation(s) (limited by ${actualBatches === fundBasedBatches ? 'funds' : 'cards'})</strong></p>`;
+                
+                const initialSilver = silverBalance;
+                
+                // Keep track of used cards to prevent reuse
+                const usedCardIds = new Set();
+                
+                // Step 4: Process each crafting batch
+                for (let batchNum = 1; batchNum <= actualBatches; batchNum++) {
+                    if (stopProcess) break;
+                    
+                    accountSection.innerHTML += `<p class="info"><strong>Processing craft ${batchNum}/${actualBatches}</strong></p>`;
+                    
+                    // Check funds before each craft (except the first)
+                    if (batchNum > 1) {
+                        try {
+                            const currentSilver = await checkUserFunds(authToken);
+                            if (currentSilver < silverPerCraft) {
+                                accountSection.innerHTML += `<p class="error">Insufficient funds for next craft (balance: ${currentSilver.toLocaleString()})</p>`;
+                                break;
+                            }
+                        } catch (fundsError) {
+                            accountSection.innerHTML += `<p class="warning">Could not verify funds before craft ${batchNum}</p>`;
+                        }
+                    }
+                    
+                    // Process the craft with proper card tracking
+                    const craftResult = await processCraft(
+                        authToken, 
+                        senderID, 
+                        cardsByRequirement, 
+                        usedCardIds,
+                        batchNum, 
+                        accountSection,
+                        requirements
+                    );
+                    
+                    if (craftResult) {
+                        successfulCrafts++;
+                    } else {
+                        accountSection.innerHTML += `<p class="warning">Craft ${batchNum} failed, but continuing with next...</p>`;
+                    }
+                    
+                    completedCrafts++;
+                    totalCrafts++;
+                    updateStats();
+                    
+                    // Update progress
+                    const accountProgress = (batchNum / actualBatches) * 100;
+                    const totalProgress = ((currentAccountIndex * 100) + accountProgress) / accountPairs.length;
+                    document.getElementById('progressBar').style.width = `${totalProgress}%`;
+                    
+                    // Delay between crafts
+                    if (batchNum < actualBatches) {
+                        const delayTime = parseInt(operationDelayInput.value) || DEFAULT_OPERATION_DELAY;
+                        await delay(delayTime);
+                    }
+                }
+                
+                // Check final funds
+                try {
+                    const finalSilver = await checkUserFunds(authToken);
+                    const formattedFinalSilver = finalSilver.toLocaleString();
+                    const silverSpent = initialSilver - finalSilver;
+                    
+                    accountSection.innerHTML += `<p class="info">Final silver balance: ${formattedFinalSilver}</p>`;
+                    accountSection.innerHTML += `<p class="info">Total silver spent: ${silverSpent.toLocaleString()}</p>`;
+                } catch (fundsError) {
+                    accountSection.innerHTML += `<p class="warning">Could not check final funds</p>`;
+                }
+                
+            } catch (fundsError) {
+                accountSection.innerHTML += `<p class="error">Failed to check funds: ${fundsError.message}</p>`;
+                accountSection.innerHTML += `<p class="warning">Proceeding with card-based crafts only (${cardBasedBatches} crafts)</p>`;
+                
+                const actualBatches = Math.min(cardBasedBatches, maxCrafts);
+                
+                const usedCardIds = new Set();
+                
+                for (let batchNum = 1; batchNum <= actualBatches; batchNum++) {
+                    if (stopProcess) break;
+                    
+                    accountSection.innerHTML += `<p class="info"><strong>Processing craft ${batchNum}/${actualBatches} (funds check failed, proceeding anyway)</strong></p>`;
+                    
+                    const craftResult = await processCraft(
+                        authToken, 
+                        senderID, 
+                        cardsByRequirement, 
+                        usedCardIds,
+                        batchNum, 
+                        accountSection,
+                        requirements
+                    );
+                    
+                    if (craftResult) {
+                        successfulCrafts++;
+                    }
+                    
+                    completedCrafts++;
+                    totalCrafts++;
+                    updateStats();
+                    
+                    const accountProgress = (batchNum / actualBatches) * 100;
+                    const totalProgress = ((currentAccountIndex * 100) + accountProgress) / accountPairs.length;
+                    document.getElementById('progressBar').style.width = `${totalProgress}%`;
+                    
+                    if (batchNum < actualBatches) {
+                        const delayTime = parseInt(operationDelayInput.value) || DEFAULT_OPERATION_DELAY;
+                        await delay(delayTime);
+                    }
+                }
+            }
+            
+            accountSection.innerHTML += `<p class="success">Account ${accountNumber} processing completed!</p>`;
+            
+        } catch (error) {
+            accountSection.innerHTML += `<p class="error">Error processing account: ${error.message}</p>`;
+            console.error('Account processing error:', error);
+        }
+    }
+    
+    // Calculate how many crafts we can perform based on cards
+    function calculateCraftableBatches(cardsByRequirement, requirements, maxCrafts) {
+        let maxPossibleCrafts = maxCrafts;
+        
+        for (const req of requirements) {
+            const cards = cardsByRequirement[req.requirementId] || [];
+            const possibleCraftsForRequirement = Math.floor(cards.length / req.cardsPerCraft);
+            
+            if (possibleCraftsForRequirement < maxPossibleCrafts) {
+                maxPossibleCrafts = possibleCraftsForRequirement;
+            }
+        }
+        
+        return maxPossibleCrafts;
+    }
+    
+    // Get cards from a collection
+    async function getCollectionCards(authToken, senderID, collectionId) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': authToken
+        };
+        
+        const endpoint = `/collections/${collectionId}/users/${senderID}/owned2`;
+        
+        try {
+            const response = await sendProxyRequest(endpoint, 'GET', headers);
+            
+            if (response?.data?.cards) {
+                return response.data.cards;
+            } else if (Array.isArray(response?.data)) {
+                return response.data;
+            } else if (Array.isArray(response)) {
+                return response;
+            }
+            
+            return [];
+        } catch (error) {
+            console.error(`Error fetching cards for collection ${collectionId}:`, error);
+            throw error;
+        }
+    }
+    
+    // Process a single craft
+    async function processCraft(authToken, senderID, cardsByRequirement, usedCardIds, batchNumber, accountSection, requirements) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': authToken
+        };
+        
+        const craftingPlanId = craftingPlanIdInput.value.trim() || '3202';
+        const silvercoins = parseInt(silvercoinsInput.value) || 5000;
+        
+        const endpoint = `/crafting/plans/${craftingPlanId}`;
+        
+        // Build requirements array using cards that haven't been used yet
+        const requirementsArray = [];
+        const cardsUsedInThisCraft = [];
+        
+        for (const req of requirements) {
+            const cardsNeeded = req.cardsPerCraft;
+            
+            // Get all cards for this requirement
+            const allCards = cardsByRequirement[req.requirementId] || [];
+            
+            // Filter out cards that have already been used
+            const availableCards = allCards.filter(card => !usedCardIds.has(card.id));
+            
+            if (availableCards.length < cardsNeeded) {
+                throw new Error(`Not enough unused cards for requirement ${req.requirementId}. Need ${cardsNeeded}, have ${availableCards.length}`);
+            }
+            
+            // Take the first N unused cards
+            const selectedCards = availableCards.slice(0, cardsNeeded);
+            
+            // Mark these cards as used
+            selectedCards.forEach(card => {
+                usedCardIds.add(card.id);
+                cardsUsedInThisCraft.push({
+                    id: card.id,
+                    requirementId: req.requirementId
+                });
+            });
+            
+            requirementsArray.push({
+                requirementId: parseInt(req.requirementId),
+                entityIds: selectedCards.map(card => card.id)
+            });
+        }
+        
+        const craftingBody = {
+            requirements: requirementsArray,
+            silvercoins: silvercoins
+        };
+        
+        accountSection.innerHTML += `<p>Sending crafting request for batch ${batchNumber}...</p>`;
+        accountSection.innerHTML += `<p>Using card IDs: ${cardsUsedInThisCraft.map(c => c.id).join(', ')}</p>`;
+        
+        try {
+            const responseCraft = await sendProxyRequest(endpoint, 'POST', headers, craftingBody);
+            
+            if (!responseCraft.success) {
+                cardsUsedInThisCraft.forEach(card => usedCardIds.delete(card.id));
+                throw new Error(`Crafting failed: ${JSON.stringify(responseCraft.error || responseCraft)}`);
+            }
+            
+            accountSection.innerHTML += `<p class="success">Crafting request successful!</p>`;
+            
+            // Process slots from the response
+            const slots = responseCraft.data?.slots || [];
+            
+            if (!slots || slots.length === 0) {
+                accountSection.innerHTML += `<p class="warning">No slots found in response</p>`;
+                return true;
+            }
+            
+            accountSection.innerHTML += `<p>Found ${slots.length} slots to open</p>`;
+            accountSection.innerHTML += `<p>Slot IDs: ${slots.map(s => s.id).join(', ')}</p>`;
+            
+            // Open each slot
+            for (let i = 0; i < slots.length; i++) {
+                if (stopProcess) break;
+                
+                const slotId = slots[i].id;
+                accountSection.innerHTML += `<p>Opening slot ${i + 1} (ID: ${slotId})...</p>`;
+                
+                try {
+                    const slotResult = await openSlot(authToken, slotId);
+                    
+                    if (slotResult && slotResult.success) {
+                        if (slotResult.data?.cards?.length > 0) {
+                            const card = slotResult.data.cards[0];
+                            const cardInfo = `${card.type || 'Unknown'} ${card.mintBatch || ''}${card.mintNumber || ''}`.trim();
+                            accountSection.innerHTML += `<p class="success">Slot ${i + 1}: Got ${cardInfo} with rating ${card.rating || 'N/A'}</p>`;
+                        } else {
+                            accountSection.innerHTML += `<p class="success">Slot ${i + 1} opened successfully</p>`;
+                        }
+                    } else {
+                        throw new Error(`Slot open failed: ${JSON.stringify(slotResult)}`);
+                    }
+                    
+                    if (i < slots.length - 1) {
+                        await delay(2000);
+                    }
+                    
+                } catch (error) {
+                    accountSection.innerHTML += `<p class="error">Error opening slot ${i + 1}: ${error.message}</p>`;
+                    
+                    if (i === slots.length - 1) {
+                        accountSection.innerHTML += `<p class="warning">Last slot failed, but craft completed</p>`;
+                    }
+                }
+            }
+            
+            accountSection.innerHTML += `<p class="success">Craft ${batchNumber} completed successfully!</p>`;
+            return true;
+            
+        } catch (error) {
+            accountSection.innerHTML += `<p class="error">Error in craft ${batchNumber}: ${error.message}</p>`;
+            return false;
+        }
+    }
+    
+    // Open a slot
+    async function openSlot(authToken, slotId) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-user-jwt': authToken
+        };
+        
+        const endpoint = `/crafting/slots/${slotId}/open-instant`;
+        
+        try {
+            const response = await sendProxyRequest(endpoint, 'POST', headers);
+            
+            if (!response.success) {
+                throw new Error(`Slot open failed: ${JSON.stringify(response.error || response)}`);
+            }
+            
+            return response;
+        } catch (error) {
+            console.error(`Error opening slot ${slotId}:`, error);
+            throw error;
+        }
+    }
+    
+    // Stop the script
+    function stopScript() {
+        stopProcess = true;
+        document.getElementById('stopButton').disabled = true;
+        document.getElementById('startButton').disabled = false;
+        addToResultContainer('Process stopped by user', 'warning');
+    }
+</script>
+</body>
+</html>
