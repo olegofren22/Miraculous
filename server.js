@@ -18,21 +18,17 @@ const CONFIG = {
 
 // Prize mapping for console logs only
 const PRIZE_MAP = {
-    12048: '5,000 Spraycoins',
-    12056: 'Cold Front: Cold Blooded',
-    12055: 'Cold Front: Chillen',
-    12054: 'Cold Front: Frosty',
-    12053: 'Standard Box 2026',
-    12079: 'EPL 23 Box 2026',
-    12046: '500 Spraycoins',
-    12049: '1,000,000 Spraycoins',
-    12050: '100,000 Spraycoins',
-    12051: '2,500 Spraycoins',
-    12052: '1,000 Spraycoins'
+    12314: '5,000 Spraycoins',
+    12316: 'Standard Box 2026',
+    12315: '500 Spraycoins',
+    12313: '1,000,000 Spraycoins',
+    12312: '100,000 Spraycoins',
+    12311: '2,500 Spraycoins',
+    12310: '1,000 Spraycoins'
 };
 
 // Pack IDs that need opening
-const PACK_IDS = [12053, 12013, 12079];
+const PACK_IDS = [12053, 12013, 12079, 12316, 14356];
 
 // Retry configuration
 const RETRY_CONFIG = {
@@ -372,7 +368,7 @@ async function buyAndSpinAtomic(userId) {
         CONFIG.BASE_URL_SPIN,
         'POST',
         { 'x-user-jwt': user.jwtToken },
-        { spinnerId: 6898 },
+        { spinnerId: 7030 },
         userId
     );
 
