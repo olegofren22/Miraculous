@@ -3,9 +3,39 @@ const cron = require('node-cron');
 const axios = require('axios');
 const fs = require('fs').promises;
 const path = require('path');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 🎯 PROXY CONFIGURATION
+// Get proxy info from environment variables
+// Format: http://username:password@host:port or http://host:port or socks5://host:port
+const PROXY_URL = process.env.PROXY_URL || null;
+const PROXY_ENABLED = process.env.PROXY_ENABLED !== 'false' && !!PROXY_URL;
+
+// Create proxy agent if enabled
+let proxyAgent = null;
+if (PROXY_ENABLED && PROXY_URL) {
+    try {
+        // Determine proxy type from URL protocol
+        if (PROXY_URL.startsWith('socks5://') || PROXY_URL.startsWith('socks://')) {
+            proxyAgent = new SocksProxyAgent(PROXY_URL);
+            console.log(`🔄 SOCKS5 Proxy enabled: ${PROXY_URL.replace(/:[^@]*@/, ':***@')}`);
+        } else {
+            proxyAgent = new HttpsProxyAgent(PROXY_URL);
+            console.log(`🔄 HTTP/HTTPS Proxy enabled: ${PROXY_URL.replace(/:[^@]*@/, ':***@')}`);
+        }
+    } catch (error) {
+        console.error('❌ Failed to create proxy agent:', error.message);
+        console.log('⚠️ Continuing without proxy...');
+        PROXY_ENABLED = false;
+        proxyAgent = null;
+    }
+} else {
+    console.log('ℹ️ Proxy not configured or disabled. Using direct connections.');
+}
 
 // 🎯 ENHANCED DEBUGGING - You'll see EVERYTHING in console AND browser!
 const debugLogs = [];
@@ -15,6 +45,10 @@ function debugLog(userId, action, url, method, headers = {}, data = null, respon
         timestamp: new Date().toISOString(),
         userId,
         action,
+        proxy: PROXY_ENABLED ? {
+            enabled: true,
+            url: PROXY_URL ? PROXY_URL.replace(/:[^@]*@/, ':***@') : null
+        } : { enabled: false },
         request: {
             url,
             method,
@@ -38,6 +72,9 @@ function debugLog(userId, action, url, method, headers = {}, data = null, respon
     console.log('\n' + '='.repeat(80));
     console.log(`🔍 DEBUG [${debugEntry.timestamp}] - USER: ${userId}`);
     console.log(`📝 ACTION: ${action}`);
+    if (PROXY_ENABLED) {
+        console.log(`🌐 PROXY: ${PROXY_URL ? PROXY_URL.replace(/:[^@]*@/, ':***@') : 'enabled'}`);
+    }
     console.log(`📡 REQUEST:`);
     console.log(`   URL: ${url}`);
     console.log(`   METHOD: ${method}`);
@@ -94,10 +131,33 @@ let globalSpinnerConfig = {
     packIds: [11953, 12053, 12079, 12121, 12145, 12316, 14356]
 };
 
+// 🎯 Create axios instance with proxy support
+function createAxiosInstance() {
+    const config = {
+        timeout: 10000
+    };
+    
+    if (PROXY_ENABLED && proxyAgent) {
+        config.httpsAgent = proxyAgent;
+        config.httpAgent = proxyAgent;
+        // For HTTP proxies, we need to set the proxy in the URL
+        if (PROXY_URL && !PROXY_URL.startsWith('socks')) {
+            // Axios will use the agent for all requests
+            config.proxy = false; // Disable axios's built-in proxy handling
+        }
+    }
+    
+    return axios.create(config);
+}
+
 // Initialize the application
 async function initializeApp() {
     try {
         console.log('🚀 INITIALIZING APPLICATION...');
+        console.log(`🌐 Proxy Status: ${PROXY_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+        if (PROXY_ENABLED && PROXY_URL) {
+            console.log(`   Proxy URL: ${PROXY_URL.replace(/:[^@]*@/, ':***@')}`);
+        }
         
         // Load user configuration
         await loadUserConfig();
@@ -199,20 +259,20 @@ async function loadUserConfig() {
     }
 }
 
-// API request function with error handling
+// API request function with error handling and proxy support
 async function makeAPIRequest(url, method = 'GET', headers = {}, data = null, userId = 'system') {
     try {
         debugLog(userId, 'SENDING_REQUEST', url, method, headers, data);
         
-        const response = await axios({
+        const axiosInstance = createAxiosInstance();
+        const response = await axiosInstance({
             method: method.toLowerCase(),
             url: url,
             headers: {
                 'Content-Type': 'application/json',
                 ...headers
             },
-            data: data,
-            timeout: 10000
+            data: data
         });
 
         debugLog(userId, 'REQUEST_SUCCESS', url, method, headers, data, response);
@@ -983,5 +1043,9 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📊 Dashboard available at http://localhost:${PORT}`);
     console.log(`🔍 Debug logs available at http://localhost:${PORT}/api/debug-logs`);
+    console.log(`🌐 Proxy Status: ${PROXY_ENABLED ? 'ENABLED' : 'DISABLED'}`);
+    if (PROXY_ENABLED && PROXY_URL) {
+        console.log(`   Using proxy: ${PROXY_URL.replace(/:[^@]*@/, ':***@')}`);
+    }
     initializeApp();
 });
