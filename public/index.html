@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>MegaTool Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
+  <style>
     :root {
       --bg: #f8fafc;
       --panel: #ffffff;
@@ -37,35 +37,35 @@
     .wrap { padding: 16px; max-width: 1400px; margin: 0 auto; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
     @media (min-width: 900px) { .grid { grid-template-columns: 2fr 1fr; } }
-    .card { 
-      background: rgba(255, 255, 255, 0.8); 
-      border: 1px solid #e2e8f0; 
-      border-radius: 12px; 
-      overflow: hidden; 
+    .card {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       backdrop-filter: blur(10px);
     }
-    .card h2 { 
-      font-size: 16px; 
-      margin: 0; 
-      padding: 12px 14px; 
-      border-bottom: 1px solid #e2e8f0; 
+    .card h2 {
+      font-size: 16px;
+      margin: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e2e8f0;
       background: rgba(241, 245, 249, 0.7);
     }
     .section { padding: 12px 14px; }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
     .btn {
-      background: #f1f5f9; 
-      border: 1px solid #cbd5e1; 
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
       color: var(--text);
-      padding: 8px 12px; 
-      border-radius: 8px; 
-      cursor: pointer; 
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
       transition: all .15s;
     }
-    .btn:hover { 
-      border-color: var(--accent); 
-      color: var(--accent); 
+    .btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
       background: #f0fdff;
     }
     .btn.small { padding: 6px 10px; font-size: 12px; }
@@ -86,23 +86,29 @@
     .btn-success:hover {
       background: #138c3c;
     }
+    .btn-warn {
+      background: var(--warn);
+      border-color: var(--warn);
+      color: white;
+    }
+    .btn-warn:hover { background: #b45309; color: white; }
     .pill {
-      display: inline-flex; 
-      align-items: center; 
-      gap: 6px; 
-      background: var(--chip); 
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--chip);
       border: 1px solid #cbd5e1;
-      padding: 6px 8px; 
-      border-radius: 999px; 
-      font-size: 12px; 
+      padding: 6px 8px;
+      border-radius: 999px;
+      font-size: 12px;
       color: var(--muted);
     }
     .pill b { color: var(--text); font-weight: 600; }
     .user-card {
-      background: rgba(248, 250, 252, 0.8); 
-      border: 1px solid #e2e8f0; 
-      border-radius: 10px; 
-      padding: 12px; 
+      background: rgba(248, 250, 252, 0.8);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
       margin-bottom: 10px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.03);
     }
@@ -110,22 +116,22 @@
     .user-head h3 { margin: 0; font-size: 15px; }
     .kv { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; margin: 8px 0; font-size: 13px; }
     .muted { color: var(--muted); }
-    code.time { 
-      background: #f1f5f9; 
-      padding: 2px 6px; 
-      border-radius: 6px; 
-      border: 1px solid #cbd5e1; 
+    code.time {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
     }
     pre.logs, pre.token-display {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-      white-space: pre-wrap; 
-      word-break: break-word; 
-      background: #f1f5f9; 
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #f1f5f9;
       border: 1px solid #cbd5e1;
-      padding: 10px; 
-      border-radius: 10px; 
-      max-height: 150px; 
-      overflow: auto; 
+      padding: 10px;
+      border-radius: 10px;
+      max-height: 150px;
+      overflow: auto;
       font-size: 11px;
       margin: 4px 0;
     }
@@ -164,11 +170,15 @@
       border: 1px solid #91d5ff;
       border-radius: 8px;
       padding: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
       gap: 20px;
+    }
+    .global-config.amber {
+      background: #fef3c7;
+      border-color: #fbbf24;
     }
     .save-indicator {
       color: var(--good);
@@ -198,6 +208,7 @@
       z-index: 1000;
       animation: fadeOut 2s;
     }
+    .copy-success.bad { background: var(--bad); }
   </style>
 </head>
 <body>
@@ -212,18 +223,33 @@
   </header>
 
   <div class="wrap">
-    <!-- GLOBAL CONFIGURATION - ONE FOR ALL USERS -->
+    <!-- SPINNER GLOBAL CONFIG -->
     <div class="global-config">
       <div class="config-group">
-        <span class="config-label">🎰 Spinner ID (all users):</span>
+        <span class="config-label">🎰 Spinner ID:</span>
         <input type="number" class="config-input" id="globalSpinnerId" min="1" value="7030" placeholder="Spinner ID">
       </div>
       <div class="config-group">
-        <span class="config-label">📦 Pack IDs (comma separated):</span>
-        <input type="text" class="config-input" id="globalPackIds" value="11953, 12053, 12079, 12121, 12145, 12316, 14356" placeholder="e.g. 11953, 12053, 12079, 12121, 12145, 12316, 14356" style="width: 300px;">
+        <span class="config-label">📦 Pack Prize IDs:</span>
+        <input type="text" class="config-input" id="globalPackIds" value="11953, 12053, 12079, 12121, 12145, 12316, 14356" style="width: 340px;">
       </div>
-      <button class="btn btn-primary" id="updateGlobalConfig">Save Global Config</button>
+      <div class="config-group">
+        <label class="pill"><input type="checkbox" id="autoFetchSpinner" checked> Auto-fetch on JWT refresh</label>
+        <span class="muted small" id="lastSpinnerFetch"></span>
+      </div>
+      <button class="btn btn-primary" id="updateGlobalConfig">💾 Save Config</button>
+      <button class="btn btn-warn" id="refreshSpinnerNow" title="Force fetch using any user JWT">🔄 Refresh Spinner Map</button>
       <span id="saveIndicator" class="save-indicator" style="display: none;">✓ Saved</span>
+    </div>
+
+    <!-- LISTING GLOBAL CONFIG -->
+    <div class="global-config amber">
+      <div class="config-group">
+        <span class="config-label">💵 Listing delay (ms):</span>
+        <input type="number" class="config-input" id="globalListingDelay" min="100" value="2400">
+      </div>
+      <button class="btn btn-primary" id="updateListingConfig">💾 Save</button>
+      <span id="listingSaveIndicator" class="save-indicator" style="display: none;">✓</span>
     </div>
 
     <div class="grid">
@@ -248,7 +274,6 @@
   <div id="copySuccessMsg" style="display: none;"></div>
 
   <script>
-    // === CONFIG ===
     const DEBUG_LIMIT = 100;
     document.getElementById('logLimit').textContent = DEBUG_LIMIT;
 
@@ -278,15 +303,12 @@
       } catch { return null; }
     }
 
-    // Show temporary success message
-    function showCopySuccess(message) {
-      let msgDiv = document.getElementById('copySuccessMsg');
+    function showCopySuccess(message, bad = false) {
+      const msgDiv = document.getElementById('copySuccessMsg');
       msgDiv.textContent = message;
-      msgDiv.className = 'copy-success';
+      msgDiv.className = 'copy-success' + (bad ? ' bad' : '');
       msgDiv.style.display = 'block';
-      setTimeout(() => {
-        msgDiv.style.display = 'none';
-      }, 2000);
+      setTimeout(() => { msgDiv.style.display = 'none'; }, 2400);
     }
 
     // --- API functions ---
@@ -295,19 +317,16 @@
       if (!r.ok) throw new Error('Failed to fetch /api/users');
       return r.json();
     }
-
     async function fetchUserJwtData() {
       const r = await fetch('/api/export/user-jwt');
       if (!r.ok) throw new Error('Failed to fetch user JWT data');
       return r.json();
     }
-
     async function fetchFullUserData() {
       const r = await fetch('/api/export/full-data');
       if (!r.ok) throw new Error('Failed to fetch full user data');
       return r.json();
     }
-
     async function fetchDebugLogs(limit = DEBUG_LIMIT) {
       const r = await fetch(`/api/debug-logs?limit=${limit}`);
       if (!r.ok) throw new Error('Failed to fetch /api/debug-logs');
@@ -317,89 +336,119 @@
     async function fetchGlobalConfig() {
       try {
         const r = await fetch('/api/spinner-config');
+        if (!r.ok) return;
+        const config = await r.json();
+        document.getElementById('globalSpinnerId').value = config.spinnerId || 7030;
+        document.getElementById('globalPackIds').value = config.packIds ? config.packIds.join(', ') : '';
+        document.getElementById('autoFetchSpinner').checked = config.autoFetch !== false;
+        document.getElementById('lastSpinnerFetch').textContent =
+          config.lastAutoFetch ? `last: ${fmtUTC(config.lastAutoFetch)}` : 'never';
+      } catch (e) { console.error('Failed to fetch spinner config:', e); }
+    }
+
+    async function fetchListingConfig() {
+      try {
+        const r = await fetch('/api/listing-config');
         if (r.ok) {
-          const config = await r.json();
-          document.getElementById('globalSpinnerId').value = config.spinnerId || 7030;
-          document.getElementById('globalPackIds').value = config.packIds ? config.packIds.join(', ') : '11953, 12053, 12079, 12121, 12145, 12316, 14356';
+          const cfg = await r.json();
+          document.getElementById('globalListingDelay').value = cfg.delayMs || 2400;
         }
-      } catch (e) {
-        console.error('Failed to fetch global config:', e);
-      }
+      } catch (e) { console.error('Failed to fetch listing config:', e); }
     }
 
     async function updateGlobalConfig() {
       const spinnerId = document.getElementById('globalSpinnerId').value;
       const packIds = document.getElementById('globalPackIds').value;
-      
+      const autoFetch = document.getElementById('autoFetchSpinner').checked;
       const saveIndicator = document.getElementById('saveIndicator');
       saveIndicator.style.display = 'inline';
-      
+      saveIndicator.textContent = '…';
+      saveIndicator.style.color = 'var(--good)';
+
       try {
         const r = await fetch('/api/spinner-config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ spinnerId, packIds })
+          body: JSON.stringify({ spinnerId, packIds, autoFetch })
         });
-        
         if (!r.ok) throw new Error('Failed to update config');
-        
         saveIndicator.textContent = '✓ Saved';
-        setTimeout(() => {
-          saveIndicator.style.display = 'none';
-        }, 2000);
+        setTimeout(() => { saveIndicator.style.display = 'none'; }, 2000);
+        await fetchGlobalConfig();
       } catch (err) {
         saveIndicator.textContent = '✗ Error';
         saveIndicator.style.color = 'var(--bad)';
-        setTimeout(() => {
-          saveIndicator.style.display = 'none';
-          saveIndicator.style.color = 'var(--good)';
-        }, 2000);
+        setTimeout(() => { saveIndicator.style.display = 'none'; saveIndicator.style.color = 'var(--good)'; }, 2000);
       }
     }
 
-    // Copy Info Button Handler - copies User ID and JWT as tab-separated table
+    async function updateListingConfig() {
+      const delayMs = document.getElementById('globalListingDelay').value;
+      const ind = document.getElementById('listingSaveIndicator');
+      ind.style.display = 'inline'; ind.textContent = '…'; ind.style.color = 'var(--good)';
+      try {
+        const r = await fetch('/api/listing-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ delayMs })
+        });
+        if (!r.ok) throw new Error('failed');
+        ind.textContent = '✓';
+        setTimeout(() => { ind.style.display = 'none'; }, 2000);
+      } catch {
+        ind.textContent = '✗'; ind.style.color = 'var(--bad)';
+        setTimeout(() => { ind.style.display = 'none'; ind.style.color = 'var(--good)'; }, 2000);
+      }
+    }
+
+    async function refreshSpinnerNow() {
+      const btn = document.getElementById('refreshSpinnerNow');
+      btn.disabled = true;
+      const orig = btn.textContent;
+      btn.textContent = '⏳…';
+      try {
+        const r = await fetch('/api/spinner-check', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+        });
+        const data = await r.json();
+        if (!r.ok || !data.success) throw new Error(data.error || 'failed');
+        showCopySuccess(`✅ Spinner updated (ID=${data.config.spinnerId}, packs=[${data.config.packIds.join(',')}])`);
+        await fetchGlobalConfig();
+      } catch (e) {
+        showCopySuccess(`❌ ${e.message}`, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = orig;
+      }
+    }
+
     async function copyUserJwtInfo() {
       try {
         const data = await fetchUserJwtData();
         const users = Object.values(data);
-        
         if (users.length === 0) {
           showCopySuccess('No user data available to copy');
           return;
         }
-        
-        // Create header row
         let tsvContent = 'User ID\tJWT Token\n';
-        
-        // Add data rows
         users.forEach(user => {
           const userId = user.userId || '';
-          const jwtToken = user.jwtToken || '';
-          // Escape any tabs or newlines in JWT just in case
-          const escapedJwt = jwtToken.replace(/\t/g, ' ').replace(/\n/g, ' ');
-          tsvContent += `${userId}\t${escapedJwt}\n`;
+          const jwtToken = (user.jwtToken || '').replace(/\t/g, ' ').replace(/\n/g, ' ');
+          tsvContent += `${userId}\t${jwtToken}\n`;
         });
-        
-        // Copy to clipboard
         await navigator.clipboard.writeText(tsvContent);
         showCopySuccess(`📋 Copied ${users.length} user(s) info to clipboard`);
       } catch (err) {
         console.error('Copy failed:', err);
-        showCopySuccess('❌ Failed to copy data');
+        showCopySuccess('❌ Failed to copy data', true);
       }
     }
 
-    // Export CSV Button Handler - creates CSV file with user data
     async function exportCsv() {
       try {
         const users = await fetchFullUserData();
-        
-        if (users.length === 0) {
-          showCopySuccess('No user data available to export');
-          return;
-        }
-        
-        // Get current date and time for filename: year,month,day_hh-mm
+        if (users.length === 0) return showCopySuccess('No user data available to export');
+
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -407,18 +456,12 @@
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const timestamp = `${year}${month}${day}_${hours}-${minutes}`;
-        
-        // CSV Header (6 columns as requested)
+
         const headers = ['Nick', 'User ID', 'Funds (Silver)', 'Coronas', 'USD', 'JWT Token'];
-        
-        // Build CSV rows
         const rows = users.map(user => {
-          // Format funds without commas (just the number as string)
           const funds = user.funds ? String(user.funds) : '0';
           const coronas = user.coronas ? String(user.coronas) : '0';
           const usd = user.usd || '0';
-          
-          // Escape fields that might contain commas or quotes
           const escapeField = (field) => {
             if (field === undefined || field === null) return '';
             const str = String(field);
@@ -427,21 +470,16 @@
             }
             return str;
           };
-          
           return [
             escapeField(user.nick),
             escapeField(user.userId),
-            funds,
-            coronas,
+            funds, coronas,
             escapeField(usd),
             escapeField(user.jwtToken)
           ].join(',');
         });
-        
-        // Combine header and rows
+
         const csvContent = [headers.join(','), ...rows].join('\n');
-        
-        // Create and download file
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
@@ -451,47 +489,43 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        
         showCopySuccess(`📊 Exported ${users.length} user(s) to users_export_${timestamp}.csv`);
       } catch (err) {
         console.error('Export failed:', err);
-        showCopySuccess('❌ Failed to export CSV');
+        showCopySuccess('❌ Failed to export CSV', true);
       }
     }
 
-    // Fixed action function with proper route mapping
     async function action(userId, actionType) {
-      // Map UI action names to API routes
       const routeMap = {
         'refresh': 'refresh',
         'spin': 'spin',
         'claim': 'claim-achievements',
-        'funds': 'check-funds'
+        'funds': 'check-funds',
+        'scan-list': 'scan-list',
+        'spinner-check': 'spinner-check',
       };
-      
       const route = routeMap[actionType];
-      if (!route) {
-        throw new Error(`Unknown action: ${actionType}`);
-      }
-      
-      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/${route}`, { 
+      if (!route) throw new Error(`Unknown action: ${actionType}`);
+
+      const r = await fetch(`/api/user/${encodeURIComponent(userId)}/${route}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
       });
-      
+
       if (!r.ok) {
         const errorText = await r.text();
         throw new Error(`Action ${actionType} failed: ${r.status} ${errorText}`);
       }
-      
       return r.json();
     }
 
-    // --- Render functions ---
+    // --- Render ---
     function renderUsers(users) {
       const panel = document.getElementById('usersPanel');
       const ids = Object.keys(users);
-      
+
       if (!ids.length) {
         panel.innerHTML = '<div class="muted">No users loaded.</div>';
         return;
@@ -503,6 +537,8 @@
         const startISO = toIso(u._effectiveStartUTC);
         const endISO = toIso(u._effectiveEndUTC);
         const jitter = u._startJitterMin ? `${u._startJitterMin}m` : '—';
+        const listerJitter = u.listerJitter != null ? `${u.listerJitter}m` : '150m';
+        const agg = u.aggression != null ? u.aggression : 0;
 
         parts.push(`
           <div class="user-card" data-user="${id}">
@@ -513,6 +549,8 @@
                 <button class="btn small" data-act="spin" data-id="${id}">Spin</button>
                 <button class="btn small" data-act="claim" data-id="${id}">Claim Ach.</button>
                 <button class="btn small" data-act="funds" data-id="${id}">Check Funds</button>
+                <button class="btn small btn-warn" data-act="spinner-check" data-id="${id}">🎡 Check Spinner</button>
+                <button class="btn small btn-warn" data-act="scan-list" data-id="${id}">📋 Scan & List</button>
               </div>
             </div>
 
@@ -526,15 +564,23 @@
               <div class="muted">Next Spin</div>
               <div><code class="time">${fmtUTC(u.nextSpinTime)}</code> ${minsFromNow(u.nextSpinTime) ? `<span class="pill">${minsFromNow(u.nextSpinTime)}</span>` : ''}</div>
 
+              <div class="muted">Next Lister</div>
+              <div><code class="time">${fmtUTC(u.nextListerTime)}</code>
+                   ${minsFromNow(u.nextListerTime) ? `<span class="pill">${minsFromNow(u.nextListerTime)}</span>` : ''}
+                   <span class="pill">+${listerJitter}</span></div>
+
+              <div class="muted">Aggression</div>
+              <div><span class="pill">A = ${agg}</span></div>
+
               <div class="muted">Spins / A4</div>
               <div>${u.spinCount || 0} / ${u.achievementsClaimed || 0}</div>
 
               <div class="muted">Funds / Checks</div>
               <div>${(u.lastFunds || 0).toLocaleString()} silver / ${(u.lastCoronas || 0).toLocaleString()} coronas / ${u.lastUsd || 0} USD | ${u.dailyFundsChecks || 0} checks</div>
-              
+
               <div class="muted">Packs Opened</div>
               <div>${u.packsOpened || 0}</div>
-              
+
               <div class="token-container">
                 <div class="muted">Token</div>
                 <div class="muted small"><pre class="logs" style="font-size: 4pt;">${u.jwtToken ?? 'No token'}</pre></div>
@@ -545,33 +591,37 @@
       });
 
       panel.innerHTML = parts.join('\n');
-      
-      // Add event listeners for action buttons
+
       panel.querySelectorAll('button[data-act]').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-          const id = e.currentTarget.getAttribute('data-id');
-          const act = e.currentTarget.getAttribute('data-act');
-          e.currentTarget.disabled = true;
-          
+          const el = e.currentTarget;
+          const id = el.getAttribute('data-id');
+          const act = el.getAttribute('data-act');
+          el.disabled = true;
+          const orig = el.textContent;
+          el.textContent = '…';
           try {
-            await action(id, act);
-            // Show success feedback
-            e.currentTarget.style.backgroundColor = '#16a34a';
-            e.currentTarget.style.color = 'white';
-            setTimeout(() => {
-              e.currentTarget.style.backgroundColor = '';
-              e.currentTarget.style.color = '';
-            }, 500);
+            const res = await action(id, act);
+            if (act === 'spinner-check' && res?.config) {
+              showCopySuccess(`✅ Spinner for ${id}: ID=${res.config.spinnerId}`);
+              await fetchGlobalConfig();
+            }
+            if (act === 'scan-list' && res) {
+              showCopySuccess(`📋 Scan: ${res.scanned} cards, listed ${res.listed}, failed ${res.failed}`);
+            }
+            el.style.backgroundColor = '#16a34a';
+            el.style.color = 'white';
           } catch (err) {
-            e.currentTarget.style.backgroundColor = '#dc2626';
-            e.currentTarget.style.color = 'white';
-            setTimeout(() => {
-              e.currentTarget.style.backgroundColor = '';
-              e.currentTarget.style.color = '';
-            }, 500);
+            el.style.backgroundColor = '#dc2626';
+            el.style.color = 'white';
+            console.error(err);
           } finally {
-            e.currentTarget.disabled = false;
-            // Refresh data after action
+            setTimeout(() => {
+              el.style.backgroundColor = '';
+              el.style.color = '';
+              el.textContent = orig;
+              el.disabled = false;
+            }, 900);
             await Promise.all([
               loadUsers().catch(()=>{}),
               loadLogs().catch(()=>{})
@@ -587,23 +637,16 @@
         box.textContent = 'No debug logs yet.';
         return;
       }
-      
       const lines = list.map(entry => {
         const ts = entry.timestamp || '';
         const who = entry.userId || 'system';
         const action = entry.action || '';
         const method = entry.request?.method || '';
         const url = entry.request?.url || '';
-        
-        if (entry.response) {
-          return `[${ts}] [${who}] ${action} ${method} ${url} -> ${entry.response.status}`;
-        } else if (entry.error) {
-          return `[${ts}] [${who}] ${action} ${method} ${url} -> ERROR ${entry.error.status || ''} ${entry.error.message}`;
-        } else {
-          return `[${ts}] [${who}] ${action} ${method} ${url}`;
-        }
+        if (entry.response) return `[${ts}] [${who}] ${action} ${method} ${url} -> ${entry.response.status}`;
+        if (entry.error) return `[${ts}] [${who}] ${action} ${method} ${url} -> ERROR ${entry.error.status || ''} ${entry.error.message}`;
+        return `[${ts}] [${who}] ${action} ${method} ${url}`;
       });
-      
       box.textContent = lines.join('\n');
     }
 
@@ -631,14 +674,15 @@
       loadUsers();
       loadLogs();
       fetchGlobalConfig();
+      fetchListingConfig();
     });
-
     document.getElementById('refreshLogs').addEventListener('click', loadLogs);
     document.getElementById('updateGlobalConfig').addEventListener('click', updateGlobalConfig);
+    document.getElementById('updateListingConfig').addEventListener('click', updateListingConfig);
+    document.getElementById('refreshSpinnerNow').addEventListener('click', refreshSpinnerNow);
     document.getElementById('copyInfoBtn').addEventListener('click', copyUserJwtInfo);
     document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
 
-    // Auto refresh
     let tickHandle = setInterval(() => {
       loadUsers();
       loadLogs();
@@ -646,10 +690,7 @@
 
     document.getElementById('autoTick').addEventListener('change', (e) => {
       if (e.target.checked) {
-        tickHandle = setInterval(() => {
-          loadUsers();
-          loadLogs();
-        }, 10000);
+        tickHandle = setInterval(() => { loadUsers(); loadLogs(); }, 10000);
       } else {
         clearInterval(tickHandle);
       }
@@ -657,6 +698,7 @@
 
     // Initial load
     fetchGlobalConfig();
+    fetchListingConfig();
     loadUsers();
     loadLogs();
   </script>
